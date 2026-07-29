@@ -25,7 +25,7 @@ def add_timestamp(logger: Any, _method_name: str, event_dict: dict[str, Any]) ->
 def configure_logging(log_level: str = "INFO") -> None:
     """Configure structlog with JSON output for production, pretty output for dev."""
     processors = [
-        structlog.contextvars.merge_context_vars,
+        structlog.contextvars.merge_contextvars,
         structlog.processors.add_log_level,
         add_timestamp,
         structlog.processors.StackInfoRenderer(),

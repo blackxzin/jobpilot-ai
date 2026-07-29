@@ -223,7 +223,7 @@ class GetApplicationStatsUseCase:
 
         stats = ApplicationStats(total=len(applications))
         for app in applications:
-            value = app.status.value
+            value = app.status.value if hasattr(app.status, "value") else app.status
             stats.by_status[value] = stats.by_status.get(value, 0) + 1
 
         return stats

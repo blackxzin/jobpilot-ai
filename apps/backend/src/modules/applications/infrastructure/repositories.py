@@ -6,6 +6,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.models import ApplicationModel
+from modules.applications.domain.entities import Application
 
 
 class SQLAlchemyApplicationRepository:
@@ -21,12 +22,22 @@ class SQLAlchemyApplicationRepository:
         )
         return result.scalars().all()
 
-    async def create(self, data: dict) -> ApplicationModel:
-        import uuid
-        from datetime import datetime, UTC
-        data.setdefault("id", str(uuid.uuid4()))
-        data.setdefault("created_at", datetime.now(UTC))
-        model = ApplicationModel(**data)
+    async def create(self, app: Application) -> ApplicationModel:
+        model = ApplicationModel(
+            id=str(app.id),
+            job_id=str(app.job_id),
+            resume_id=str(app.resume_id),
+            user_id=str(app.user_id),
+            status=app.status.value if hasattr(app.status, "value") else app.status,
+            cover_letter=app.cover_letter,
+            custom_message=app.custom_message,
+            applied_at=app.applied_at,
+            responded_at=app.responded_at,
+            source_platform=app.source_platform,
+            tracking_data=app.tracking_data,
+            created_at=app.created_at,
+            updated_at=app.updated_at,
+        )
         self._session.add(model)
         await self._session.flush()
         return model

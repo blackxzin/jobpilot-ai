@@ -18,8 +18,7 @@ redis[hiredis]>=5.0.0
 # ── Task Queue ──────────────────────
 celery>=5.4.0
 
-# ── Auth ────────────────────────────
-better-auth>=0.0.1
+# ── Auth (custom session-based, no external lib needed) ──
 
 # ── AI / LLM ────────────────────────
 openai>=1.40.0

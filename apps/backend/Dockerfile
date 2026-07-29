@@ -15,7 +15,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Python dependencies
-COPY apps/backend/requirements.txt /tmp/requirements.txt
+COPY requirements.txt /tmp/requirements.txt
 RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir -r /tmp/requirements.txt
 
@@ -29,12 +29,12 @@ COPY --from=deps /usr/local/lib/python3.12/site-packages /usr/local/lib/python3.
 COPY --from=deps /usr/local/bin /usr/local/bin
 
 # Copy source
-COPY apps/backend/src /app/src
-COPY apps/backend/alembic /app/alembic
-COPY apps/backend/pyproject.toml /app/pyproject.toml
+COPY src /app/src
+COPY alembic /app/alembic
+COPY pyproject.toml /app/pyproject.toml
 
 # Install dev dependencies
-COPY apps/backend/requirements-dev.txt /tmp/requirements-dev.txt
+COPY requirements-dev.txt /tmp/requirements-dev.txt
 RUN pip install --no-cache-dir -r /tmp/requirements-dev.txt
 
 EXPOSE 8000
@@ -49,9 +49,9 @@ WORKDIR /app
 COPY --from=deps /usr/local/lib/python3.12/site-packages /usr/local/lib/python3.12/site-packages
 COPY --from=deps /usr/local/bin /usr/local/bin
 
-COPY apps/backend/src /app/src
-COPY apps/backend/alembic /app/alembic
-COPY apps/backend/pyproject.toml /app/pyproject.toml
+COPY src /app/src
+COPY alembic /app/alembic
+COPY pyproject.toml /app/pyproject.toml
 
 # Create non-root user
 RUN groupadd -r jobpilot && useradd -r -g jobpilot -d /app -s /sbin/nologin jobpilot && \
