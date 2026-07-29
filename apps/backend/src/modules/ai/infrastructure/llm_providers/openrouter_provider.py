@@ -1,0 +1,125 @@
+"""OpenRouter LLM Provider implementation."""
+from __future__ import annotations
+
+import os
+from typing import AsyncGenerator
+
+from openai import AsyncOpenAI
+
+from modules.ai.domain.llm_provider import LLMProvider
+from core.config import settings
+
+
+class OpenRouterProvider(LLMProvider):
+    """Provider for OpenRouter (aggregator that routes to multiple LLMs)."""
+
+    def __init__(self, api_key: str | None = None, model: str = "openai/gpt-4o"):
+        self.provider_name = "openrouter"
+        self._model = model
+        self._client = AsyncOpenAI(
+            api_key=api_key or os.getenv("OPENROUTER_API_KEY", settings.OPENROUTER_API_KEY),
+            base_url="https://openrouter.ai/api/v1",
+            default_headers={
+                "HTTP-Referer": "https://jobpilot.ai",
+                "X-Title": "JobPilot AI",
+            },
+        )
+
+    @property
+    def model(self) -> str:
+        return self._model
+
+    async def generate(self, prompt: str, **kwargs) -> str:
+        response = await self._client.chat.completions.create(
+            model=self._model,
+            messages=[{"role": "user", "content": prompt}],
+            stream=False,
+            **kwargs,
+        )
+        return response.choices[0].message.content or ""
+
+    async def stream_generate(self, prompt: str, **kwargs) -> AsyncGenerator[str, None]:
+        stream = await self._client.chat.completions.create(
+            model=self._model,
+            messages=[{"role": "user", "content": prompt}],
+            stream=True,
+            **kwargs,
+        )
+        async for chunk in stream:
+            content = chunk.choices[0].delta.content
+            if content is not None:
+                yield content
+
+    async def summarize(self, text: str, **kwargs) -> str:
+        return await self.generate(f"Summarize concisely:\n\n{text}", **kwargs)
+
+    async def analyze_resume(self, resume: str, job_description: str, **kwargs) -> dict:
+        prompt = f"""Analyze resume vs job description. Return ONLY JSON:
+
+RESUME:
+{resume}
+JOB:
+{job_description}
+
+JSON keys: score (0-100), matched_skills, missing_skills, suggestions, strengths"""
+        result = await self.generate(prompt, **kwargs)
+        return self._parse_json(result)
+
+    async def compare_job(self, resume: str, job: dict, **kwargs) -> dict:
+        prompt = f"""Compare resume to job. Return ONLY JSON:
+
+RESUME:
+{resume}
+JOB: {job.get('title', '')} at {job.get('company', '')}
+SKILLS: {', '.join(job.get('skills', []))}
+DESC: {job.get('description', '')[:500]}
+
+JSON keys: compatibility_score (0-100), match_reasons [{{text, type}}], suggestions"""
+        result = await self.generate(prompt, **kwargs)
+        return self._parse_json(result)
+
+    async def generate_cover_letter(self, resume: str, job: dict, **kwargs) -> str:
+        prompt = f"""Write a cover letter (3 paragraphs, max 400 words).
+
+Resume: {resume[:2000]}
+Job: {job.get('title', '')} at {job.get('company', '')}
+Requirements: {', '.join(job.get('requirements', []))}
+
+Reference resume only. Never invent experiences."""
+        return await self.generate(prompt, **kwargs)
+
+    async def answer_question(self, question: str, context: str = "") -> str:
+        prompt = f"""You are a career coach.
+
+{'Context: ' + context + '\n' if context else ''}
+Question: {question}
+
+Provide a helpful career advice answer."""
+        return await self.generate(prompt, **kwargs)
+
+    async def health_check(self) -> bool:
+        try:
+            await self._client.models.list()
+            return True
+        except Exception:
+            return False
+
+    def _parse_json(self, text: str) -> dict:
+        import json
+        import re
+        try:
+            return json.loads(text)
+        except json.JSONDecodeError:
+            pass
+        block_match = re.search(r'```json\s*(\{.*?\})\s*```', text, re.DOTALL)
+        if block_match:
+            try:
+                return json.loads(block_match.group(1))
+            except json.JSONDecodeError:
+                pass
+        try:
+            start = text.index("{")
+            end = text.rindex("}") + 1
+            return json.loads(text[start:end])
+        except (ValueError, json.JSONDecodeError):
+            return {"error": "Failed to parse LLM response", "raw": text}

@@ -1,0 +1,43 @@
+# ── Python ──────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+*.egg
+.venv/
+venv/
+env/
+
+# ── Node ────────────────────────────────────────────
+node_modules/
+.next/
+*.tsbuildinfo
+
+# ── Environment ─────────────────────────────────────
+.env
+.env.local
+.env.production
+
+# ── IDE / Editor ────────────────────────────────────
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# ── OS ──────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+
+# ── Database ────────────────────────────────────────
+*.db
+*.sqlite3
+
+# ── Logs ────────────────────────────────────────────
+logs/
+*.log
+
+# ── Project ─────────────────────────────────────────
+test.db
