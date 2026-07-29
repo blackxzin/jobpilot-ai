@@ -33,6 +33,12 @@ async def lifespan(app: FastAPI):
     if engine:
         await engine.begin()
         logger.info("Database connection established")
+        # Auto-create tables in development mode
+        if settings.APP_ENV == "development":
+            from core.database import Base
+            async with engine.begin() as conn:
+                await conn.run_sync(Base.metadata.create_all)
+                logger.info("Database tables created/verified")
     yield
     # ── Shutdown ─────────────────────────────────────────
     logger.info("Shutting down JobPilot AI...")
@@ -82,6 +88,8 @@ def create_app() -> FastAPI:
     from modules.cover_letters.api.routes import router as cover_letters_router
     from modules.applications.api.routes import router as applications_router
     from modules.notifications.api.routes import router as notifications_router
+    from modules.config.api.routes import router as config_router
+    from modules.ai.api.routes import router as ai_router
 
     app.include_router(auth_router, prefix=api_prefix)
     app.include_router(users_router, prefix=api_prefix)
@@ -90,6 +98,8 @@ def create_app() -> FastAPI:
     app.include_router(cover_letters_router, prefix=api_prefix)
     app.include_router(applications_router, prefix=api_prefix)
     app.include_router(notifications_router, prefix=api_prefix)
+    app.include_router(config_router, prefix=api_prefix)
+    app.include_router(ai_router, prefix=api_prefix)
 
     # ── Health check ─────────────────────────────────────
     @app.get("/health", tags=["health"])
