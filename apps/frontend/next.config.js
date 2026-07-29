@@ -1,11 +1,15 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // TODO: update for production
-  // experimental: {
-  //   serverComponentsExternalPackages: ['@pinecone-database/pinecone'],
-  // },
   poweredByHeader: false,
   compress: true,
+  async rewrites() {
+    return [
+      {
+        source: "/api/:path*",
+        destination: "http://localhost:8000/api/:path*",
+      },
+    ];
+  },
 };
 
-module.exports = nextConfig;
+export default nextConfig;
