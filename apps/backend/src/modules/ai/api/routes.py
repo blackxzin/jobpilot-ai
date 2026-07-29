@@ -27,6 +27,11 @@ class GitHubRequest(BaseModel):
     username: str
 
 
+class ChatRequest(BaseModel):
+    message: str
+    context: str = ""
+
+
 async def _get_provider(user_id: str, db: AsyncSession):
     result = await db.execute(
         select(LLMProviderConfigModel).where(
@@ -94,3 +99,21 @@ async def import_github(body: GitHubRequest, authorization: str = Header(""), db
         return {"error": str(e)}
     finally:
         await client.close()
+
+
+@router.post("/chat")
+async def chat_ai(body: ChatRequest, authorization: str = Header(""), db: AsyncSession = Depends(get_db)):
+    token = authorization.replace("Bearer ", "")
+    user_repo = SQLAlchemyUserRepository(db)
+    session_repo = SQLAlchemySessionRepository(db)
+    auth_uc = GetCurrentUserUseCase(user_repo, session_repo)
+    user = await auth_uc.execute(token)
+
+    provider = await _get_provider(str(user.id), db)
+    llm = LLMService(provider)
+
+    prompt = f"""You are a career coach assistant for JobPilot AI. Be practical, direct, and helpful. Answer in Portuguese.
+
+User: {body.message}"""
+    response = await llm.generate(prompt)
+    return {"response": response}

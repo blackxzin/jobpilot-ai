@@ -9,12 +9,11 @@ from openai import AsyncOpenAI
 from modules.ai.domain.llm_provider import LLMProvider
 from core.config import settings
 
-
 class OpenAIProvider(LLMProvider):
     """Provider for OpenAI's Chat Completions API."""
 
     def __init__(self, api_key: str | None = None, model: str = "gpt-4o", base_url: str | None = None):
-        self.provider_name = "openai"
+        self._provider_name = "openai"
         kwargs = dict(
             api_key=api_key or os.getenv("OPENAI_API_KEY", settings.OPENAI_API_KEY),
         )
@@ -26,6 +25,10 @@ class OpenAIProvider(LLMProvider):
     @property
     def model(self) -> str:
         return self._model
+
+    @property
+    def provider_name(self) -> str:
+        return self._provider_name
 
     async def generate(self, prompt: str, **kwargs) -> str:
         response = await self._client.chat.completions.create(

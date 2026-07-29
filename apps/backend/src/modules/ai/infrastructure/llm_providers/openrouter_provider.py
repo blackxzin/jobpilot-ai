@@ -9,12 +9,11 @@ from openai import AsyncOpenAI
 from modules.ai.domain.llm_provider import LLMProvider
 from core.config import settings
 
-
 class OpenRouterProvider(LLMProvider):
     """Provider for OpenRouter (aggregator that routes to multiple LLMs)."""
 
     def __init__(self, api_key: str | None = None, model: str = "openai/gpt-4o"):
-        self.provider_name = "openrouter"
+        self._provider_name = "openrouter"
         self._model = model
         self._client = AsyncOpenAI(
             api_key=api_key or os.getenv("OPENROUTER_API_KEY", settings.OPENROUTER_API_KEY),
@@ -27,7 +26,14 @@ class OpenRouterProvider(LLMProvider):
 
     @property
     def model(self) -> str:
+
+    
+        return self._provider_name
         return self._model
+
+    @property
+    def provider_name(self) -> str:
+        return self._provider_name
 
     async def generate(self, prompt: str, **kwargs) -> str:
         response = await self._client.chat.completions.create(

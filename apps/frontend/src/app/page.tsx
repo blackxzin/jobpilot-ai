@@ -37,6 +37,16 @@ export default function Home() {
   const [linkedinData, setLinkedinData] = useState<any>(null);
   const [importing, setImporting] = useState(false);
 
+  // Calendar
+  const [events, setEvents] = useState<any[]>([]);
+  const [newEvent, setNewEvent] = useState({ title: "", event_type: "interview", date: "", notes: "", location: "" });
+  const [showNewEvent, setShowNewEvent] = useState(false);
+
+  // Chat
+  const [chatMsg, setChatMsg] = useState("");
+  const [chatHistory, setChatHistory] = useState<{role: string, text: string}[]>([]);
+  const [chatting, setChatting] = useState(false);
+
   const api = (path: string, opts?: any) =>
     fetch(`/api/v1${path}`, {
       ...opts,
@@ -83,7 +93,7 @@ export default function Home() {
     if (r.ok) setLlmConfigs((await r.json()).configs);
   }
 
-  useEffect(() => { if (token) { fetchApps(); fetchResumes(); fetchLlmConfigs(); } }, [token]);
+  useEffect(() => { if (token) { fetchApps(); fetchResumes(); fetchLlmConfigs(); fetchEvents(); } }, [token]);
 
   async function uploadResume(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -173,7 +183,7 @@ export default function Home() {
     );
   }
 
-  const tabs = ["dashboard", "jobs", "applications", "resumes", "ia"];
+  const tabs = ["dashboard", "jobs", "calendar", "applications", "resumes", "chat", "ia"];
   const sources = [
     { id: "remoteok", name: "RemoteOK", desc: "Vagas remotas mundo todo" },
     { id: "programathor", name: "Programathor", desc: "Vagas Brasil tech" },
@@ -459,6 +469,68 @@ export default function Home() {
           </div>
         )}
 
+        {tab === "calendar" && (
+          <div className="space-y-4">
+            <div className="bg-zinc-900 rounded-xl p-6 border border-zinc-800">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="font-semibold">📅 Agenda de Entrevistas</h2>
+                <button onClick={() => setShowNewEvent(!showNewEvent)} className="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1.5 rounded-lg text-xs font-medium">
+                  {showNewEvent ? "Cancelar" : "+ Novo Evento"}
+                </button>
+              </div>
+
+              {showNewEvent && (
+                <div className="bg-zinc-800/50 rounded-lg p-4 mb-4 space-y-3">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <input value={newEvent.title} onChange={e => setNewEvent({...newEvent, title: e.target.value})} placeholder="Título (ex: Entrevista Nubank)" className="bg-zinc-900 rounded px-3 py-2 text-xs border border-zinc-700" />
+                    <select value={newEvent.event_type} onChange={e => setNewEvent({...newEvent, event_type: e.target.value})} className="bg-zinc-900 rounded px-3 py-2 text-xs border border-zinc-700 text-zinc-300">
+                      <option value="interview">Entrevista</option>
+                      <option value="deadline">Prazo</option>
+                      <option value="reminder">Lembrete</option>
+                    </select>
+                    <input type="datetime-local" value={newEvent.date} onChange={e => setNewEvent({...newEvent, date: e.target.value})} className="bg-zinc-900 rounded px-3 py-2 text-xs border border-zinc-700" />
+                    <input value={newEvent.location} onChange={e => setNewEvent({...newEvent, location: e.target.value})} placeholder="Local ou link (Zoom, Google Meet...)" className="bg-zinc-900 rounded px-3 py-2 text-xs border border-zinc-700" />
+                  </div>
+                  <textarea value={newEvent.notes} onChange={e => setNewEvent({...newEvent, notes: e.target.value})} placeholder="Anotações..." className="w-full bg-zinc-900 rounded px-3 py-2 text-xs border border-zinc-700 h-16" />
+                  <button onClick={createEvent} className="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-lg text-xs font-medium">Salvar Evento</button>
+                </div>
+              )}
+
+              {events.length === 0 ? (
+                <p className="text-zinc-500 text-sm">Nenhum evento. Cadastre entrevistas e prazos.</p>
+              ) : (
+                <div className="space-y-3">
+                  {events.map((e: any) => (
+                    <div key={e.id} className={`bg-zinc-800/50 rounded-lg p-4 border-l-4 ${e.event_type === "interview" ? "border-emerald-500" : e.event_type === "deadline" ? "border-red-500" : "border-blue-500"}`}>
+                      <div className="flex items-start justify-between gap-2">
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className={`text-xs px-2 py-0.5 rounded ${e.event_type === "interview" ? "bg-emerald-900/50 text-emerald-400" : e.event_type === "deadline" ? "bg-red-900/50 text-red-400" : "bg-blue-900/50 text-blue-400"}`}>
+                              {e.event_type}
+                            </span>
+                            <h3 className="font-medium text-sm">{e.title}</h3>
+                          </div>
+                          {e.date && <p className="text-xs text-zinc-400 mt-1">📅 {new Date(e.date).toLocaleString("pt-BR")}</p>}
+                          {e.location && <p className="text-xs text-zinc-500">📍 {e.location}</p>}
+                          {e.notes && <p className="text-xs text-zinc-500 mt-1">{e.notes}</p>}
+                        </div>
+                        <div className="flex gap-2 shrink-0">
+                          <select value={e.status} onChange={ev => updateEventStatus(e.id, ev.target.value)} className="bg-zinc-900 rounded px-2 py-1 text-xs border border-zinc-700">
+                            <option value="scheduled">Agendado</option>
+                            <option value="completed">Realizado</option>
+                            <option value="cancelled">Cancelado</option>
+                          </select>
+                          <button onClick={() => deleteEvent(e.id)} className="text-red-400 hover:text-red-300 text-xs">✕</button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         {tab === "applications" && (
           <div className="space-y-4">
             <div className="bg-zinc-900 rounded-xl p-6 border border-zinc-800">
@@ -525,6 +597,32 @@ export default function Home() {
                 </div>
               </div>
             )}
+          </div>
+        )}
+
+        {tab === "chat" && (
+          <div className="bg-zinc-900 rounded-xl p-6 border border-zinc-800">
+            <h2 className="font-semibold mb-4">💬 Assistente de Carreira</h2>
+            <div className="h-80 overflow-y-auto mb-4 space-y-3 bg-zinc-950/50 rounded-lg p-4 border border-zinc-800/50">
+              {chatHistory.length === 0 && (
+                <p className="text-zinc-500 text-sm text-center py-8">Faça perguntas sobre carreira, entrevistas, currículo...<br/>Ex: "Como melhorar meu currículo?" ou "Dicas para entrevista técnica"</p>
+              )}
+              {chatHistory.map((h, i) => (
+                <div key={i} className={`flex ${h.role === "user" ? "justify-end" : "justify-start"}`}>
+                  <div className={`max-w-[80%] rounded-lg px-4 py-2 text-sm whitespace-pre-wrap ${h.role === "user" ? "bg-emerald-600/20 text-emerald-300" : "bg-zinc-800 text-zinc-300"}`}>
+                    {h.text}
+                  </div>
+                </div>
+              ))}
+              {chatting && <div className="flex justify-start"><div className="bg-zinc-800 rounded-lg px-4 py-2 text-sm text-zinc-500 animate-pulse">Pensando...</div></div>}
+            </div>
+            <div className="flex gap-2">
+              <input value={chatMsg} onChange={e => setChatMsg(e.target.value)} onKeyDown={e => e.key === "Enter" && sendChat()} placeholder="Digite sua pergunta..." className="flex-1 bg-zinc-800 rounded-lg px-4 py-2.5 text-sm border border-zinc-700 focus:outline-none focus:border-emerald-500" />
+              <button onClick={sendChat} disabled={chatting || !chatMsg.trim()} className="bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white px-6 py-2.5 rounded-lg font-medium text-sm">
+                {chatting ? "Enviando..." : "Enviar"}
+              </button>
+            </div>
+            <p className="text-xs text-zinc-500 mt-2">Configure sua chave de IA na aba 🤖 IA para ativar o chat.</p>
           </div>
         )}
 

@@ -86,7 +86,11 @@ class GetCurrentUserUseCase:
         session = await self._session_repo.get_by_token(token)
         if not session:
             raise AuthenticationError("Invalid session")
-        if session.expires_at < datetime.now(UTC):
+        now = datetime.now(UTC)
+        expires = session.expires_at
+        if expires.tzinfo is None:
+            expires = expires.replace(tzinfo=UTC)
+        if expires < now:
             raise AuthenticationError("Session expired")
         user = await self._user_repo.get_by_id(str(session.user_id))
         if not user:

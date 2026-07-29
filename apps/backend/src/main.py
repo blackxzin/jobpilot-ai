@@ -78,6 +78,29 @@ def create_app() -> FastAPI:
     app.add_middleware(RequestLoggingMiddleware)
     app.add_middleware(AuthMiddleware)
 
+    # Exception handlers
+    from starlette.responses import JSONResponse
+    from core.exceptions import (
+        JobPilotException, NotFoundError, ValidationError,
+        AuthenticationError, AuthorizationError,
+    )
+
+    @app.exception_handler(AuthenticationError)
+    async def auth_exception_handler(request, exc):
+        return JSONResponse(status_code=401, content={"detail": exc.message})
+
+    @app.exception_handler(AuthorizationError)
+    async def authz_exception_handler(request, exc):
+        return JSONResponse(status_code=403, content={"detail": exc.message})
+
+    @app.exception_handler(NotFoundError)
+    async def not_found_handler(request, exc):
+        return JSONResponse(status_code=404, content={"detail": exc.message})
+
+    @app.exception_handler(ValidationError)
+    async def validation_handler(request, exc):
+        return JSONResponse(status_code=422, content={"detail": exc.message})
+
     # ── Include API routers ──────────────────────────────
     api_prefix = settings.API_V1_PREFIX
 
@@ -90,6 +113,7 @@ def create_app() -> FastAPI:
     from modules.notifications.api.routes import router as notifications_router
     from modules.config.api.routes import router as config_router
     from modules.ai.api.routes import router as ai_router
+    from modules.calendar.api.routes import router as calendar_router
 
     app.include_router(auth_router, prefix=api_prefix)
     app.include_router(users_router, prefix=api_prefix)
@@ -100,6 +124,7 @@ def create_app() -> FastAPI:
     app.include_router(notifications_router, prefix=api_prefix)
     app.include_router(config_router, prefix=api_prefix)
     app.include_router(ai_router, prefix=api_prefix)
+    app.include_router(calendar_router, prefix=api_prefix)
 
     # ── Health check ─────────────────────────────────────
     @app.get("/health", tags=["health"])

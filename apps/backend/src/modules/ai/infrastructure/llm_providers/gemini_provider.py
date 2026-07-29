@@ -9,12 +9,11 @@ from google.generativeai import GenerativeModel, configure
 from modules.ai.domain.llm_provider import LLMProvider
 from core.config import settings
 
-
 class GeminiProvider(LLMProvider):
     """Provider for Google Gemini API."""
 
     def __init__(self, api_key: str | None = None, model: str = "gemini-2.0-flash"):
-        self.provider_name = "gemini"
+        self._provider_name = "gemini"
         self._model_name = model
         api_key = api_key or os.getenv("GEMINI_API_KEY", settings.GEMINI_API_KEY)
         if api_key:
@@ -24,7 +23,14 @@ class GeminiProvider(LLMProvider):
 
     @property
     def model(self) -> str:
+
+    
+        return self._provider_name
         return self._model_name
+
+    @property
+    def provider_name(self) -> str:
+        return self._provider_name
 
     async def generate(self, prompt: str, **kwargs) -> str:
         response = await self._model.generate_content_async(

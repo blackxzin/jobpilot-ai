@@ -9,12 +9,11 @@ from anthropic import AsyncAnthropic
 from modules.ai.domain.llm_provider import LLMProvider
 from core.config import settings
 
-
 class AnthropicProvider(LLMProvider):
     """Provider for Anthropic Claude API (messages API)."""
 
     def __init__(self, api_key: str | None = None, model: str = "claude-sonnet-4-20250514"):
-        self.provider_name = "anthropic"
+        self._provider_name = "anthropic"
         self._client = AsyncAnthropic(
             api_key=api_key or os.getenv("ANTHROPIC_API_KEY", settings.ANTHROPIC_API_KEY),
         )
@@ -22,7 +21,14 @@ class AnthropicProvider(LLMProvider):
 
     @property
     def model(self) -> str:
+
+    
+        return self._provider_name
         return self._model
+
+    @property
+    def provider_name(self) -> str:
+        return self._provider_name
 
     async def generate(self, prompt: str, **kwargs) -> str:
         # Map kwargs to Claude API params

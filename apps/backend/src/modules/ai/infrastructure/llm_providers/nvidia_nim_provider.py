@@ -9,7 +9,6 @@ from openai import AsyncOpenAI
 from modules.ai.domain.llm_provider import LLMProvider
 from core.config import settings
 
-
 class NvidiaNimProvider(LLMProvider):
     """Provider for NVIDIA NIM API (uses OpenAI-compatible endpoint).
 
@@ -18,7 +17,7 @@ class NvidiaNimProvider(LLMProvider):
     """
 
     def __init__(self, api_key: str | None = None, model: str = "nvidia/llama-3.3-70b-instruct", base_url: str | None = None):
-        self.provider_name = "nvidia_nim"
+        self._provider_name = "nvidia_nim"
         self._model = model
         api_key = api_key or settings.OPENAI_API_KEY  # NIM uses OpenAI-compatible key
         self._client = AsyncOpenAI(
@@ -28,7 +27,14 @@ class NvidiaNimProvider(LLMProvider):
 
     @property
     def model(self) -> str:
+
+    
+        return self._provider_name
         return self._model
+
+    @property
+    def provider_name(self) -> str:
+        return self._provider_name
 
     async def generate(self, prompt: str, **kwargs) -> str:
         response = await self._client.chat.completions.create(

@@ -9,19 +9,25 @@ import httpx
 from modules.ai.domain.llm_provider import LLMProvider
 from core.config import settings
 
-
 class OllamaProvider(LLMProvider):
     """Provider for Ollama (local LLM server)."""
 
     def __init__(self, base_url: str | None = None, model: str = "llama3.1"):
-        self.provider_name = "ollama"
+        self._provider_name = "ollama"
         self._base_url = (base_url or settings.OLLAMA_BASE_URL).rstrip("/")
         self._model = model
         self._client = httpx.AsyncClient(timeout=120.0)
 
     @property
     def model(self) -> str:
+
+    
+        return self._provider_name
         return self._model
+
+    @property
+    def provider_name(self) -> str:
+        return self._provider_name
 
     async def generate(self, prompt: str, **kwargs) -> str:
         response = await self._client.post(
