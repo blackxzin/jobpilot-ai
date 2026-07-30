@@ -14,6 +14,7 @@ celery_app = Celery(
         "workers.matching",
         "workers.ats_scoring",
         "workers.email_notifications",
+        "workers.auto_apply",
     ],
 )
 

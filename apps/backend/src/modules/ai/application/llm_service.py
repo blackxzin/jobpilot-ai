@@ -98,6 +98,13 @@ class LLMService:
         """Answer a career-related question."""
         return await self._provider.answer_question(question, context, **kwargs)
 
+    async def generate_tailored_resume(self, resume: str, job: dict, **kwargs) -> str:
+        """Generate a resume tailored to a specific job."""
+        logger.info("llm_tailor_resume", provider=self.provider_name, job_title=job.get("title"))
+        result = await self._provider.generate_tailored_resume(resume, job, **kwargs)
+        logger.info("llm_tailor_resume_complete", provider=self.provider_name, length=len(result))
+        return result
+
     async def health_check(self) -> bool:
         """Check provider health."""
         return await self._provider.health_check()

@@ -98,6 +98,16 @@ class GeminiProvider(LLMProvider):
         )
         return await self.generate(prompt, **kwargs)
 
+    async def generate_tailored_resume(self, resume: str, job: dict) -> str:
+        prompt = (
+            f'Tailor this resume for the target job. Return ONLY the resume.\n\n'
+            f'ORIGINAL RESUME:\n{resume}\n\n'
+            f'TARGET: {job.get("title", "")} at {job.get("company", "")}\n'
+            f'DESCRIPTION: {job.get("description", "")[:500]}\n\n'
+            f'Keep all experience. Rewrite bullets for relevance. Add professional summary and relevant skills section. Markdown.'
+        )
+        return await self.generate(prompt)
+
     async def health_check(self) -> bool:
         try:
             # Test with a minimal generation

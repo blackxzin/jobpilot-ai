@@ -1,0 +1,115 @@
+# JobPilot AI — Production Docker Compose (Coolify)
+# Usage: Coolify > New Resource > Docker Compose > paste this
+# Or: docker compose -f docker-compose.yml -f infra/coolify/docker-compose.prod.yml up -d
+
+version: "3.8"
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: always
+    environment:
+      POSTGRES_DB: jobpilot
+      POSTGRES_USER: jobpilot
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U jobpilot -d jobpilot"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    restart: always
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./apps/backend
+      dockerfile: Dockerfile
+      target: production
+    restart: always
+    env_file:
+      - .env.production
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      - APP_ENV=production
+      - DEBUG=false
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+
+  celery-worker:
+    build:
+      context: ./apps/backend
+      dockerfile: Dockerfile
+      target: production
+    restart: always
+    env_file:
+      - .env.production
+    depends_on:
+      - backend
+    environment:
+      - CELERY_WORKER=true
+      - APP_ENV=production
+    command: celery -A workers.celery_app worker --loglevel=warning --concurrency=4
+
+  celery-beat:
+    build:
+      context: ./apps/backend
+      dockerfile: Dockerfile
+      target: production
+    restart: always
+    env_file:
+      - .env.production
+    depends_on:
+      - backend
+    environment:
+      - CELERY_BEAT=true
+      - APP_ENV=production
+    command: celery -A workers.celery_app beat --loglevel=warning
+
+  frontend:
+    build:
+      context: ./apps/frontend
+      dockerfile: Dockerfile
+      target: production
+    restart: always
+    environment:
+      - NEXT_PUBLIC_API_URL=https://${DOMAIN}
+      - NODE_ENV=production
+    depends_on:
+      - backend
+
+  nginx:
+    image: nginx:alpine
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./infra/docker/nginx/nginx.prod.conf:/etc/nginx/nginx.conf:ro
+      - ./infra/docker/nginx/ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - frontend
+      - backend
+
+volumes:
+  postgres_data:
+  redis_data:

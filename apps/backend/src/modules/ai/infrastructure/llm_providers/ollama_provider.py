@@ -129,6 +129,21 @@ Question: {question}
 Provide a helpful answer about job searching and career development."""
         return await self.generate(prompt, **kwargs)
 
+    async def generate_tailored_resume(self, resume: str, job: dict) -> str:
+        job_title = job.get("title", "")
+        company = job.get("company", "")
+        job_desc = job.get("description", "")
+        prompt = f"""You are a professional resume writer. Tailor the candidate's resume for a specific job.
+
+ORIGINAL RESUME:
+{resume}
+
+TARGET JOB: {job_title} at {company}
+DESCRIPTION: {job_desc}
+
+Write a tailored resume: keep ALL experience, rewrite bullets for relevance, add skills section matching the job, include professional summary, clean markdown. Return ONLY the resume."""
+        return await self.generate(prompt)
+
     async def health_check(self) -> bool:
         try:
             response = await self._client.get(f"{self._base_url}/api/tags")

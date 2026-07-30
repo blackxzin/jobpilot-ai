@@ -189,6 +189,32 @@ Provide a helpful, detailed answer based on best practices in job searching and 
 
         return await self.generate(prompt)
 
+    async def generate_tailored_resume(self, resume: str, job: dict) -> str:
+        """Generate a resume tailored to a specific job."""
+        job_title = job.get("title", "the position")
+        company = job.get("company", "")
+        job_desc = job.get("description", "")
+
+        prompt = f"""You are a professional resume writer. Tailor the candidate's resume for a specific job.
+
+CANDIDATE'S ORIGINAL RESUME:
+{resume}
+
+TARGET JOB: {job_title} at {company}
+JOB DESCRIPTION: {job_desc}
+
+Write a tailored resume that:
+1. Keeps ALL experience and education from the original — never invent or fabricate
+2. Rewrites bullet points to emphasize skills and achievements relevant to this specific job
+3. Reorders experience to put the most relevant first
+4. Adds a "Relevant Skills" section highlighting matching keywords from the job description
+5. Includes a professional summary (2-3 sentences) tailored to this role
+6. Uses the same contact info from the original
+7. Is formatted in clean markdown
+
+Return ONLY the resume content, no explanation."""
+        return await self.generate(prompt)
+
     async def health_check(self) -> bool:
         try:
             # Simple check: try to list models (lightweight API call)

@@ -103,6 +103,18 @@ Question: {question}
 Provide a helpful career advice answer."""
         return await self.generate(prompt, **kwargs)
 
+    async def generate_tailored_resume(self, resume: str, job: dict) -> str:
+        prompt = f"""Tailor this resume for the target job. Return ONLY the tailored resume.
+
+ORIGINAL RESUME:
+{resume}
+
+TARGET: {job.get('title', '')} at {job.get('company', '')}
+DESCRIPTION: {job.get('description', '')[:500]}
+
+Keep all experience. Rewrite bullets for relevance. Add professional summary and relevant skills section. Markdown format."""
+        return await self.generate(prompt)
+
     async def health_check(self) -> bool:
         try:
             await self._client.models.list()

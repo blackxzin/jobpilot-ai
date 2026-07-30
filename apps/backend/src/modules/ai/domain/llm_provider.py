@@ -61,6 +61,15 @@ class LLMProvider(ABC):
         ...
 
     @abstractmethod
+    async def generate_tailored_resume(self, resume: str, job: dict) -> str:
+        """Generate a resume tailored to a specific job description.
+
+        Adapts the candidate's existing experience to highlight relevant
+        skills and achievements for the target role.
+        """
+        ...
+
+    @abstractmethod
     async def answer_question(self, question: str, context: str = "") -> str:
         """Answer a career-related question using optional user context."""
         ...

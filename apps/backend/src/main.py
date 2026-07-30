@@ -114,6 +114,8 @@ def create_app() -> FastAPI:
     from modules.config.api.routes import router as config_router
     from modules.ai.api.routes import router as ai_router
     from modules.calendar.api.routes import router as calendar_router
+    from modules.analytics.api.routes import router as analytics_router
+    from modules.search.api import router as search_router
 
     app.include_router(auth_router, prefix=api_prefix)
     app.include_router(users_router, prefix=api_prefix)
@@ -125,6 +127,8 @@ def create_app() -> FastAPI:
     app.include_router(config_router, prefix=api_prefix)
     app.include_router(ai_router, prefix=api_prefix)
     app.include_router(calendar_router, prefix=api_prefix)
+    app.include_router(analytics_router, prefix=api_prefix)
+    app.include_router(search_router, prefix=api_prefix)
 
     # ── Health check ─────────────────────────────────────
     @app.get("/health", tags=["health"])

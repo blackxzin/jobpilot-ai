@@ -56,9 +56,19 @@ class Settings(BaseSettings):
     EMAIL_API_KEY: str = ""
     EMAIL_FROM: str = "noreply@jobpilot.ai"
 
+    # ── Notifications ─────────────────────────────────
+    DISCORD_WEBHOOK_URL: str = ""
+    TELEGRAM_BOT_TOKEN: str = ""
+    TELEGRAM_CHAT_ID: str = ""
+
     # ── Monitoring ────────────────────────────────────
     SENTRY_DSN: str = ""
     LOG_LEVEL: str = "INFO"
+
+    # ── LinkedIn OAuth ────────────────────────────────
+    LINKEDIN_CLIENT_ID: str = ""
+    LINKEDIN_CLIENT_SECRET: str = ""
+    LINKEDIN_REDIRECT_URI: str = "http://localhost:8000/api/v1/auth/linkedin/callback"
 
     model_config = SettingsConfigDict(
         env_file=".env",

@@ -5,6 +5,21 @@ import { useState, useEffect } from "react";
 export default function Home() {
   const [token, setToken] = useState("");
   const [tab, setTab] = useState("dashboard");
+  const [theme, setTheme] = useState("dark");
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  useEffect(() => {
+    const saved = localStorage.getItem("jobpilot-theme") || "dark";
+    setTheme(saved);
+    document.documentElement.setAttribute("data-theme", saved);
+  }, []);
+
+  function toggleTheme() {
+    const next = theme === "dark" ? "light" : "dark";
+    setTheme(next);
+    localStorage.setItem("jobpilot-theme", next);
+    document.documentElement.setAttribute("data-theme", next);
+  }
   const [msg, setMsg] = useState("");
   const [linkedinUrl, setLinkedinUrl] = useState("");
 
@@ -30,6 +45,7 @@ export default function Home() {
   const [analyzing, setAnalyzing] = useState<string>("");
   const [analysisResult, setAnalysisResult] = useState<any>(null);
   const [coverLetter, setCoverLetter] = useState("");
+  const [tailoredResume, setTailoredResume] = useState("");
 
   // LinkedIn & GitHub
   const [githubUsername, setGithubUsername] = useState("");
@@ -47,11 +63,43 @@ export default function Home() {
   const [chatHistory, setChatHistory] = useState<{role: string, text: string}[]>([]);
   const [chatting, setChatting] = useState(false);
 
+  // Notifications
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [showNotifications, setShowNotifications] = useState(false);
+
+  // Analytics
+  const [analytics, setAnalytics] = useState<any>(null);
+
+  // Semantic search
+  const [semanticQuery, setSemanticQuery] = useState("");
+  const [semanticResults, setSemanticResults] = useState<any[]>([]);
+  const [semanticSearching, setSemanticSearching] = useState(false);
+
   const api = (path: string, opts?: any) =>
     fetch(`/api/v1${path}`, {
       ...opts,
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}`, ...opts?.headers },
     });
+
+  async function fetchNotifications() {
+    const r = await api("/notifications?limit=20");
+    if (r.ok) setNotifications((await r.json()).results);
+    const u = await api("/notifications/unread-count");
+    if (u.ok) setUnreadCount((await u.json()).unread_count);
+  }
+
+  async function fetchAnalytics() {
+    const r = await api("/analytics/overview");
+    if (r.ok) setAnalytics(await r.json());
+  }
+
+  async function markRead(id: string) {
+    await api(`/notifications/${id}/read`, { method: "PATCH" });
+    fetchNotifications();
+  }
+
+  useEffect(() => { if (token) { fetchApps(); fetchResumes(); fetchLlmConfigs(); fetchEvents(); fetchNotifications(); fetchAnalytics(); } }, [token]);
 
   async function doLogin() {
     const email = loginEmail || "user@jobpilot.ai";
@@ -61,6 +109,19 @@ export default function Home() {
     if (r.ok) { const d = await r.json(); setToken(d.token); setShowLogin(false); setMsg(""); }
     else setMsg("Erro ao entrar");
   }
+
+  async function linkedinLogin() {
+    const r = await api("/auth/linkedin/login");
+    if (r.ok) { const d = await r.json(); window.location.href = d.auth_url; }
+    else setMsg("Erro ao conectar com LinkedIn");
+  }
+
+  // Handle OAuth callback token from URL
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const urlToken = params.get("token");
+    if (urlToken) { setToken(urlToken); setShowLogin(false); window.history.replaceState({}, "", "/"); }
+  }, []);
 
   async function logout() {
     await api("/auth/logout", { method: "POST" });
@@ -88,12 +149,43 @@ export default function Home() {
     if (r.ok) setResumes((await r.json()).results);
   }
 
+  async function fetchEvents() {
+    const r = await api("/calendar");
+    if (r.ok) setEvents((await r.json()).results);
+  }
+
+  async function createEvent() {
+    const r = await api("/calendar", { method: "POST", body: JSON.stringify(newEvent) });
+    if (r.ok) { setMsg("Evento criado!"); setShowNewEvent(false); fetchEvents(); setNewEvent({ title: "", event_type: "interview", date: "", notes: "", location: "" }); }
+    else setMsg("Erro ao criar evento");
+  }
+
+  async function deleteEvent(id: string) {
+    await api(`/calendar/${id}`, { method: "DELETE" });
+    fetchEvents();
+  }
+
+  async function updateEventStatus(id: string, status: string) {
+    await api(`/calendar/${id}/status`, { method: "PATCH", body: JSON.stringify({ status }) });
+    fetchEvents();
+  }
+
+  async function sendChat() {
+    if (!chatMsg.trim()) return;
+    setChatHistory(h => [...h, { role: "user", text: chatMsg }]);
+    setChatting(true);
+    const msg = chatMsg;
+    setChatMsg("");
+    const r = await api("/ai/chat", { method: "POST", body: JSON.stringify({ message: msg }) });
+    if (r.ok) { const d = await r.json(); setChatHistory(h => [...h, { role: "assistant", text: d.response }]); }
+    else setChatHistory(h => [...h, { role: "assistant", text: "Erro ao processar mensagem." }]);
+    setChatting(false);
+  }
+
   async function fetchLlmConfigs() {
     const r = await api("/settings/llm");
     if (r.ok) setLlmConfigs((await r.json()).configs);
   }
-
-  useEffect(() => { if (token) { fetchApps(); fetchResumes(); fetchLlmConfigs(); fetchEvents(); } }, [token]);
 
   async function uploadResume(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -157,10 +249,39 @@ export default function Home() {
     setAnalyzing("cover");
     setAnalysisResult(null);
     setCoverLetter("");
+    setTailoredResume("");
     const r = await api("/ai/cover-letter", { method: "POST", body: JSON.stringify({ job_id: jobId, resume_id: resumeId }) });
     if (r.ok) { const d = await r.json(); setCoverLetter(d.cover_letter); }
     else setMsg("Erro na carta");
     setAnalyzing("");
+  }
+
+  async function runTailorResume(resumeId: string, jobId: string) {
+    setAnalyzing("tailor");
+    setAnalysisResult(null);
+    setCoverLetter("");
+    setTailoredResume("");
+    const r = await api("/ai/tailor-resume", { method: "POST", body: JSON.stringify({ resume_id: resumeId, job_id: jobId }) });
+    if (r.ok) { const d = await r.json(); setTailoredResume(d.tailored_resume); setMsg("Currículo personalizado gerado!"); }
+    else setMsg("Erro ao gerar currículo");
+    setAnalyzing("");
+  }
+
+  async function runAutoApply(resumeId: string, jobId: string) {
+    setAnalyzing("auto-apply");
+    setMsg("Gerando currículo, carta e candidatura...");
+    const r = await api("/ai/auto-apply", { method: "POST", body: JSON.stringify({ resume_id: resumeId, job_id: jobId }) });
+    if (r.ok) { const d = await r.json(); setMsg("✅ Candidatura automática criada!"); setTailoredResume(d.tailored_resume); setCoverLetter(d.cover_letter); fetchApps(); }
+    else setMsg("Erro no auto apply");
+    setAnalyzing("");
+  }
+
+  async function semanticSearch() {
+    if (!semanticQuery.trim()) return;
+    setSemanticSearching(true);
+    const r = await api(`/search/semantic?q=${encodeURIComponent(semanticQuery)}&limit=10`);
+    if (r.ok) setSemanticResults((await r.json()).results);
+    setSemanticSearching(false);
   }
 
   if (showLogin) {
@@ -171,10 +292,17 @@ export default function Home() {
             <h1 className="text-3xl font-bold text-emerald-400">JobPilot AI</h1>
             <p className="text-zinc-400 text-sm mt-1">Copiloto de carreira inteligente</p>
           </div>
-          <div className="bg-zinc-900 rounded-xl p-6 space-y-3 border border-zinc-800">
+          <div className="bg-zinc-900 rounded-xl p-4 sm:p-6 space-y-3 border border-zinc-800">
             <input value={loginEmail} onChange={e => setLoginEmail(e.target.value)} placeholder="Email (opcional)" className="w-full bg-zinc-800 rounded-lg px-4 py-2.5 text-sm border border-zinc-700" />
             <input value={loginPass} onChange={e => setLoginPass(e.target.value)} type="password" placeholder="Senha (opcional)" className="w-full bg-zinc-800 rounded-lg px-4 py-2.5 text-sm border border-zinc-700" />
             <button onClick={doLogin} className="w-full bg-emerald-600 hover:bg-emerald-500 text-white py-2.5 rounded-lg font-medium text-sm">Entrar</button>
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-zinc-700" /></div>
+              <div className="relative flex justify-center text-xs"><span className="bg-zinc-900 px-2 text-zinc-500">ou</span></div>
+            </div>
+            <button onClick={linkedinLogin} className="w-full bg-blue-600 hover:bg-blue-500 text-white py-2.5 rounded-lg font-medium text-sm flex items-center justify-center gap-2">
+              <span>🔗</span> Entrar com LinkedIn
+            </button>
             <p className="text-xs text-zinc-500 text-center">Deixe em branco para entrar rápido</p>
             {msg && <p className="text-sm text-center text-red-400">{msg}</p>}
           </div>
@@ -183,9 +311,11 @@ export default function Home() {
     );
   }
 
-  const tabs = ["dashboard", "jobs", "calendar", "applications", "resumes", "chat", "ia"];
+  const tabs = ["dashboard", "jobs", "semantic", "calendar", "applications", "resumes", "chat", "ia"];
   const sources = [
     { id: "remoteok", name: "RemoteOK", desc: "Vagas remotas mundo todo" },
+    { id: "indeed", name: "Indeed", desc: "Maior portal de vagas do Brasil" },
+    { id: "linkedin", name: "LinkedIn Jobs", desc: "Vagas no LinkedIn" },
     { id: "programathor", name: "Programathor", desc: "Vagas Brasil tech" },
     { id: "geekhunter", name: "GeekHunter", desc: "Vagas Brasil tech" },
     { id: "gupy", name: "Gupy", desc: "Vagas Brasil geral" },
@@ -201,29 +331,98 @@ export default function Home() {
   ];
 
   return (
-    <div className="min-h-screen bg-zinc-950">
-      <nav className="border-b border-zinc-800 bg-zinc-900/50 backdrop-blur">
+    <div className="min-h-screen" style={{background: 'var(--bg-page)', color: 'var(--text-primary)'}}>
+      <nav className="border-b" style={{borderColor: 'var(--border)', backgroundColor: 'var(--bg-nav)'}}>
         <div className="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between">
           <span className="text-emerald-400 font-bold text-lg">JobPilot AI</span>
-          <div className="flex items-center gap-4">
-            <div className="flex gap-1 bg-zinc-800 rounded-lg p-1">
+          <button onClick={() => setMenuOpen(!menuOpen)} className="md:hidden text-lg" style={{color: 'var(--text-secondary)'}}>
+            {menuOpen ? "✕" : "☰"}
+          </button>
+          <div className="hidden md:flex items-center gap-4">
+            <div className="flex gap-1 rounded-lg p-1" style={{backgroundColor: 'var(--bg-input)'}}>
               {tabs.map(t => (
                 <button key={t} onClick={() => setTab(t)} className={`px-3 py-1.5 rounded-md text-xs font-medium capitalize ${tab === t ? "bg-emerald-600 text-white" : "text-zinc-400 hover:text-white"}`}>
                   {t === "ia" ? "🤖 IA" : t}
                 </button>
               ))}
             </div>
-            <button onClick={logout} className="text-xs text-zinc-400 hover:text-red-400">Sair</button>
+            <div className="relative">
+              <button onClick={() => setShowNotifications(!showNotifications)} className="text-sm relative" style={{color: 'var(--text-secondary)'}}>
+                🔔 {unreadCount > 0 && <span className="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] rounded-full w-4 h-4 flex items-center justify-center font-bold">{unreadCount}</span>}
+              </button>
+              {showNotifications && (
+                <div className="absolute right-0 top-8 w-72 sm:w-80 shadow-xl z-50 max-h-80 overflow-y-auto rounded-xl" style={{backgroundColor: 'var(--bg-card)', border: '1px solid', borderColor: 'var(--border)'}}>
+                  <div className="p-3 border-b" style={{borderColor: 'var(--border)'}}>
+                    <div className="flex justify-between items-center">
+                      <span className="text-xs font-semibold">Notificações</span>
+                      <button onClick={() => setShowNotifications(false)} className="text-xs" style={{color: 'var(--text-muted)'}}>✕</button>
+                    </div>
+                  </div>
+                  {notifications.length === 0 ? (
+                    <p className="text-xs p-4 text-center" style={{color: 'var(--text-muted)'}}>Nenhuma notificação</p>
+                  ) : (
+                    notifications.slice(0, 10).map((n: any) => (
+                      <div key={n.id} onClick={() => { if (n.status !== "read") markRead(n.id); }}
+                        className="p-3 border-b cursor-pointer" style={{borderColor: 'var(--border)', borderLeft: n.status === "pending" || n.status === "sent" ? '2px solid #10b981' : '2px solid transparent'}}>
+                        <p className="text-xs font-medium">{n.title}</p>
+                        <p className="text-[11px] truncate" style={{color: 'var(--text-secondary)'}}>{n.message}</p>
+                        <div className="flex gap-2 mt-1">
+                          <span className="text-[10px] px-1.5 py-0.5 rounded" style={{backgroundColor: 'var(--bg-input)', color: 'var(--text-muted)'}}>{n.channel}</span>
+                          <span className="text-[10px]" style={{color: 'var(--text-muted)'}}>{new Date(n.created_at).toLocaleDateString("pt-BR")}</span>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              )}
+            </div>
+            <button onClick={toggleTheme} className="text-xs" style={{color: 'var(--text-secondary)'}} title="Alternar tema">
+              {theme === "dark" ? "☀️" : "🌙"}
+            </button>
+            <button onClick={logout} className="text-xs hover:text-red-400" style={{color: 'var(--text-secondary)'}}>Sair</button>
           </div>
         </div>
+        {menuOpen && (
+          <div className="md:hidden border-t" style={{borderColor: 'var(--border)', backgroundColor: 'var(--bg-nav)'}}>
+            <div className="px-4 py-3 space-y-1">
+              {tabs.map(t => (
+                <button key={t} onClick={() => { setTab(t); setMenuOpen(false); }}
+                  className={`w-full text-left px-3 py-2 rounded-lg text-sm capitalize ${tab === t ? "bg-emerald-600 text-white" : ""}`}
+                  style={{color: tab === t ? 'white' : 'var(--text-secondary)'}}>
+                  {t === "ia" ? "🤖 IA" : t}
+                </button>
+              ))}
+              <div className="flex items-center gap-3 pt-2 border-t" style={{borderColor: 'var(--border)'}}>
+                <button onClick={toggleTheme} className="text-sm" style={{color: 'var(--text-secondary)'}}>{theme === "dark" ? "☀️ Claro" : "🌙 Escuro"}</button>
+                <button onClick={logout} className="text-sm" style={{color: 'var(--text-secondary)'}}>Sair</button>
+              </div>
+            </div>
+          </div>
+        )}
       </nav>
 
       <main className="max-w-6xl mx-auto p-4 space-y-6">
         {msg && <div className="bg-emerald-900/50 border border-emerald-700 text-emerald-300 px-4 py-2 rounded-lg text-sm">{msg}</div>}
 
+        {/* TAILORED RESUME MODAL */}
+        {tailoredResume && (
+          <div className="bg-zinc-900 rounded-xl p-4 sm:p-6 border border-emerald-700">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="font-semibold">📄 Currículo Personalizado</h2>
+              <div className="flex gap-2">
+                <button onClick={() => { navigator.clipboard.writeText(tailoredResume); setMsg("Copiado!"); }} className="text-xs bg-zinc-800 hover:bg-zinc-700 px-3 py-1.5 rounded-lg">📋 Copiar</button>
+                <button onClick={() => setTailoredResume("")} className="text-zinc-500 hover:text-white text-xs">✕ Fechar</button>
+              </div>
+            </div>
+            <div className="bg-zinc-800/50 rounded-lg p-4 whitespace-pre-wrap text-sm text-zinc-300 leading-relaxed max-h-96 overflow-y-auto font-mono">
+              {tailoredResume}
+            </div>
+          </div>
+        )}
+
         {/* ANALYSIS MODAL */}
-        {(analysisResult || coverLetter) && (
-          <div className="bg-zinc-900 rounded-xl p-6 border border-emerald-700">
+        {(analysisResult || coverLetter) && !tailoredResume && (
+          <div className="bg-zinc-900 rounded-xl p-4 sm:p-6 border border-emerald-700">
             <div className="flex items-center justify-between mb-4">
               <h2 className="font-semibold">
                 {analysisResult?.compatibility_score !== undefined ? "🎯 Resultado do Matching" :
@@ -300,7 +499,7 @@ export default function Home() {
 
         {tab === "dashboard" && (
           <>
-            <div className="bg-zinc-900 rounded-xl p-6 border border-zinc-800">
+            <div className="bg-zinc-900 rounded-xl p-4 sm:p-6 border border-zinc-800">
               <h2 className="font-semibold mb-4">📥 Importar Dados</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="bg-zinc-800/50 rounded-lg p-4">
@@ -334,10 +533,33 @@ export default function Home() {
               </div>
             </div>
 
+            {/* Analytics KPIs */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <div className="bg-zinc-900 rounded-xl p-4 border border-zinc-800">
+                <p className="text-xs text-zinc-500 mb-1">📋 Total</p>
+                <p className="text-2xl font-bold text-white">{analytics?.total_applications || stats?.total || 0}</p>
+              </div>
+              <div className="bg-zinc-900 rounded-xl p-4 border border-zinc-800">
+                <p className="text-xs text-zinc-500 mb-1">🎯 Entrevistas</p>
+                <p className="text-2xl font-bold text-emerald-400">{analytics?.interviews || 0}</p>
+                <p className="text-[10px] text-zinc-600">{analytics?.interview_rate || 0}% taxa</p>
+              </div>
+              <div className="bg-zinc-900 rounded-xl p-4 border border-zinc-800">
+                <p className="text-xs text-zinc-500 mb-1">🏆 Ofertas</p>
+                <p className="text-2xl font-bold text-emerald-400">{analytics?.offers || 0}</p>
+                <p className="text-[10px] text-zinc-600">{analytics?.offer_rate || 0}% taxa</p>
+              </div>
+              <div className="bg-zinc-900 rounded-xl p-4 border border-zinc-800">
+                <p className="text-xs text-zinc-500 mb-1">❌ Rejeições</p>
+                <p className="text-2xl font-bold text-red-400">{analytics?.rejected || 0}</p>
+                <p className="text-[10px] text-zinc-600">{analytics?.rejection_rate || 0}% taxa</p>
+              </div>
+            </div>
+
             {/* Charts row */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {/* Status chart */}
-              <div className="bg-zinc-900 rounded-xl p-6 border border-zinc-800">
+              <div className="bg-zinc-900 rounded-xl p-4 sm:p-6 border border-zinc-800">
                 <h2 className="font-semibold mb-4">📊 Status Candidaturas</h2>
                 {stats?.by_status && Object.keys(stats.by_status).length > 0 ? (
                   <>
@@ -370,50 +592,116 @@ export default function Home() {
                 ) : <p className="text-zinc-500 text-sm">Nenhuma candidatura ainda.</p>}
               </div>
 
-              {/* Activity / Overview */}
-              <div className="bg-zinc-900 rounded-xl p-6 border border-zinc-800">
-                <h2 className="font-semibold mb-4">📈 Resumo</h2>
-                <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-zinc-400">Total Candidaturas</span>
-                    <span className="text-lg font-bold text-white">{stats?.total || 0}</span>
+              {/* Insights */}
+              <div className="bg-zinc-900 rounded-xl p-4 sm:p-6 border border-zinc-800">
+                <h2 className="font-semibold mb-4">📈 Insights</h2>
+                {analytics ? (
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-zinc-400">Taxa de Resposta</span>
+                      <span className="text-lg font-bold text-white">{analytics.response_rate}%</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-zinc-400">ATS Score Médio</span>
+                      <span className="text-lg font-bold text-white">{analytics.avg_ats_score ?? "—"}/100</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-zinc-400">Empresas com mais candidaturas</span>
+                    </div>
+                    {analytics.top_companies?.map((c: any, i: number) => (
+                      <div key={i} className="flex items-center justify-between text-xs">
+                        <span className="text-zinc-400">{c.name}</span>
+                        <span className="text-zinc-300 font-medium">{c.count}x</span>
+                      </div>
+                    ))}
+                    {analytics.top_skills?.length > 0 && (
+                      <>
+                        <div className="flex items-center justify-between pt-2 border-t border-zinc-700/50">
+                          <span className="text-sm text-zinc-400">💪 Top Skills</span>
+                        </div>
+                        <div className="flex flex-wrap gap-1">
+                          {analytics.top_skills.map((s: any, i: number) => (
+                            <span key={i} className="text-xs bg-zinc-800 px-2 py-0.5 rounded text-zinc-300">{s.name} <span className="text-zinc-500">×{s.count}</span></span>
+                          ))}
+                        </div>
+                      </>
+                    )}
                   </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-zinc-400">Currículos</span>
-                    <span className="text-lg font-bold text-white">{resumes.length}</span>
+                ) : (
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between"><span className="text-sm text-zinc-400">Total Candidaturas</span><span className="text-lg font-bold text-white">{stats?.total || 0}</span></div>
+                    <div className="flex items-center justify-between"><span className="text-sm text-zinc-400">Currículos</span><span className="text-lg font-bold text-white">{resumes.length}</span></div>
+                    <div className="flex items-center justify-between"><span className="text-sm text-zinc-400">IA Configurada</span><span className="text-lg font-bold text-emerald-400">{llmConfigs.filter((c: any) => c.has_key).length > 0 ? "✅ Sim" : "❌ Não"}</span></div>
+                    <div className="flex items-center justify-between"><span className="text-sm text-zinc-400">GitHub</span><span className="text-lg font-bold text-white">{githubData ? "✅ Conectado" : "—"}</span></div>
+                    <div className="flex items-center justify-between"><span className="text-sm text-zinc-400">LinkedIn</span><span className="text-lg font-bold text-white">{linkedinData ? "✅ Analisado" : "—"}</span></div>
                   </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-zinc-400">Vagas Encontradas</span>
-                    <span className="text-lg font-bold text-white">{searchResults.length || 0}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-zinc-400">IA Configurada</span>
-                    <span className="text-lg font-bold text-emerald-400">{llmConfigs.filter((c: any) => c.has_key).length > 0 ? "✅ Sim" : "❌ Não"}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-zinc-400">GitHub</span>
-                    <span className="text-lg font-bold text-white">{githubData ? "✅ Conectado" : "—"}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-zinc-400">LinkedIn</span>
-                    <span className="text-lg font-bold text-white">{linkedinData ? "✅ Analisado" : "—"}</span>
-                  </div>
-                </div>
+                )}
               </div>
             </div>
 
-            {/* Old stat cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="bg-zinc-900 rounded-xl p-6 border border-zinc-800"><p className="text-zinc-400 text-sm">Vagas</p><p className="text-2xl font-bold text-white">{searchResults.length || 0}</p></div>
-              <div className="bg-zinc-900 rounded-xl p-6 border border-zinc-800"><p className="text-zinc-400 text-sm">Candidaturas</p><p className="text-2xl font-bold text-white">{stats?.total || 0}</p></div>
-              <div className="bg-zinc-900 rounded-xl p-6 border border-zinc-800"><p className="text-zinc-400 text-sm">Currículos</p><p className="text-2xl font-bold text-white">{resumes.length}</p></div>
-            </div>
+            {/* Timeline chart */}
+            {analytics?.applications_over_time?.length > 0 && (
+              <div className="bg-zinc-900 rounded-xl p-4 sm:p-6 border border-zinc-800">
+                <h2 className="font-semibold mb-4">📅 Candidaturas (últimos 30 dias)</h2>
+                <svg viewBox="0 0 300 80" className="w-full h-24">
+                  {(() => {
+                    const data = analytics.applications_over_time;
+                    const max = Math.max(...data.map((d: any) => d.count), 1);
+                    const w = 280 / data.length;
+                    return data.map((d: any, i: number) => (
+                      <g key={i}>
+                        <rect x={10 + i * w} y={70 - (d.count / max) * 55} width={Math.max(w - 2, 4)} height={(d.count / max) * 55} fill="#34d399" rx="3" opacity="0.8" />
+                      </g>
+                    ));
+                  })()}
+                </svg>
+              </div>
+            )}
           </>
+        )}
+
+        {tab === "semantic" && (
+          <div className="space-y-4">
+            <div className="bg-zinc-900 rounded-xl p-4 sm:p-6 border border-zinc-800">
+              <h2 className="font-semibold mb-4">🧠 Busca Semântica</h2>
+              <p className="text-xs text-zinc-500 mb-3">Encontre vagas pelo significado, não só por palavras-chave</p>
+              <div className="flex gap-2">
+                <input value={semanticQuery} onChange={e => setSemanticQuery(e.target.value)} onKeyDown={e => e.key === "Enter" && semanticSearch()}
+                  placeholder="Ex: vaga backend com Python e AWS em startup..." className="flex-1 bg-zinc-800 rounded-lg px-4 py-2.5 text-sm border border-zinc-700 focus:outline-none focus:border-emerald-500" />
+                <button onClick={semanticSearch} disabled={semanticSearching}
+                  className="bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white px-6 py-2.5 rounded-lg font-medium text-sm">
+                  {semanticSearching ? "Buscando..." : "Buscar"}
+                </button>
+              </div>
+            </div>
+            {semanticResults.length > 0 && (
+              <div className="bg-zinc-900 rounded-xl p-4 sm:p-6 border border-zinc-800">
+                <h2 className="font-semibold mb-4">{semanticResults.length} resultados semânticos</h2>
+                <div className="space-y-3">
+                  {semanticResults.map((j: any, i: number) => (
+                    <div key={i} className="bg-zinc-800/50 rounded-lg p-4">
+                      <div className="flex items-start justify-between gap-2">
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <h3 className="font-medium text-white">{j.title}</h3>
+                            <span className="text-xs bg-emerald-900/50 text-emerald-400 px-2 py-0.5 rounded">{j.score}%</span>
+                          </div>
+                          <p className="text-xs text-zinc-400">{j.company_id ? `Empresa: ${j.company_id.slice(0, 8)}...` : ""} {j.location}</p>
+                          <p className="text-xs text-zinc-500 mt-1">{j.description?.slice(0, 200)}</p>
+                          {j.match && <p className="text-xs text-emerald-500 mt-1">📌 {j.match}</p>}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
         )}
 
         {tab === "jobs" && (
           <div className="space-y-4">
-            <div className="bg-zinc-900 rounded-xl p-6 border border-zinc-800">
+            <div className="bg-zinc-900 rounded-xl p-4 sm:p-6 border border-zinc-800">
               <h2 className="font-semibold mb-4">Buscar Vagas</h2>
               <div className="flex gap-2 mb-4 flex-wrap">
                 {sources.map(s => (
@@ -441,7 +729,7 @@ export default function Home() {
               </div>
             </div>
             {searchResults.length > 0 && (
-              <div className="bg-zinc-900 rounded-xl p-6 border border-zinc-800">
+              <div className="bg-zinc-900 rounded-xl p-4 sm:p-6 border border-zinc-800">
                 <h2 className="font-semibold mb-4">{searchResults.length} vagas</h2>
                 <div className="space-y-3 max-h-[600px] overflow-y-auto">
                   {searchResults.map((j: any, i: number) => {
@@ -464,14 +752,14 @@ export default function Home() {
               </div>
             )}
             {searchResults.length === 0 && !searching && (
-              <div className="bg-zinc-900 rounded-xl p-6 border border-zinc-800"><p className="text-zinc-500 text-sm">Digite um termo e clique em Buscar.</p></div>
+              <div className="bg-zinc-900 rounded-xl p-4 sm:p-6 border border-zinc-800"><p className="text-zinc-500 text-sm">Digite um termo e clique em Buscar.</p></div>
             )}
           </div>
         )}
 
         {tab === "calendar" && (
           <div className="space-y-4">
-            <div className="bg-zinc-900 rounded-xl p-6 border border-zinc-800">
+            <div className="bg-zinc-900 rounded-xl p-4 sm:p-6 border border-zinc-800">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="font-semibold">📅 Agenda de Entrevistas</h2>
                 <button onClick={() => setShowNewEvent(!showNewEvent)} className="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1.5 rounded-lg text-xs font-medium">
@@ -533,7 +821,7 @@ export default function Home() {
 
         {tab === "applications" && (
           <div className="space-y-4">
-            <div className="bg-zinc-900 rounded-xl p-6 border border-zinc-800">
+            <div className="bg-zinc-900 rounded-xl p-4 sm:p-6 border border-zinc-800">
               <h2 className="font-semibold mb-4">Candidaturas</h2>
               {apps.length === 0 ? <p className="text-zinc-500 text-sm">Nenhuma ainda.</p> : (
                 <div className="space-y-4">
@@ -564,6 +852,14 @@ export default function Home() {
                           className="px-3 py-1.5 rounded text-xs bg-amber-600/20 text-amber-400 hover:bg-amber-600/40 disabled:opacity-50">
                           {analyzing === "cover" ? "Gerando..." : "✉️ Carta"}
                         </button>
+                        <button onClick={() => runTailorResume(a.resume_id, a.job_id)} disabled={analyzing === "tailor"}
+                          className="px-3 py-1.5 rounded text-xs bg-emerald-600/20 text-emerald-400 hover:bg-emerald-600/40 disabled:opacity-50">
+                          {analyzing === "tailor" ? "Gerando..." : "📄 Currículo"}
+                        </button>
+                        <button onClick={() => runAutoApply(a.resume_id, a.job_id)} disabled={analyzing === "auto-apply"}
+                          className="px-3 py-1.5 rounded text-xs bg-orange-600/20 text-orange-400 hover:bg-orange-600/40 disabled:opacity-50">
+                          {analyzing === "auto-apply" ? "Aplicando..." : "🤖 Auto Apply"}
+                        </button>
                       </div>
                     </div>
                   ))}
@@ -575,7 +871,7 @@ export default function Home() {
 
         {tab === "resumes" && (
           <div className="space-y-4">
-            <div className="bg-zinc-900 rounded-xl p-6 border border-zinc-800">
+            <div className="bg-zinc-900 rounded-xl p-4 sm:p-6 border border-zinc-800">
               <h2 className="font-semibold mb-4">Enviar Currículo</h2>
               <form onSubmit={uploadResume} className="space-y-3">
                 <input name="title" defaultValue="Meu Currículo" className="w-full bg-zinc-800 rounded-lg px-4 py-2.5 text-sm border border-zinc-700" />
@@ -584,7 +880,7 @@ export default function Home() {
               </form>
             </div>
             {resumes.length > 0 && (
-              <div className="bg-zinc-900 rounded-xl p-6 border border-zinc-800">
+              <div className="bg-zinc-900 rounded-xl p-4 sm:p-6 border border-zinc-800">
                 <h2 className="font-semibold mb-4">Meus Currículos ({resumes.length})</h2>
                 <div className="space-y-3">
                   {resumes.map((r: any) => (
@@ -601,7 +897,7 @@ export default function Home() {
         )}
 
         {tab === "chat" && (
-          <div className="bg-zinc-900 rounded-xl p-6 border border-zinc-800">
+          <div className="bg-zinc-900 rounded-xl p-4 sm:p-6 border border-zinc-800">
             <h2 className="font-semibold mb-4">💬 Assistente de Carreira</h2>
             <div className="h-80 overflow-y-auto mb-4 space-y-3 bg-zinc-950/50 rounded-lg p-4 border border-zinc-800/50">
               {chatHistory.length === 0 && (
@@ -627,7 +923,7 @@ export default function Home() {
         )}
 
         {tab === "ia" && (
-          <div className="bg-zinc-900 rounded-xl p-6 border border-zinc-800">
+          <div className="bg-zinc-900 rounded-xl p-4 sm:p-6 border border-zinc-800">
             <h2 className="font-semibold mb-4">🤖 Configurar Inteligência Artificial</h2>
             <p className="text-sm text-zinc-400 mb-6">Escolha seu provedor de IA e coloque sua chave (API Key). Os dados ficam criptografados.</p>
 

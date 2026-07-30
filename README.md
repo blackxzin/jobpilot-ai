@@ -1,27 +1,46 @@
 # JobPilot AI 🚀
 
 **Copiloto de carreira inteligente** que automatiza e otimiza a busca por emprego.
-JobPilot AI usa inteligência artificial multi-provedor para ajudar candidatos a encontrar vagas compatíveis, analisar currículos, gerar cartas de apresentação personalizadas e acompanhar candidaturas — tudo em um só lugar.
+Usa IA multi-provedor pra encontrar vagas compatíveis, analisar currículos, gerar cartas personalizadas, currículo inteligente, e acompanhar candidaturas — tudo num só lugar.
 
 ---
 
 ## ✨ Funcionalidades
 
-| Funcionalidade | Status |
-|---------------|--------|
-| 🔐 Autenticação (register/login/logout com sessions) | ✅ Pronto |
-| 👤 Perfil de usuário | ✅ Pronto |
-| 📄 Upload e parsing de currículo PDF | ✅ Pronto |
-| 🤖 Abstração multi-provedor LLM (OpenAI, Anthropic, Gemini, Ollama, NVIDIA NIM, OpenRouter) | ✅ Pronto |
-| 💼 Busca de vagas (Gupy API + banco local) | ✅ Pronto |
-| 📊 Análise de currículo vs vaga com IA (matching + ATS Score) | ✅ Pronto |
-| ✉️ Geração de cartas de apresentação com IA | ✅ Pronto |
-| 📋 Rastreamento de candidaturas (pipeline completo) | ✅ Pronto |
-| 🔔 Notificações multi-canal (Email, Discord, Telegram) | ✅ Pronto |
-| ⚡ Tarefas assíncronas com Celery | ✅ Pronto |
-| 📈 Analytics de carreira | 📅 Planejado |
-| 🗓️ Agenda de entrevistas | 📅 Planejado |
-| 🤖 Chat assistente IA | 📅 Planejado |
+### Backend (FastAPI + Python)
+
+| Módulo | Status | O que faz |
+|--------|--------|-----------|
+| 🔐 **Auth** | ✅ | Register, login, logout, sessão com tokens, LinkedIn OAuth |
+| 👤 **Users** | ✅ | Perfil de usuário, proteção por token |
+| 💼 **Jobs** | ✅ | Busca local + 6 fontes externas (RemoteOK, Indeed, LinkedIn Jobs, Programathor, GeekHunter, Gupy) + busca semântica pgvector |
+| 🤖 **AI / LLM** | ✅ | 6 provedores (OpenAI, Anthropic, Gemini, NVIDIA NIM, Ollama, OpenRouter) — matching, ATS, cover letter, currículo inteligente, auto apply |
+| 📄 **Resume** | ✅ | Upload PDF, extração de texto com pypdf, currículo personalizado por vaga |
+| 📋 **Applications** | ✅ | Pipeline completo com status, CRUD, auto apply |
+| ✉️ **Cover Letters** | ✅ | Geração automática com IA |
+| 📅 **Calendar** | ✅ | Agenda de entrevistas, CRUD com status |
+| 💬 **Chat** | ✅ | Assistente de carreira com IA |
+| 🐙 **GitHub Import** | ✅ | Importa perfil, repositórios e skills via API |
+| 🔗 **LinkedIn Analysis** | ✅ | Análise de perfil via IA |
+| 📊 **Matching + ATS** | ✅ | Score de compatibilidade e análise de currículo vs vaga |
+| 📊 **Analytics** | ✅ | KPIs (taxa entrevista/oferta/rejeição), top empresas, top skills, timeline |
+| 🔔 **Notifications** | ✅ | Email (Resend), Discord webhook, Telegram bot |
+| ⚡ **Celery Workers** | ✅ | Tasks assíncronas: scraping, matching, ATS, email, auto apply |
+| 🧠 **Vector Search** | ✅ | Busca semântica com embeddings (pgvector) |
+
+### Frontend (Next.js + React + Tailwind)
+
+| Tela | Funcionalidades |
+|------|----------------|
+| **Login** | Email/senha, entrada rápida, login com LinkedIn OAuth, modo claro/escuro |
+| **Dashboard** | KPIs, GitHub Import, LinkedIn Analysis, gráfico status, top empresas, top skills, timeline |
+| **Jobs** | Busca em 6 fontes + busca semântica, filtros rápidos |
+| **Calendar** | Criar/editar/deletar eventos de entrevista |
+| **Applications** | Pipeline de status + Matching, ATS Score, Carta, Currículo Inteligente, Auto Apply |
+| **Notifications** | 🔔 dropdown na navbar com contador, marca como lida |
+| **Resumes** | Upload PDF, listagem |
+| **Chat** | Assistente de carreira IA |
+| **IA Settings** | Configurar chave dos 6 provedores |
 
 ---
 
@@ -29,113 +48,89 @@ JobPilot AI usa inteligência artificial multi-provedor para ajudar candidatos a
 
 | Camada | Tecnologia |
 |--------|-----------|
-| **Frontend** | Next.js 14 + React + TypeScript + TailwindCSS + shadcn/ui |
+| **Frontend** | Next.js 14 + React 18 + TypeScript + TailwindCSS |
 | **Backend** | FastAPI (Python 3.12+) |
-| **Database** | PostgreSQL 16 |
+| **Database** | PostgreSQL 16 + pgvector |
 | **Cache / Broker** | Redis 7 |
 | **Task Queue** | Celery + Redis |
-| **Auth** | Session-based com tokens |
-| **LLM** | Multi-provedor (Strategy Pattern) |
-| **Container** | Docker + Docker Compose |
+| **Auth** | Session-based com tokens + LinkedIn OAuth |
+| **LLM** | Multi-provedor (Strategy Pattern — 6 providers) |
+| **Container** | Docker + Docker Compose (7 serviços) |
 | **CI/CD** | GitHub Actions |
+| **Testes** | pytest + pytest-asyncio (47 testes) |
 
 ---
 
 ## 📁 Estrutura do Projeto
 
 ```
-jobpilot-ai/
+JOBPILOT_AI/
 ├── apps/
-│   ├── frontend/                    # Next.js application
+│   ├── backend/                        # FastAPI
 │   │   ├── src/
-│   │   │   ├── app/                 # App Router pages
-│   │   │   ├── components/          # UI components
-│   │   │   │   ├── ui/              # shadcn/ui
-│   │   │   │   ├── dashboard/
-│   │   │   │   ├── jobs/
-│   │   │   │   └── resume/
-│   │   │   ├── hooks/               # TanStack Query hooks
-│   │   │   ├── lib/                 # Utilities
-│   │   │   └── types/               # TypeScript types
-│   │   ├── package.json
-│   │   └── next.config.js
+│   │   │   ├── main.py                 # App factory + routers
+│   │   │   ├── core/                   # Config, DB, models, security, exceptions
+│   │   │   ├── modules/                # Clean Architecture modules
+│   │   │   │   ├── auth/               # Autenticação + LinkedIn OAuth
+│   │   │   │   ├── users/              # Perfil + clients externos (Gupy, GitHub, etc.)
+│   │   │   │   ├── jobs/               # Vagas + buscadores externos
+│   │   │   │   ├── resume/             # Upload + parsing PDF
+│   │   │   │   ├── cover_letters/      # Geração de cartas
+│   │   │   │   ├── applications/       # Candidaturas + pipeline
+│   │   │   │   ├── notifications/      # Email/Discord/Telegram
+│   │   │   │   ├── ai/                 # LLM abstraction (6 providers)
+│   │   │   │   ├── analytics/          # Métricas e KPIs
+│   │   │   │   ├── calendar/           # Agenda
+│   │   │   │   ├── config/             # Config de IA do usuário
+│   │   │   │   └── search/             # Busca semântica pgvector
+│   │   │   └── workers/                # Celery tasks
+│   │   ├── tests/                       # 47 testes
+│   │   ├── Dockerfile
+│   │   └── requirements.txt
 │   │
-│   └── backend/                     # FastAPI application
-│       ├── src/
-│       │   ├── main.py              # App factory + router wiring
-│       │   ├── core/                # Cross-cutting concerns
-│       │   │   ├── config.py        # Pydantic settings
-│       │   │   ├── database.py      # Async SQLAlchemy engine
-│       │   │   ├── models.py        # 18 ORM models
-│       │   │   ├── redis_client.py  # Redis connection
-│       │   │   ├── security.py      # Fernet encryption
-│       │   │   ├── logger.py        # structlog config
-│       │   │   ├── middleware.py    # Request logging + auth
-│       │   │   ├── exceptions.py    # Domain exceptions
-│       │   │   └── dependency_injection.py
-│       │   ├── modules/             # Clean Architecture modules
-│       │   │   ├── auth/            # Autenticação
-│       │   │   ├── users/           # Perfil de usuário
-│       │   │   ├── jobs/            # Vagas + buscadores
-│       │   │   ├── resume/          # Currículos + PDF parsing
-│       │   │   ├── cover_letters/   # Geração de cartas
-│       │   │   ├── applications/    # Candidaturas + tracking
-│       │   │   ├── notifications/   # Email/Discord/Telegram
-│       │   │   ├── ai/              # LLM abstraction + providers
-│       │   │   ├── analytics/       # Métricas (planejado)
-│       │   │   └── calendar/        # Agenda (planejado)
-│       │   └── workers/             # Celery tasks
-│       ├── alembic/                 # Database migrations
-│       ├── tests/                   # Testes
-│       ├── Dockerfile
-│       ├── requirements.txt
-│       └── pyproject.toml
+│   ├── frontend/                        # Next.js 14
+│   │   ├── src/app/
+│   │   │   ├── layout.tsx
+│   │   │   ├── page.tsx                # SPA completa
+│   │   │   └── globals.css             # Tema claro/escuro via CSS variables
+│   │   ├── Dockerfile
+│   │   └── package.json
+│   │
+│   └── docs/, infra/                   # Futuro
 │
 ├── infra/
-│   ├── docker/
-│   │   ├── nginx/                   # Reverse proxy config
-│   │   └── postgres/                # Init scripts
-│   ├── coolify/                     # Coolify manifests
-│   └── railway.json                 # Railway config
+│   ├── docker/                         # nginx.conf + init.sql
+│   └── coolify/, railway/              # Deploy guides
 │
-├── .github/workflows/               # CI/CD pipelines
-├── docker-compose.yml               # Local dev stack
-├── .env.example                     # Environment template
-├── PLAN.md                          # Roadmap detalhado
-└── README.md                        # Este arquivo
+├── docker-compose.yml                   # 7 serviços
+├── PLAN.md                              # Status detalhado
+└── README.md                            # Este arquivo
 ```
 
 ---
 
 ## 🚀 Execução Rápida
 
-### Pré-requisitos
-- Docker e Docker Compose v2
-- Python 3.12+ (desenvolvimento local)
-- Node.js 20+ (desenvolvimento frontend)
-
 ### Com Docker (recomendado)
 
 ```bash
-# Clone e entre no diretório
 git clone https://github.com/blackxzin/JOBPILOT_AI.git
 cd JOBPILOT_AI
 
-# Configure o ambiente
 cp .env.example .env
+# Edite .env com suas chaves
 
-# Suba todos os serviços
 docker compose up -d
 
-# Pronto! Acesse:
+# Acesse:
 # - Frontend: http://localhost:3000
-# - Backend API: http://localhost:8000
-# - Swagger Docs: http://localhost:8000/docs
-# - Redoc: http://localhost:8000/redoc
+# - API: http://localhost:8000
+# - Docs: http://localhost:8000/docs
 ```
 
-### Desenvolvimento Local (Backend)
+### Desenvolvimento Local
 
+**Backend:**
 ```bash
 cd apps/backend
 python -m venv .venv && source .venv/bin/activate
@@ -143,12 +138,18 @@ pip install -r requirements.txt
 uvicorn src.main:app --reload --port 8000
 ```
 
-### Desenvolvimento Local (Frontend)
-
+**Frontend:**
 ```bash
 cd apps/frontend
 npm install
 npm run dev
+```
+
+**Testes:**
+```bash
+cd apps/backend
+pip install -r requirements.txt pytest pytest-asyncio httpx aiosqlite numpy
+PYTHONPATH=src pytest tests/ -v
 ```
 
 ---
@@ -164,37 +165,50 @@ Todas as rotas usam prefixo `/api/v1`.
 | POST | `/auth/login` | Login (retorna token) |
 | POST | `/auth/logout` | Invalidar sessão |
 | GET | `/auth/me` | Dados do usuário logado |
-
-### Perfil
-| Método | Rota | Descrição |
-|--------|------|-----------|
-| GET | `/users/me/profile` | Perfil do usuário logado |
+| GET | `/auth/linkedin/login` | URL de login LinkedIn OAuth |
+| GET | `/auth/linkedin/callback` | Callback LinkedIn OAuth |
 
 ### Vagas
 | Método | Rota | Descrição |
 |--------|------|-----------|
 | GET | `/jobs` | Buscar vagas locais |
-| GET | `/jobs/gupy` | Buscar vagas na Gupy |
+| GET | `/jobs/remoteok` | RemoteOK |
+| GET | `/jobs/indeed` | Indeed |
+| GET | `/jobs/linkedin` | LinkedIn Jobs |
+| GET | `/jobs/gupy` | Gupy |
+| GET | `/jobs/programathor` | Programathor |
+| GET | `/jobs/geekhunter` | GeekHunter |
 | GET | `/jobs/{id}` | Detalhes de uma vaga |
 
-### Currículos
+### IA
 | Método | Rota | Descrição |
 |--------|------|-----------|
-| POST | `/resumes/upload` | Upload de PDF (extrai texto automaticamente) |
-| GET | `/resumes/list` | Listar currículos do usuário |
-| GET | `/resumes/{id}` | Detalhes de um currículo |
+| POST | `/ai/match` | Matching currículo vs vaga |
+| POST | `/ai/ats-score` | ATS Score |
+| POST | `/ai/cover-letter` | Gerar carta de apresentação |
+| POST | `/ai/tailor-resume` | Gerar currículo personalizado |
+| POST | `/ai/auto-apply` | Candidatura automática (currículo + carta + aplicação) |
+| POST | `/ai/chat` | Chat assistente de carreira |
+| POST | `/ai/linkedin/analyze` | Análise de perfil LinkedIn |
+| POST | `/ai/github/import` | Importar dados do GitHub |
 
-### Cartas de Apresentação
+### Analytics
 | Método | Rota | Descrição |
 |--------|------|-----------|
-| POST | `/cover-letters/generate` | Gerar carta com IA para uma vaga |
+| GET | `/analytics/overview` | KPIs, top empresas, top skills, timeline |
+
+### Busca Semântica
+| Método | Rota | Descrição |
+|--------|------|-----------|
+| GET | `/search/semantic` | Busca por similaridade (embeddings) |
+| POST | `/search/index-job/{id}` | Indexar vaga para busca semântica |
 
 ### Candidaturas
 | Método | Rota | Descrição |
 |--------|------|-----------|
 | POST | `/applications` | Registrar candidatura |
-| GET | `/applications/list` | Listar candidaturas (com filtros) |
-| GET | `/applications/stats` | Estatísticas agregadas |
+| GET | `/applications/list` | Listar candidaturas |
+| GET | `/applications/stats` | Estatísticas |
 | PATCH | `/applications/{id}/status` | Atualizar status |
 
 ### Notificações
@@ -204,16 +218,16 @@ Todas as rotas usam prefixo `/api/v1`.
 | GET | `/notifications/unread-count` | Contagem de não lidas |
 | PATCH | `/notifications/{id}/read` | Marcar como lida |
 
-### Saúde
+### Currículos
 | Método | Rota | Descrição |
 |--------|------|-----------|
-| GET | `/health` | Health check do serviço |
+| POST | `/resumes/upload` | Upload PDF |
+| GET | `/resumes/list` | Listar |
+| GET | `/resumes/{id}` | Detalhes |
 
 ---
 
-## 🧠 Arquitetura de IA
-
-JobPilot usa **Strategy Pattern** para abstrair múltiplos provedores LLM:
+## 🧠 Arquitetura de IA — Strategy Pattern
 
 ```
 ┌────────────────┐     ┌──────────────────┐     ┌───────────────────┐
@@ -223,39 +237,30 @@ JobPilot usa **Strategy Pattern** para abstrair múltiplos provedores LLM:
 │ - generate     │     │ - analyze_resume │     ├───────────────────┤
 │ - summarize    │     │ - compare_job    │────▶│  GeminiProvider   │
 │ - analyze      │     │ - cover_letter   │     ├───────────────────┤
-│ - compare      │     │ - health_check   │────▶│  OllamaProvider   │
-│ - cover_letter │     └──────────────────┘     ├───────────────────┤
-└────────────────┘                              │ NVIDIA NIM        │
-                                                ├───────────────────┤
+│ - compare      │     │ - tailored_resume│────▶│  OllamaProvider   │
+│ - cover_letter │     │ - health_check   │     ├───────────────────┤
+│ - tailor_resume│     └──────────────────┘     │ NVIDIA NIM        │
+└────────────────┘                              ├───────────────────┤
         ┌──────────────┐                        │ OpenRouter        │
         │   Factory    │                        └───────────────────┘
         │ (Cria provider│
         │  baseado na   │
-        │ configuração  │
+        │  configuração │
         │  do usuário)  │
         └──────────────┘
 ```
 
-Cada usuário configura sua própria API key no banco (criptografada com Fernet).
-Resultados de IA são cacheados no Redis para reduzir custos.
+- Chaves de API criptografadas com **Fernet** no banco
+- Resultados cacheados no **Redis** (1h TTL)
+- 6 provedores: OpenAI, Anthropic, Gemini, Ollama, NVIDIA NIM, OpenRouter
 
 ---
 
 ## 📊 Banco de Dados
 
-18 tabelas principais:
-- **users**, **sessions**, **user_settings**
-- **resumes**, **experiences**, **skills**
-- **companies**, **jobs**, **job_requirements**, **job_matches**
-- **applications**, **interviews**
-- **cover_letters**
-- **ai_analyses**
-- **llm_provider_configs**
-- **notifications**
-- **calendar_events**, **search_preferences**
-- **events** (audit log)
+20 tabelas principais — PostgreSQL 16 com extensão **pgvector** para busca semântica.
 
-Para migrações: `cd apps/backend && alembic upgrade head`
+Migrações: `cd apps/backend && alembic upgrade head`
 
 ---
 
@@ -263,32 +268,53 @@ Para migrações: `cd apps/backend && alembic upgrade head`
 
 | Serviço | Porta | Descrição |
 |---------|-------|-----------|
-| `postgres` | 5432 | Banco de dados |
+| `postgres` | 5432 | PostgreSQL + pgvector |
 | `redis` | 6379 | Cache + Celery broker |
-| `backend` | 8000 | API FastAPI |
+| `backend` | 8000 | FastAPI (uvicorn) |
 | `celery-worker` | — | Workers assíncronos |
 | `celery-beat` | — | Tarefas agendadas |
 | `frontend` | 3000 | Next.js |
-| `nginx` | 80/443 | Reverse proxy |
+| `nginx` | 80/443 | Reverse proxy com HTTPS |
 
 ---
 
-## 🧪 Testes
+## 🧪 Testes — 47 testes passando
 
 ```bash
 cd apps/backend
-pip install -r requirements.txt pytest pytest-asyncio httpx aiosqlite
-pytest tests/ -v --asyncio-mode=auto
+pip install -r tests/requirements-test.txt  # ou: pip install pytest pytest-asyncio httpx aiosqlite numpy
+PYTHONPATH=src pytest tests/ -v
 ```
+
+| Teste | Qtd | O que cobre |
+|-------|-----|-------------|
+| `test_auth.py` | 6 | Register, login, logout, me, duplicate, wrong password |
+| `test_analytics.py` | 2 | Overview vazio + com dados |
+| `test_search.py` | 3 | Busca semântica, index, not found |
+| `test_ai.py` | 7 | Tailor resume, auto apply, matching, ATS, cover letter |
+| `test_notifications.py` | 7 | CRUD + providers (email, discord, telegram) |
+| `test_oauth.py` | 3 | LinkedIn login, callback, state inválido |
+| `test_infrastructure.py` | 7 | Embeddings, cosine similarity |
+| `test_models.py` | 2 | User, Job |
+| `test_modules.py` | 6 | Calendar CRUD, chat, GitHub, LinkedIn, full flow |
+| `test_applications.py` | 2 | Create + list |
+| `test_health.py` | 1 | Health check |
 
 ---
 
 ## 🚢 Deploy
 
-Opções suportadas:
-- **Coolify** (self-hosted) — produção
-- **Railway** — staging rápido
-- **Docker Compose** — deploy single-server
+### Coolify
+Guia completo em `infra/coolify/README.md`
+
+```bash
+cp infra/coolify/.env.production.example .env.production
+# Preencha as variáveis
+# Cole o docker-compose.prod.yml no Coolify
+```
+
+### Railway
+Guia completo em `infra/railway/README.md`
 
 ---
 
@@ -298,4 +324,4 @@ MIT
 
 ---
 
-**Feito com dedicação por [Lucas Oliver](https://github.com/lucasoliver43322)**
+**Feito com dedicação por [Lucas Oliver](https://github.com/blackxzin)**

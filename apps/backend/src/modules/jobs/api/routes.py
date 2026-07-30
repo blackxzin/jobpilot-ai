@@ -12,6 +12,8 @@ from modules.users.infrastructure.providers.gupy_client import GupyClient
 from modules.users.infrastructure.providers.remoteok_client import RemoteOKClient
 from modules.users.infrastructure.providers.programathor_client import ProgramathorClient
 from modules.users.infrastructure.providers.geekhunter_client import GeekHunterClient
+from modules.users.infrastructure.providers.indeed_client import IndeedClient
+from modules.users.infrastructure.providers.linkedin_jobs_client import LinkedInJobsClient
 
 logger = get_logger(__name__)
 
@@ -86,6 +88,32 @@ async def search_geekhunter(q: str = Query(""), page: int = 1):
         await client.close()
 
 
+@router.get("/indeed")
+async def search_indeed(q: str = Query(""), location: str = "", page: int = 1):
+    client = IndeedClient()
+    try:
+        jobs = await client.search_jobs(query=q, location=location, page=page)
+        return {"results": jobs, "source": "indeed"}
+    except Exception as e:
+        logger.warning("indeed_search_failed", error=str(e))
+        return {"error": "Indeed search failed", "detail": str(e)}
+    finally:
+        await client.close()
+
+
+@router.get("/linkedin")
+async def search_linkedin_jobs(q: str = Query(""), location: str = "", page: int = 1):
+    client = LinkedInJobsClient()
+    try:
+        jobs = await client.search_jobs(query=q, location=location, page=page)
+        return {"results": jobs, "source": "linkedin"}
+    except Exception as e:
+        logger.warning("linkedin_jobs_search_failed", error=str(e))
+        return {"error": "LinkedIn Jobs search failed", "detail": str(e)}
+    finally:
+        await client.close()
+
+
 @router.get("/search-all")
 async def search_all(q: str = Query(""), page: int = 1):
     """Aggregate results from multiple sources."""
@@ -109,7 +137,25 @@ async def search_all(q: str = Query(""), page: int = 1):
         except:
             return {"source": "remoteok", "jobs": []}
 
-    results = await gather(_gupy(), _remoteok(), return_exceptions=True)
+    async def _indeed():
+        try:
+            client = IndeedClient()
+            r = await client.search_jobs(query=q, page=page)
+            await client.close()
+            return {"source": "indeed", "jobs": r}
+        except:
+            return {"source": "indeed", "jobs": []}
+
+    async def _linkedin():
+        try:
+            client = LinkedInJobsClient()
+            r = await client.search_jobs(query=q, page=page)
+            await client.close()
+            return {"source": "linkedin", "jobs": r}
+        except:
+            return {"source": "linkedin", "jobs": []}
+
+    results = await gather(_gupy(), _remoteok(), _indeed(), _linkedin(), return_exceptions=True)
     return {"results": [r for r in results if isinstance(r, dict) and r.get("jobs")]}
 
 

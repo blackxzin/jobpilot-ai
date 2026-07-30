@@ -181,6 +181,17 @@ class JobModel(Base):
     )
 
 
+class JobEmbeddingModel(Base):
+    """pgvector embedding for semantic search on jobs."""
+    __tablename__ = "job_embeddings"
+
+    id = Column(UUID(as_uuid=False), primary_key=True, default=_uuid)
+    job_id = Column(UUID(as_uuid=False), ForeignKey("jobs.id", ondelete="CASCADE"), nullable=False, index=True)
+    embedding = Column(JSON, default=list)
+    chunk_text = Column(Text, default="")
+    created_at = Column(DateTime(timezone=True), default=_utcnow)
+
+
 class JobRequirementModel(Base):
     __tablename__ = "job_requirements"
 

@@ -4,4 +4,47 @@
 
 body {
   font-family: system-ui, -apple-system, sans-serif;
+  transition: background-color 0.2s, color 0.2s;
 }
+
+/* ── Theme variables ─────────────────────────────────── */
+:root {
+  --bg-page: #09090b;
+  --bg-card: #18181b;
+  --bg-card-hover: #27272a;
+  --bg-input: #27272a;
+  --bg-nav: #18181b;
+  --text-primary: #f4f4f5;
+  --text-secondary: #a1a1aa;
+  --text-muted: #71717a;
+  --border: #27272a;
+  --border-light: #3f3f46;
+  --border-accent: #065f46;
+}
+
+:root[data-theme="light"] {
+  --bg-page: #fafafa;
+  --bg-card: #ffffff;
+  --bg-card-hover: #f4f4f5;
+  --bg-input: #e4e4e7;
+  --bg-nav: #ffffff;
+  --text-primary: #18181b;
+  --text-secondary: #52525b;
+  --text-muted: #a1a1aa;
+  --border: #e4e4e7;
+  --border-light: #d4d4d8;
+  --border-accent: #a7f3d0;
+}
+
+/* ── Utility classes for themed colors ───────────────── */
+.bg-theme-page { background-color: var(--bg-page); }
+.bg-theme-card { background-color: var(--bg-card); }
+.bg-theme-card-hover { background-color: var(--bg-card-hover); }
+.bg-theme-input { background-color: var(--bg-input); }
+.bg-theme-nav { background-color: var(--bg-nav); }
+.text-theme-primary { color: var(--text-primary); }
+.text-theme-secondary { color: var(--text-secondary); }
+.text-theme-muted { color: var(--text-muted); }
+.border-theme { border-color: var(--border); }
+.border-theme-light { border-color: var(--border-light); }
+.border-theme-accent { border-color: var(--border-accent); }

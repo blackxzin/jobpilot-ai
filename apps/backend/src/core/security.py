@@ -39,3 +39,9 @@ def decrypt_api_key(encrypted_key: str) -> str:
     if _fernet is None:
         _fernet = Fernet(get_encryption_key())
     return _fernet.decrypt(encrypted_key.encode()).decode()
+
+
+def generate_token() -> str:
+    """Generate a cryptographically secure session token."""
+    import secrets
+    return secrets.token_urlsafe(48)
