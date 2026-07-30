@@ -313,12 +313,12 @@ export default function Home() {
 
   const tabs = ["dashboard", "jobs", "semantic", "calendar", "applications", "resumes", "chat", "ia"];
   const sources = [
-    { id: "remoteok", name: "RemoteOK", desc: "Vagas remotas mundo todo" },
-    { id: "indeed", name: "Indeed", desc: "Maior portal de vagas do Brasil" },
-    { id: "linkedin", name: "LinkedIn Jobs", desc: "Vagas no LinkedIn" },
-    { id: "programathor", name: "Programathor", desc: "Vagas Brasil tech" },
-    { id: "geekhunter", name: "GeekHunter", desc: "Vagas Brasil tech" },
-    { id: "gupy", name: "Gupy", desc: "Vagas Brasil geral" },
+  { id: "remoteok", name: "RemoteOK", desc: "Vagas remotas mundo todo" },
+    { id: "jobicy", name: "Jobicy", desc: "Vagas remotas tech" },
+    { id: "google-jobs", name: "Google Jobs", desc: "Vagas do Google" },
+    { id: "gupy", name: "Gupy", desc: "Vagas Brasil (fallback)" },
+    { id: "indeed", name: "Indeed", desc: "Vagas Brasil (fallback)" },
+    { id: "linkedin", name: "LinkedIn Jobs", desc: "Vagas LinkedIn (fallback)" },
   ];
 
   const llmProviders = [

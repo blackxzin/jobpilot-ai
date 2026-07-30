@@ -6,12 +6,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.database import get_db
 from core.logger import get_logger
-from modules.jobs.application.use_cases import SearchJobsUseCase, GetJobUseCase, SearchGupyUseCase
+from modules.jobs.application.use_cases import SearchJobsUseCase, GetJobUseCase
 from modules.jobs.infrastructure.repositories import JobRepository
-from modules.users.infrastructure.providers.gupy_client import GupyClient
 from modules.users.infrastructure.providers.remoteok_client import RemoteOKClient
-from modules.users.infrastructure.providers.programathor_client import ProgramathorClient
-from modules.users.infrastructure.providers.geekhunter_client import GeekHunterClient
+from modules.users.infrastructure.providers.jobicy_client import JobicyClient
+from modules.users.infrastructure.providers.google_jobs_client import GoogleJobsClient
 from modules.users.infrastructure.providers.indeed_client import IndeedClient
 from modules.users.infrastructure.providers.linkedin_jobs_client import LinkedInJobsClient
 
@@ -34,21 +33,6 @@ async def search_jobs(
     return {"results": [_to_dict(j) for j in results], "page": page, "per_page": per_page}
 
 
-@router.get("/gupy")
-async def search_gupy(
-    q: str = Query("", alias="query"),
-    location: str = "",
-    remote: bool = False,
-    page: int = 1,
-):
-    try:
-        use_case = SearchGupyUseCase()
-        return await use_case.execute(query=q, location=location, remote=remote, page=page)
-    except Exception as e:
-        logger.warning("gupy_search_failed", error=str(e))
-        return {"error": "Gupy search failed", "detail": str(e)}
-
-
 @router.get("/remoteok")
 async def search_remoteok(q: str = Query(""), page: int = 1):
     client = RemoteOKClient()
@@ -57,35 +41,46 @@ async def search_remoteok(q: str = Query(""), page: int = 1):
         return {"results": jobs, "source": "remoteok"}
     except Exception as e:
         logger.warning("remoteok_search_failed", error=str(e))
-        return {"error": "RemoteOK search failed", "detail": str(e)}
+        return {"results": [], "source": "remoteok"}
     finally:
         await client.close()
 
 
-@router.get("/programathor")
-async def search_programathor(q: str = Query(""), page: int = 1):
-    client = ProgramathorClient()
+@router.get("/jobicy")
+async def search_jobicy(q: str = Query(""), page: int = 1):
+    client = JobicyClient()
     try:
         jobs = await client.search_jobs(query=q, page=page)
-        return {"results": jobs, "source": "programathor"}
+        return {"results": jobs, "source": "jobicy"}
     except Exception as e:
-        logger.warning("programathor_search_failed", error=str(e))
-        return {"error": "Programathor search failed", "detail": str(e)}
+        logger.warning("jobicy_search_failed", error=str(e))
+        return {"results": [], "source": "jobicy"}
     finally:
         await client.close()
 
 
-@router.get("/geekhunter")
-async def search_geekhunter(q: str = Query(""), page: int = 1):
-    client = GeekHunterClient()
+@router.get("/google-jobs")
+async def search_google_jobs(q: str = Query(""), location: str = "", page: int = 1):
+    client = GoogleJobsClient()
     try:
-        jobs = await client.search_jobs(query=q, page=page)
-        return {"results": jobs, "source": "geekhunter"}
+        jobs = await client.search_jobs(query=q, location=location, page=page)
+        return {"results": jobs, "source": "google_jobs"}
     except Exception as e:
-        logger.warning("geekhunter_search_failed", error=str(e))
-        return {"error": "GeekHunter search failed", "detail": str(e)}
+        logger.warning("google_jobs_search_failed", error=str(e))
+        return {"results": [], "source": "google_jobs"}
     finally:
         await client.close()
+
+
+@router.get("/gupy")
+async def search_gupy(q: str = Query(""), location: str = "", remote: bool = False, page: int = 1):
+    try:
+        from modules.jobs.application.use_cases import SearchGupyUseCase
+        use_case = SearchGupyUseCase()
+        return await use_case.execute(query=q, location=location, remote=remote, page=page)
+    except Exception as e:
+        logger.warning("gupy_search_failed", error=str(e))
+        return {"results": [], "source": "gupy"}
 
 
 @router.get("/indeed")
@@ -96,7 +91,7 @@ async def search_indeed(q: str = Query(""), location: str = "", page: int = 1):
         return {"results": jobs, "source": "indeed"}
     except Exception as e:
         logger.warning("indeed_search_failed", error=str(e))
-        return {"error": "Indeed search failed", "detail": str(e)}
+        return {"results": [], "source": "indeed"}
     finally:
         await client.close()
 
@@ -109,24 +104,42 @@ async def search_linkedin_jobs(q: str = Query(""), location: str = "", page: int
         return {"results": jobs, "source": "linkedin"}
     except Exception as e:
         logger.warning("linkedin_jobs_search_failed", error=str(e))
-        return {"error": "LinkedIn Jobs search failed", "detail": str(e)}
+        return {"results": [], "source": "linkedin"}
+    finally:
+        await client.close()
+
+
+@router.get("/geekhunter")
+async def search_geekhunter(q: str = Query(""), page: int = 1):
+    from modules.users.infrastructure.providers.geekhunter_client import GeekHunterClient
+    client = GeekHunterClient()
+    try:
+        jobs = await client.search_jobs(query=q, page=page)
+        return {"results": jobs, "source": "geekhunter"}
+    except Exception as e:
+        logger.warning("geekhunter_search_failed", error=str(e))
+        return {"results": [], "source": "geekhunter"}
+    finally:
+        await client.close()
+
+
+@router.get("/programathor")
+async def search_programathor(q: str = Query(""), page: int = 1):
+    from modules.users.infrastructure.providers.programathor_client import ProgramathorClient
+    client = ProgramathorClient()
+    try:
+        jobs = await client.search_jobs(query=q, page=page)
+        return {"results": jobs, "source": "programathor"}
+    except Exception as e:
+        logger.warning("programathor_search_failed", error=str(e))
+        return {"results": [], "source": "programathor"}
     finally:
         await client.close()
 
 
 @router.get("/search-all")
 async def search_all(q: str = Query(""), page: int = 1):
-    """Aggregate results from multiple sources."""
     from asyncio import gather
-
-    async def _gupy():
-        try:
-            client = GupyClient()
-            r = await client.search_jobs(query=q, page=page)
-            await client.close()
-            return {"source": "gupy", "jobs": r.get("jobs", []) if isinstance(r, dict) else r}
-        except:
-            return {"source": "gupy", "jobs": []}
 
     async def _remoteok():
         try:
@@ -137,25 +150,25 @@ async def search_all(q: str = Query(""), page: int = 1):
         except:
             return {"source": "remoteok", "jobs": []}
 
-    async def _indeed():
+    async def _jobicy():
         try:
-            client = IndeedClient()
+            client = JobicyClient()
             r = await client.search_jobs(query=q, page=page)
             await client.close()
-            return {"source": "indeed", "jobs": r}
+            return {"source": "jobicy", "jobs": r}
         except:
-            return {"source": "indeed", "jobs": []}
+            return {"source": "jobicy", "jobs": []}
 
-    async def _linkedin():
+    async def _google():
         try:
-            client = LinkedInJobsClient()
+            client = GoogleJobsClient()
             r = await client.search_jobs(query=q, page=page)
             await client.close()
-            return {"source": "linkedin", "jobs": r}
+            return {"source": "google_jobs", "jobs": r}
         except:
-            return {"source": "linkedin", "jobs": []}
+            return {"source": "google_jobs", "jobs": []}
 
-    results = await gather(_gupy(), _remoteok(), _indeed(), _linkedin(), return_exceptions=True)
+    results = await gather(_remoteok(), _jobicy(), _google(), return_exceptions=True)
     return {"results": [r for r in results if isinstance(r, dict) and r.get("jobs")]}
 
 
