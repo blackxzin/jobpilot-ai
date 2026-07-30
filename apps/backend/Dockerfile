@@ -33,9 +33,7 @@ COPY src /app/src
 COPY alembic /app/alembic
 COPY pyproject.toml /app/pyproject.toml
 
-# Install dev dependencies
-COPY requirements-dev.txt /tmp/requirements-dev.txt
-RUN pip install --no-cache-dir -r /tmp/requirements-dev.txt
+# Install dev dependencies (optional)
 
 EXPOSE 8000
 

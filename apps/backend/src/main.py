@@ -34,7 +34,7 @@ async def lifespan(app: FastAPI):
         logger.info("Database connection established")
         # Auto-create tables in development mode
         if settings.APP_ENV == "development":
-            from core.database import Base
+            from core.database import Base; from core import models  # noqa: F401
             async with engine.begin() as conn:
                 await conn.run_sync(Base.metadata.create_all)
                 logger.info("Database tables created/verified")
