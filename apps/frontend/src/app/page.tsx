@@ -151,7 +151,7 @@ export default function Home() {
 
   async function fetchEvents() {
     const r = await api("/calendar");
-    if (r.ok) setEvents((await r.json()).results);
+    if (r.ok) setEvents((await r.json()).events);
   }
 
   async function createEvent() {
@@ -166,7 +166,7 @@ export default function Home() {
   }
 
   async function updateEventStatus(id: string, status: string) {
-    await api(`/calendar/${id}/status`, { method: "PATCH", body: JSON.stringify({ status }) });
+    await api(`/calendar/${id}`, { method: "PATCH", body: JSON.stringify({ status }) });
     fetchEvents();
   }
 

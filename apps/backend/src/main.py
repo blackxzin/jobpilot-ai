@@ -31,7 +31,6 @@ async def lifespan(app: FastAPI):
     logger.info("Starting JobPilot AI...", extra={"env": settings.APP_ENV})
     engine = get_engine()
     if engine:
-        await engine.begin()
         logger.info("Database connection established")
         # Auto-create tables in development mode
         if settings.APP_ENV == "development":

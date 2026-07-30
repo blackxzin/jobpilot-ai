@@ -120,7 +120,7 @@ Requirements: {', '.join(job_requirements)}
 Rules: Reference resume experiences only. Never invent. Professional tone."""
         return await self.generate(prompt, **kwargs)
 
-    async def answer_question(self, question: str, context: str = "") -> str:
+    async def answer_question(self, question: str, context: str = "", **kwargs) -> str:
         prompt = f"""You are a career coach.
 
 {'User context: ' + context + '\n' if context else ''}

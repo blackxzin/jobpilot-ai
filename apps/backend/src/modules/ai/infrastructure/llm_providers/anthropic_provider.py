@@ -54,7 +54,7 @@ class AnthropicProvider(LLMProvider):
         max_tokens = kwargs.get("max_tokens", 4096)
         temperature = kwargs.get("temperature", 0.7)
 
-        with self._client.messages.stream(
+        async with self._client.messages.stream(
             model=self._model,
             max_tokens=max_tokens,
             temperature=temperature,
@@ -143,7 +143,7 @@ Rules:
 
         return await self.generate(prompt, **kwargs)
 
-    async def answer_question(self, question: str, context: str = "") -> str:
+    async def answer_question(self, question: str, context: str = "", **kwargs) -> str:
         prompt = f"""You are a career coach and job search advisor.
 
 {'User context: ' + context + '\n' if context else ''}

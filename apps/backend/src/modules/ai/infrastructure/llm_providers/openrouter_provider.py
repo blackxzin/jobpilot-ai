@@ -94,7 +94,7 @@ Requirements: {', '.join(job.get('requirements', []))}
 Reference resume only. Never invent experiences."""
         return await self.generate(prompt, **kwargs)
 
-    async def answer_question(self, question: str, context: str = "") -> str:
+    async def answer_question(self, question: str, context: str = "", **kwargs) -> str:
         prompt = f"""You are a career coach.
 
 {'Context: ' + context + '\n' if context else ''}

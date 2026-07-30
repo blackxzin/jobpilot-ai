@@ -178,7 +178,7 @@ The cover letter should:
         logger.info("generating_cover_letter_with_openai", model=self._model, company=company_name)
         return await self.generate(prompt)
 
-    async def answer_question(self, question: str, context: str = "") -> str:
+    async def answer_question(self, question: str, context: str = "", **kwargs) -> str:
         prompt = f"""You are a career coach and job search advisor.
 
 {'Context about the user:\n' + context if context else ''}

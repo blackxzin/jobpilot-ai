@@ -85,13 +85,9 @@ class SendNotificationUseCase:
         classes imported here to avoid circular dependencies at module load.
         """
         # Import inside method to keep domain layer free of infrastructure imports.
-        from modules.notifications.infrastructure.providers.email_provider import (
+        from modules.notifications.infrastructure.providers import (
             EmailNotificationProvider,
-        )
-        from modules.notifications.infrastructure.providers.discord_provider import (
             DiscordNotificationProvider,
-        )
-        from modules.notifications.infrastructure.providers.telegram_provider import (
             TelegramNotificationProvider,
         )
         from core.config import settings

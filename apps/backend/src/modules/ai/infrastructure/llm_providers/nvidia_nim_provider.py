@@ -88,7 +88,7 @@ class NvidiaNimProvider(LLMProvider):
         )
         return await self.generate(prompt, **kwargs)
 
-    async def answer_question(self, question: str, context: str = "") -> str:
+    async def answer_question(self, question: str, context: str = "", **kwargs) -> str:
         prompt = f'You are a career coach.\n{f"Context: {context}\n" if context else ""}Question: {question}\nProvide helpful career advice.'
         return await self.generate(prompt, **kwargs)
 
