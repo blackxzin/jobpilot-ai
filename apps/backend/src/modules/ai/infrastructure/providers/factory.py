@@ -68,7 +68,7 @@ class LLMProviderFactory:
         if name == "gemini":
             return provider_cls(api_key=api_key or None, model=model or "gemini-2.0-flash")
         if name == "nvidia_nim":
-            return provider_cls(api_key=api_key or None, model=model or "nvidia/llama-3.3-70b-instruct", base_url=base_url or None)
+            return provider_cls(api_key=api_key or None, model=model or "meta/llama-3.2-3b-instruct", base_url=base_url or None)
 
         # Fallback (should never reach here)
         return provider_cls(api_key=api_key or None)

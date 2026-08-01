@@ -21,9 +21,6 @@ class AnthropicProvider(LLMProvider):
 
     @property
     def model(self) -> str:
-
-    
-        return self._provider_name
         return self._model
 
     @property

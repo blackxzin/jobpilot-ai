@@ -16,7 +16,7 @@ class NvidiaNimProvider(LLMProvider):
     This is the default provider for development environments.
     """
 
-    def __init__(self, api_key: str | None = None, model: str = "nvidia/llama-3.3-70b-instruct", base_url: str | None = None):
+    def __init__(self, api_key: str | None = None, model: str = "meta/llama-3.2-3b-instruct", base_url: str | None = None):
         self._provider_name = "nvidia_nim"
         self._model = model
         api_key = api_key or settings.OPENAI_API_KEY  # NIM uses OpenAI-compatible key
@@ -27,9 +27,6 @@ class NvidiaNimProvider(LLMProvider):
 
     @property
     def model(self) -> str:
-
-    
-        return self._provider_name
         return self._model
 
     @property

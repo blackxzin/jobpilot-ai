@@ -13,7 +13,7 @@
 | 🔐 **Auth** | ✅ Completo | Register, login, logout, sessão com tokens, proteção de rotas |
 | 👤 **Users** | ✅ Completo | Perfil de usuário, proteção por token |
 | 💼 **Jobs** | ✅ Completo | Busca local + integração com 6 fontes + busca semântica pgvector |
-| 🤖 **AI / LLM** | ✅ Completo | 6 provedores: OpenAI, Anthropic, Gemini, NVIDIA NIM, Ollama, OpenRouter — tailored resume + auto apply |
+| 🤖 **AI / LLM** | ✅ Completo | 6 provedores: OpenAI, Anthropic, Gemini, NVIDIA NIM, Ollama, OpenRouter — tailored resume + auto apply. **Default/dev:** NVIDIA NIM (`meta/llama-3.2-3b-instruct`) via chave OpenAI-compatible em `OPENAI_API_KEY` |
 | 📄 **Resume** | ✅ Completo | Upload de PDF, extração de texto com pypdf |
 | 📋 **Applications** | ✅ Completo | Pipeline com status, CRUD completo |
 | ✉️ **Cover Letters** | ✅ Completo | Geração automática com IA |
@@ -44,7 +44,7 @@
 
 | Item | Status |
 |------|--------|
-| 🐳 Docker Compose (PostgreSQL, Redis, Backend, Frontend, Nginx, Celery) | ✅ |
+| 🐳 Docker Compose (PostgreSQL, Redis, Backend, Frontend, Celery) | ✅ | Nginx removido em dev — backend expõe :8000 e frontend :3000 diretamente |
 | 🗄️ 18 tabelas SQLAlchemy | ✅ |
 | 🧪 47 testes passando | ✅ | auth, analytics, search, notifications, ai, oauth, models, calendar, infra |
 | 📝 README completo | ✅ |
@@ -89,6 +89,7 @@
 | Analisar LinkedIn | ✅ |
 | Gráfico no Dashboard | ✅ |
 | 16 testes automatizados | ✅ |
+| NVIDIA NIM como provedor default (dev) | ✅ | `meta/llama-3.2-3b-instruct` com chave OpenAI-compatible |
 
 ---
 
@@ -100,6 +101,7 @@ Maior impacto com menor esforço:
 2. 🚀 **Deploy** — subir em produção com Coolify
 3. 🔄 **Indeed + mais fontes de vaga**
 4. 🤖 **Automação de candidaturas**
+5. 📱 **PWA** — transformar em Progressive Web App
 
 ---
 

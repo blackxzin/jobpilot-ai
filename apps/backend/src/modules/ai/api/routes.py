@@ -6,6 +6,7 @@ from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
+from core.config import settings
 from core.database import get_db
 from core.logger import get_logger
 from core.models import LLMProviderConfigModel
@@ -56,7 +57,8 @@ async def _get_provider(user_id: str, db: AsyncSession):
     if config:
         api_key = decrypt_api_key(config.api_key_encrypted) if config.api_key_encrypted else ""
         return LLMProviderFactory.create(config.provider_name, api_key=api_key, model=config.model)
-    return LLMProviderFactory.create("openai")
+    # Fallback: OPENAI_API_KEY env var contém chave NVIDIA NIM → usar provider nvidia_nim
+    return LLMProviderFactory.create("nvidia_nim", api_key=settings.OPENAI_API_KEY)
 
 
 @router.post("/linkedin/analyze")

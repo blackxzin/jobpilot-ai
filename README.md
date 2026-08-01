@@ -55,7 +55,7 @@ Usa IA multi-provedor pra encontrar vagas compatíveis, analisar currículos, ge
 | **Task Queue** | Celery + Redis |
 | **Auth** | Session-based com tokens + LinkedIn OAuth |
 | **LLM** | Multi-provedor (Strategy Pattern — 6 providers) |
-| **Container** | Docker + Docker Compose (7 serviços) |
+| **Container** | Docker + Docker Compose (6 serviços) |
 | **CI/CD** | GitHub Actions |
 | **Testes** | pytest + pytest-asyncio (47 testes) |
 
@@ -102,7 +102,7 @@ JOBPILOT_AI/
 │   ├── docker/                         # nginx.conf + init.sql
 │   └── coolify/, railway/              # Deploy guides
 │
-├── docker-compose.yml                   # 7 serviços
+├── docker-compose.yml                   # 6 serviços (dev, sem nginx)
 ├── PLAN.md                              # Status detalhado
 └── README.md                            # Este arquivo
 ```
@@ -119,6 +119,10 @@ cd JOBPILOT_AI
 
 cp .env.example .env
 # Edite .env com suas chaves
+
+# 💡 IA em dev usa NVIDIA NIM (grátis no build.nvidia.com):
+# gere uma chave em https://build.nvidia.com (modelo meta/llama-3.2-3b-instruct)
+# e coloque em OPENAI_API_KEY — é uma chave OpenAI-compatible da NVIDIA.
 
 docker compose up -d
 
@@ -274,7 +278,9 @@ Migrações: `cd apps/backend && alembic upgrade head`
 | `celery-worker` | — | Workers assíncronos |
 | `celery-beat` | — | Tarefas agendadas |
 | `frontend` | 3000 | Next.js |
-| `nginx` | 80/443 | Reverse proxy com HTTPS |
+
+> Em **desenvolvimento** o nginx foi removido: backend expõe `:8000` e frontend `:3000` diretamente.
+> Em **produção** use o reverse proxy (config em `infra/docker/nginx/`).
 
 ---
 
