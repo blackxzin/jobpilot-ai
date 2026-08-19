@@ -2,8 +2,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime, UTC
-from typing import Optional
+from datetime import UTC, datetime
 from uuid import UUID, uuid4
 
 
@@ -13,7 +12,7 @@ class User:
     email: str = ""
     hashed_password: str = ""
     full_name: str = ""
-    avatar_url: Optional[str] = None
+    avatar_url: str | None = None
     is_active: bool = True
     is_superuser: bool = False
     created_at: datetime = field(default_factory=lambda: datetime.now(UTC))

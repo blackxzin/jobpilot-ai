@@ -1,13 +1,13 @@
 """Ollama LLM Provider implementation."""
 from __future__ import annotations
 
-import os
-from typing import AsyncGenerator
+from collections.abc import AsyncGenerator
 
 import httpx
 
-from modules.ai.domain.llm_provider import LLMProvider
 from core.config import settings
+from modules.ai.domain.llm_provider import LLMProvider
+
 
 class OllamaProvider(LLMProvider):
     """Provider for Ollama (local LLM server)."""
@@ -16,7 +16,7 @@ class OllamaProvider(LLMProvider):
         self._provider_name = "ollama"
         self._base_url = (base_url or settings.OLLAMA_BASE_URL).rstrip("/")
         self._model = model
-        self._client = httpx.AsyncClient(timeout=120.0)
+        self._client = httpx.AsyncClient(timeout=settings.LLM_TIMEOUT_SECONDS)
 
     @property
     def model(self) -> str:

@@ -1,13 +1,13 @@
 """NVIDIA NIM LLM Provider implementation."""
 from __future__ import annotations
 
-import os
-from typing import AsyncGenerator
+from collections.abc import AsyncGenerator
 
 from openai import AsyncOpenAI
 
-from modules.ai.domain.llm_provider import LLMProvider
 from core.config import settings
+from modules.ai.domain.llm_provider import LLMProvider
+
 
 class NvidiaNimProvider(LLMProvider):
     """Provider for NVIDIA NIM API (uses OpenAI-compatible endpoint).
@@ -23,6 +23,8 @@ class NvidiaNimProvider(LLMProvider):
         self._client = AsyncOpenAI(
             api_key=api_key,
             base_url=(base_url or settings.NVIDIA_NIM_ENDPOINT),
+            timeout=settings.LLM_TIMEOUT_SECONDS,
+            max_retries=settings.LLM_MAX_RETRIES,
         )
 
     @property

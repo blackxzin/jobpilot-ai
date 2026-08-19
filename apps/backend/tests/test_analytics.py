@@ -5,8 +5,7 @@ import pytest
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from core.models import UserModel, JobModel, CompanyModel, ApplicationModel, ResumeModel
-from core.database import Base
+from core.models import ApplicationModel, CompanyModel, JobModel
 
 
 @pytest.mark.asyncio
@@ -30,7 +29,6 @@ async def test_analytics_overview(client: AsyncClient):
 @pytest.mark.asyncio
 async def test_analytics_with_data(client: AsyncClient, db_session: AsyncSession):
     import uuid
-    from datetime import datetime, UTC
 
     reg = await client.post("/api/v1/auth/register", json={"email": "adata@test.com", "password": "pass12345"})
     token = reg.json()["token"]

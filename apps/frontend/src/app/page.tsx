@@ -2,17 +2,28 @@
 
 import { useState, useEffect } from "react";
 
+const TOKEN_STORAGE_KEY = "jobpilot-token";
+
 export default function Home() {
   const [token, setToken] = useState("");
   const [tab, setTab] = useState("dashboard");
   const [theme, setTheme] = useState("dark");
   const [menuOpen, setMenuOpen] = useState(false);
+  const [restoring, setRestoring] = useState(true);
 
   useEffect(() => {
     const saved = localStorage.getItem("jobpilot-theme") || "dark";
     setTheme(saved);
     document.documentElement.setAttribute("data-theme", saved);
   }, []);
+
+  // Keep the session across reloads: the token lives in state, so without
+  // this the user is silently logged out on every refresh.
+  function storeToken(value: string) {
+    setToken(value);
+    if (value) localStorage.setItem(TOKEN_STORAGE_KEY, value);
+    else localStorage.removeItem(TOKEN_STORAGE_KEY);
+  }
 
   function toggleTheme() {
     const next = theme === "dark" ? "light" : "dark";
@@ -106,7 +117,7 @@ export default function Home() {
     const pass = loginPass || "jobpilot123";
     let r = await api("/auth/register", { method: "POST", body: JSON.stringify({ email, password: pass, full_name: email.split("@")[0] }) });
     if (!r.ok) r = await api("/auth/login", { method: "POST", body: JSON.stringify({ email, password: pass }) });
-    if (r.ok) { const d = await r.json(); setToken(d.token); setShowLogin(false); setMsg(""); }
+    if (r.ok) { const d = await r.json(); storeToken(d.token); setShowLogin(false); setMsg(""); }
     else setMsg("Erro ao entrar");
   }
 
@@ -116,24 +127,47 @@ export default function Home() {
     else setMsg("Erro ao conectar com LinkedIn");
   }
 
-  // Handle OAuth callback token from URL
+  // Restore an existing session, or pick up the token from an OAuth redirect.
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const urlToken = params.get("token");
-    if (urlToken) { setToken(urlToken); setShowLogin(false); window.history.replaceState({}, "", "/"); }
+    if (urlToken) {
+      storeToken(urlToken);
+      setShowLogin(false);
+      window.history.replaceState({}, "", "/");
+    } else {
+      const saved = localStorage.getItem(TOKEN_STORAGE_KEY);
+      if (saved) { storeToken(saved); setShowLogin(false); }
+    }
+    setRestoring(false);
   }, []);
 
   async function logout() {
-    await api("/auth/logout", { method: "POST" });
-    setToken(""); setShowLogin(true); setApps([]); setResumes([]);
+    try {
+      await api("/auth/logout", { method: "POST" });
+    } catch {
+      // Network failure must not trap the user in a logged-in shell.
+    }
+    storeToken(""); setShowLogin(true); setApps([]); setResumes([]);
   }
 
   async function searchJobs() {
     setSearching(true);
+    setMsg("");
     try {
       const r = await api(`/jobs/${searchSource}?q=${encodeURIComponent(searchQuery)}&page=1`);
-      if (r.ok) { const d = await r.json(); setSearchResults(d.results || []); }
-    } catch {}
+      if (r.ok) {
+        const d = await r.json();
+        setSearchResults(d.results || []);
+        if (!(d.results || []).length) setMsg("Nenhuma vaga encontrada nessa fonte.");
+      } else {
+        setSearchResults([]);
+        setMsg("Erro ao buscar vagas. Tente outra fonte.");
+      }
+    } catch {
+      setSearchResults([]);
+      setMsg("Falha de conexão com o servidor.");
+    }
     setSearching(false);
   }
 
@@ -282,6 +316,14 @@ export default function Home() {
     const r = await api(`/search/semantic?q=${encodeURIComponent(semanticQuery)}&limit=10`);
     if (r.ok) setSemanticResults((await r.json()).results);
     setSemanticSearching(false);
+  }
+
+  if (restoring) {
+    return (
+      <div className="flex min-h-screen items-center justify-center p-4">
+        <p className="text-sm text-zinc-400">Carregando…</p>
+      </div>
+    );
   }
 
   if (showLogin) {

@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Optional
 
 from modules.applications.domain.entities import Application
 from modules.applications.domain.enums import ApplicationStatus
@@ -12,7 +11,7 @@ class IApplicationRepository(ABC):
     """Abstract repository contract for application persistence."""
 
     @abstractmethod
-    async def get_by_id(self, application_id: str) -> Optional[Application]:
+    async def get_by_id(self, application_id: str) -> Application | None:
         """Retrieve a single application by its unique identifier.
 
         Args:

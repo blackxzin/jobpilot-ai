@@ -1,12 +1,13 @@
 """Tests for AI module — tailored resume, auto apply, matching."""
 from __future__ import annotations
 
+import os
+
 import pytest
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from core.models import JobModel, CompanyModel, ResumeModel
-import os
+from core.models import JobModel, ResumeModel
 
 SKIP_AI = pytest.mark.skipif(
     not os.environ.get("OPENAI_API_KEY", "").startswith("sk-"),

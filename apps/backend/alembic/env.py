@@ -7,12 +7,16 @@ from logging.config import fileConfig
 from alembic import context
 from sqlalchemy.ext.asyncio import create_async_engine
 
+from core.config import settings
 from core.database import Base
 from core.models import *  # noqa: F401, F403 — load all models
 
 config = context.config
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
+
+# The database URL comes from the environment, never from the checked-in ini.
+config.set_main_option("sqlalchemy.url", settings.DATABASE_URL)
 
 target_metadata = Base.metadata
 

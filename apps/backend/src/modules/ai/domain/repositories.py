@@ -2,17 +2,16 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Optional
 
-from modules.ai.domain.entities import LLMProviderConfig, AIAnalysis
+from modules.ai.domain.entities import AIAnalysis, LLMProviderConfig
 
 
 class LLMProviderConfigRepository(ABC):
     @abstractmethod
-    async def get_active(self, user_id: str) -> Optional[LLMProviderConfig]: ...
+    async def get_active(self, user_id: str) -> LLMProviderConfig | None: ...
 
     @abstractmethod
-    async def get_by_provider(self, user_id: str, provider_name: str) -> Optional[LLMProviderConfig]: ...
+    async def get_by_provider(self, user_id: str, provider_name: str) -> LLMProviderConfig | None: ...
 
     @abstractmethod
     async def create(self, config: LLMProviderConfig) -> LLMProviderConfig: ...
@@ -26,7 +25,7 @@ class LLMProviderConfigRepository(ABC):
 
 class AIAnalysisRepository(ABC):
     @abstractmethod
-    async def get_by_id(self, analysis_id: str) -> Optional[AIAnalysis]: ...
+    async def get_by_id(self, analysis_id: str) -> AIAnalysis | None: ...
 
     @abstractmethod
     async def get_for_user(self, user_id: str) -> list[AIAnalysis]: ...

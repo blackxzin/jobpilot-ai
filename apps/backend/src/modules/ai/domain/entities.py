@@ -2,8 +2,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime, UTC
-from typing import Optional
+from datetime import UTC, datetime
 from uuid import UUID, uuid4
 
 
@@ -29,7 +28,7 @@ class AIAnalysis:
     analyzable_id: str = ""
     analysis_type: str = ""  # ats_score, matching, cover_letter, summary
     result: dict = field(default_factory=dict)
-    score: Optional[float] = None
+    score: float | None = None
     tokens_used: int = 0
     model_used: str = ""
     provider_used: str = ""

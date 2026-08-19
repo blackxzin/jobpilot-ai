@@ -2,16 +2,13 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime, UTC
-from typing import Optional
+from datetime import UTC, datetime
 from uuid import UUID, uuid4
 
 from core.exceptions import NotFoundError, ValidationError
-
 from modules.applications.domain.entities import Application
 from modules.applications.domain.enums import ApplicationStatus
 from modules.applications.domain.repositories import IApplicationRepository
-
 
 # ---------------------------------------------------------------------------
 # Data Transfer Objects
@@ -25,10 +22,10 @@ class CreateApplicationDTO:
     job_id: UUID
     resume_id: UUID
     user_id: UUID
-    cover_letter: Optional[str] = None
-    custom_message: Optional[str] = None
-    source_platform: Optional[str] = None
-    tracking_data: Optional[dict] = None
+    cover_letter: str | None = None
+    custom_message: str | None = None
+    source_platform: str | None = None
+    tracking_data: dict | None = None
 
 
 @dataclass
@@ -42,10 +39,10 @@ class UpdateStatusDTO:
 class ApplicationFilters:
     """Optional filters when listing applications."""
 
-    user_id: Optional[UUID] = None
-    job_id: Optional[UUID] = None
-    status: Optional[ApplicationStatus] = None
-    source_platform: Optional[str] = None
+    user_id: UUID | None = None
+    job_id: UUID | None = None
+    status: ApplicationStatus | None = None
+    source_platform: str | None = None
 
 
 @dataclass
@@ -160,8 +157,8 @@ class GetUserApplicationsUseCase:
     async def execute(
         self,
         user_id: str,
-        status: Optional[str] = None,
-        source_platform: Optional[str] = None,
+        status: str | None = None,
+        source_platform: str | None = None,
     ) -> list[Application]:
         """Run the use case.
 
@@ -203,7 +200,7 @@ class GetApplicationStatsUseCase:
     def __init__(self, repository: IApplicationRepository) -> None:
         self._repository = repository
 
-    async def execute(self, user_id: Optional[str] = None) -> ApplicationStats:
+    async def execute(self, user_id: str | None = None) -> ApplicationStats:
         """Run the use case.
 
         Args:

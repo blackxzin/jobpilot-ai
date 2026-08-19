@@ -11,13 +11,17 @@ Design:
 """
 from __future__ import annotations
 
-import json
-from typing import AsyncGenerator
+import hashlib
+from collections.abc import AsyncGenerator, Awaitable, Callable
+from typing import TypeVar
 
-from modules.ai.domain.llm_provider import LLMProvider
+from core.exceptions import LLMProviderError
 from core.logger import get_logger
+from modules.ai.domain.llm_provider import LLMProvider
 
 logger = get_logger(__name__)
+
+T = TypeVar("T")
 
 
 class LLMService:
@@ -30,6 +34,29 @@ class LLMService:
     @property
     def provider_name(self) -> str:
         return self._provider.provider_name
+
+    async def _call(self, operation: str, call: Callable[[], Awaitable[T]]) -> T:
+        """Run a provider call, converting failures into a domain error.
+
+        Providers raise transport-specific exceptions (timeouts, auth errors,
+        rate limits). Left unhandled they surface as opaque 500s, so they are
+        translated into LLMProviderError, which the API maps to 502.
+        """
+        try:
+            return await call()
+        except LLMProviderError:
+            raise
+        except Exception as exc:
+            logger.error(
+                "llm_call_failed",
+                provider=self.provider_name,
+                operation=operation,
+                error_type=type(exc).__name__,
+                error=str(exc),
+            )
+            raise LLMProviderError(
+                f"LLM provider '{self.provider_name}' failed during {operation}: {exc}"
+            ) from exc
 
     async def _get_cache(self):
         """Lazy-init Redis client."""
@@ -52,7 +79,7 @@ class LLMService:
                 logger.info("llm_cache_hit", provider=self.provider_name, key=cache_key)
                 return cached
 
-        result = await self._provider.generate(prompt, **kwargs)
+        result = await self._call("generate", lambda: self._provider.generate(prompt, **kwargs))
 
         if cache_key:
             cache = await self._get_cache()
@@ -67,41 +94,51 @@ class LLMService:
             yield chunk
 
     async def summarize(self, text: str, cache_key: str | None = None, **kwargs) -> str:
+        # Built-in hash() is salted per process, so it cannot key a shared cache.
+        digest = hashlib.sha256(text.encode()).hexdigest()[:32]
         return await self.generate(
             f"Summarize concisely:\n\n{text}",
-            cache_key=f"sum:{hash(text)}" if cache_key is None else cache_key,
+            cache_key=f"sum:{digest}" if cache_key is None else cache_key,
             **kwargs,
         )
 
     async def analyze_resume(self, resume: str, job_description: str, **kwargs) -> dict:
         """Analyze resume against job description."""
         logger.info("llm_analyze_resume", provider=self.provider_name)
-        result = await self._provider.analyze_resume(resume, job_description, **kwargs)
+        result = await self._call(
+            "analyze_resume", lambda: self._provider.analyze_resume(resume, job_description, **kwargs)
+        )
         logger.info("llm_analyze_resume_complete", provider=self.provider_name, score=result.get("score"))
         return result
 
     async def compare_job(self, resume: str, job: dict, **kwargs) -> dict:
         """Compare resume to a job posting."""
         logger.info("llm_compare_job", provider=self.provider_name, job_title=job.get("title"))
-        result = await self._provider.compare_job(resume, job, **kwargs)
+        result = await self._call("compare_job", lambda: self._provider.compare_job(resume, job, **kwargs))
         logger.info("llm_compare_job_complete", provider=self.provider_name, score=result.get("compatibility_score"))
         return result
 
     async def generate_cover_letter(self, resume: str, job: dict, **kwargs) -> str:
         """Generate a personalized cover letter."""
         logger.info("llm_generate_cover_letter", provider=self.provider_name, company=job.get("company"))
-        result = await self._provider.generate_cover_letter(resume, job, **kwargs)
+        result = await self._call(
+            "generate_cover_letter", lambda: self._provider.generate_cover_letter(resume, job, **kwargs)
+        )
         logger.info("llm_generate_cover_letter_complete", provider=self.provider_name, length=len(result))
         return result
 
     async def answer_question(self, question: str, context: str = "", **kwargs) -> str:
         """Answer a career-related question."""
-        return await self._provider.answer_question(question, context, **kwargs)
+        return await self._call(
+            "answer_question", lambda: self._provider.answer_question(question, context, **kwargs)
+        )
 
     async def generate_tailored_resume(self, resume: str, job: dict, **kwargs) -> str:
         """Generate a resume tailored to a specific job."""
         logger.info("llm_tailor_resume", provider=self.provider_name, job_title=job.get("title"))
-        result = await self._provider.generate_tailored_resume(resume, job, **kwargs)
+        result = await self._call(
+            "generate_tailored_resume", lambda: self._provider.generate_tailored_resume(resume, job, **kwargs)
+        )
         logger.info("llm_tailor_resume_complete", provider=self.provider_name, length=len(result))
         return result
 

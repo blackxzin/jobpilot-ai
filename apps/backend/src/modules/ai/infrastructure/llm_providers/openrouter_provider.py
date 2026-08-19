@@ -2,12 +2,13 @@
 from __future__ import annotations
 
 import os
-from typing import AsyncGenerator
+from collections.abc import AsyncGenerator
 
 from openai import AsyncOpenAI
 
-from modules.ai.domain.llm_provider import LLMProvider
 from core.config import settings
+from modules.ai.domain.llm_provider import LLMProvider
+
 
 class OpenRouterProvider(LLMProvider):
     """Provider for OpenRouter (aggregator that routes to multiple LLMs)."""
@@ -22,6 +23,8 @@ class OpenRouterProvider(LLMProvider):
                 "HTTP-Referer": "https://jobpilot.ai",
                 "X-Title": "JobPilot AI",
             },
+            timeout=settings.LLM_TIMEOUT_SECONDS,
+            max_retries=settings.LLM_MAX_RETRIES,
         )
 
     @property

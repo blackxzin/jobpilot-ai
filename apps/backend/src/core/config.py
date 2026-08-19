@@ -6,7 +6,6 @@ All settings are validated at startup.
 """
 
 from functools import lru_cache
-from typing import List
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -18,7 +17,8 @@ class Settings(BaseSettings):
     DEBUG: bool = True
     SECRET_KEY: str = "change-me-in-production"
     API_V1_PREFIX: str = "/api/v1"
-    ALLOWED_ORIGINS: List[str] = ["http://localhost:3000", "http://localhost:8000"]
+    FRONTEND_URL: str = "http://localhost:3000"
+    ALLOWED_ORIGINS: list[str] = ["http://localhost:3000", "http://localhost:8000"]
 
     # ── Database ──────────────────────────────────────
     POSTGRES_HOST: str = "postgres"
@@ -46,6 +46,13 @@ class Settings(BaseSettings):
     GEMINI_API_KEY: str = ""
     OPENROUTER_API_KEY: str = ""
     OLLAMA_BASE_URL: str = "http://ollama:11434"
+    # Hard ceiling for a single LLM call. Without it a slow provider keeps an
+    # HTTP worker and a DB session busy indefinitely.
+    LLM_TIMEOUT_SECONDS: float = 60.0
+    # 0 keeps a single failed call bounded to LLM_TIMEOUT_SECONDS; this is a
+    # synchronous HTTP request, so doubling the wait for a retry is worse UX
+    # than just surfacing the error and letting the user try again.
+    LLM_MAX_RETRIES: int = 0
 
     # ── Celery ────────────────────────────────────────
     CELERY_BROKER_URL: str = "redis://redis:6379/0"

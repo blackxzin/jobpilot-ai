@@ -1,26 +1,23 @@
 """Analytics API routes — dashboard data, charts, insights."""
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, Header
+from fastapi import APIRouter, Depends
+from sqlalchemy import func, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func, text
 
 from core.database import get_db
-from core.models import ApplicationModel, JobModel, CompanyModel, InterviewModel, ResumeModel
-from modules.auth.infrastructure.repositories import SQLAlchemyUserRepository, SQLAlchemySessionRepository
-from modules.auth.application.use_cases import GetCurrentUserUseCase
+from core.models import ApplicationModel, CompanyModel, JobModel, ResumeModel
+from modules.auth.api.dependencies import get_current_user
+from modules.auth.domain.entities import User
 
 router = APIRouter(prefix="/analytics", tags=["analytics"])
 
 
 @router.get("/overview")
-async def analytics_overview(authorization: str = Header(""), db: AsyncSession = Depends(get_db)):
-    token = authorization.replace("Bearer ", "")
-    user_repo = SQLAlchemyUserRepository(db)
-    session_repo = SQLAlchemySessionRepository(db)
-    auth_uc = GetCurrentUserUseCase(user_repo, session_repo)
-    user = await auth_uc.execute(token)
-
+async def analytics_overview(
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
     uid = str(user.id)
 
     # Total applications & by status
@@ -77,7 +74,7 @@ async def analytics_overview(authorization: str = Header(""), db: AsyncSession =
     top_companies = [{"name": row[0], "count": row[1]} for row in result]
 
     # Applications over time (last 30 days)
-    from datetime import datetime, timedelta, UTC
+    from datetime import UTC, datetime, timedelta
     thirty_days_ago = datetime.now(UTC) - timedelta(days=30)
     time_query = (
         select(

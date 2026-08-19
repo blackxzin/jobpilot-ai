@@ -8,10 +8,10 @@ Uses asyncpg driver for PostgreSQL.
 from __future__ import annotations
 
 from sqlalchemy.ext.asyncio import (
+    AsyncEngine,
     AsyncSession,
     async_sessionmaker,
     create_async_engine,
-    AsyncEngine,
 )
 from sqlalchemy.orm import DeclarativeBase
 

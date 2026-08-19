@@ -1,21 +1,26 @@
 """Applications API routes."""
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, Header
+from uuid import UUID
+
+from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.database import get_db
-from core.exceptions import NotFoundError
-from modules.auth.infrastructure.repositories import SQLAlchemyUserRepository, SQLAlchemySessionRepository
-from modules.auth.application.use_cases import GetCurrentUserUseCase
-from modules.applications.infrastructure.repositories import SQLAlchemyApplicationRepository
+from core.exceptions import NotFoundError, ValidationError
 from modules.applications.application.use_cases import (
-    CreateApplicationUseCase, UpdateApplicationStatusUseCase,
-    GetUserApplicationsUseCase, GetApplicationStatsUseCase,
+    CreateApplicationDTO,
+    CreateApplicationUseCase,
+    GetApplicationStatsUseCase,
+    GetUserApplicationsUseCase,
+    UpdateApplicationStatusUseCase,
+    UpdateStatusDTO,
 )
-from modules.applications.application.use_cases import CreateApplicationDTO, UpdateStatusDTO
 from modules.applications.domain.enums import ApplicationStatus
+from modules.applications.infrastructure.repositories import SQLAlchemyApplicationRepository
+from modules.auth.api.dependencies import ensure_owner, get_current_user
+from modules.auth.domain.entities import User
 
 router = APIRouter(prefix="/applications", tags=["applications"])
 
@@ -32,71 +37,80 @@ class UpdateStatusRequest(BaseModel):
     status: str
 
 
-@router.post("")
-async def create_application(body: CreateAppRequest, authorization: str = Header(""), db: AsyncSession = Depends(get_db)):
-    token = authorization.replace("Bearer ", "")
-    user_repo = SQLAlchemyUserRepository(db)
-    session_repo = SQLAlchemySessionRepository(db)
-    auth_uc = GetCurrentUserUseCase(user_repo, session_repo)
-    user = await auth_uc.execute(token)
+def _parse_uuid(value: str, field: str) -> UUID:
+    """Parse a UUID string, surfacing a 422 instead of a 500 on bad input."""
+    try:
+        return UUID(value)
+    except (ValueError, AttributeError, TypeError) as e:
+        raise ValidationError(f"{field} must be a valid UUID") from e
 
-    from uuid import UUID
+
+@router.post("")
+async def create_application(
+    body: CreateAppRequest,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
     dto = CreateApplicationDTO(
-        job_id=UUID(body.job_id),
-        resume_id=UUID(body.resume_id),
+        job_id=_parse_uuid(body.job_id, "job_id"),
+        resume_id=_parse_uuid(body.resume_id, "resume_id"),
         user_id=user.id,
         cover_letter=body.cover_letter,
         custom_message=body.custom_message,
         source_platform=body.source_platform,
     )
     use_case = CreateApplicationUseCase(SQLAlchemyApplicationRepository(db))
-    app = await use_case.execute(dto)
-    return _app_to_dict(app)
+    application = await use_case.execute(dto)
+    return _app_to_dict(application)
 
 
 @router.get("/list")
 async def list_applications(
-    status: str = "", source: str = "",
-    authorization: str = Header(""),
+    status: str = "",
+    source: str = "",
+    user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    token = authorization.replace("Bearer ", "")
-    user_repo = SQLAlchemyUserRepository(db)
-    session_repo = SQLAlchemySessionRepository(db)
-    auth_uc = GetCurrentUserUseCase(user_repo, session_repo)
-    user = await auth_uc.execute(token)
-
     use_case = GetUserApplicationsUseCase(SQLAlchemyApplicationRepository(db))
-    apps = await use_case.execute(user_id=str(user.id), status=status or None, source_platform=source or None)
+    apps = await use_case.execute(
+        user_id=str(user.id), status=status or None, source_platform=source or None
+    )
     return {"results": [_app_to_dict(a) for a in apps]}
 
 
 @router.get("/stats")
-async def application_stats(authorization: str = Header(""), db: AsyncSession = Depends(get_db)):
-    token = authorization.replace("Bearer ", "")
-    user_repo = SQLAlchemyUserRepository(db)
-    session_repo = SQLAlchemySessionRepository(db)
-    auth_uc = GetCurrentUserUseCase(user_repo, session_repo)
-    user = await auth_uc.execute(token)
-
+async def application_stats(
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
     use_case = GetApplicationStatsUseCase(SQLAlchemyApplicationRepository(db))
     stats = await use_case.execute(user_id=str(user.id))
     return {"total": stats.total, "by_status": stats.by_status}
 
 
 @router.patch("/{app_id}/status")
-async def update_status(app_id: str, body: UpdateStatusRequest, authorization: str = Header(""), db: AsyncSession = Depends(get_db)):
-    token = authorization.replace("Bearer ", "")
-    user_repo = SQLAlchemyUserRepository(db)
-    session_repo = SQLAlchemySessionRepository(db)
-    auth_uc = GetCurrentUserUseCase(user_repo, session_repo)
-    await auth_uc.execute(token)
+async def update_status(
+    app_id: str,
+    body: UpdateStatusRequest,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    try:
+        status_enum = ApplicationStatus(body.status)
+    except ValueError as e:
+        raise ValidationError(
+            f"Invalid status '{body.status}'. Allowed: {', '.join(ApplicationStatus.all_values())}"
+        ) from e
 
-    status_enum = ApplicationStatus(body.status)
-    dto = UpdateStatusDTO(status=status_enum)
-    use_case = UpdateApplicationStatusUseCase(SQLAlchemyApplicationRepository(db))
-    app = await use_case.execute(app_id, dto)
-    return _app_to_dict(app)
+    repository = SQLAlchemyApplicationRepository(db)
+    existing = await repository.get_by_id(app_id)
+    if existing is None:
+        raise NotFoundError("Application not found")
+    ensure_owner(existing.user_id, user, "Application")
+
+    use_case = UpdateApplicationStatusUseCase(repository)
+    application = await use_case.execute(app_id, UpdateStatusDTO(status=status_enum))
+    return _app_to_dict(application)
 
 
 def _app_to_dict(a) -> dict:

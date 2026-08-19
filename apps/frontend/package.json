@@ -7,7 +7,7 @@
     "dev": "next dev -p 3000",
     "build": "next build",
     "start": "next start -p 3000",
-    "lint": "eslint . --ext ts,tsx",
+    "lint": "eslint .",
     "type-check": "tsc --noEmit",
     "test": "vitest",
     "test:coverage": "vitest run --coverage"
@@ -42,6 +42,8 @@
     "@testing-library/react": "^16.0.0",
     "@testing-library/jest-dom": "^6.4.0",
     "jsdom": "^24.0.0",
-    "playwright": "^1.45.0"
+    "playwright": "^1.45.0",
+    "@eslint/js": "^9.0.0",
+    "typescript-eslint": "^8.0.0"
   }
 }

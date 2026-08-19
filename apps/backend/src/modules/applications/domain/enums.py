@@ -1,10 +1,10 @@
 """Application status enumeration."""
 from __future__ import annotations
 
-from enum import Enum
+from enum import StrEnum
 
 
-class ApplicationStatus(str, Enum):
+class ApplicationStatus(StrEnum):
     """Represents the lifecycle stages of a job application."""
 
     APPLIED = "applied"

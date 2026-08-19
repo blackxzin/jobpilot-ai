@@ -1,9 +1,10 @@
 """LinkedIn Jobs client — uses public LinkedIn job search."""
 from __future__ import annotations
 
-from typing import Any
-import httpx
 import re
+from typing import Any
+
+import httpx
 
 
 class LinkedInJobsClient:

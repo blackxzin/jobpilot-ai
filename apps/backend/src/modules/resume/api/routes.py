@@ -1,62 +1,69 @@
 """Resume API routes — upload, list, get."""
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, Header, UploadFile, File, Form
+from fastapi import APIRouter, Depends, File, Form, UploadFile
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.database import get_db
-from core.exceptions import NotFoundError
-from modules.auth.infrastructure.repositories import SQLAlchemyUserRepository, SQLAlchemySessionRepository
-from modules.auth.application.use_cases import GetCurrentUserUseCase
-from modules.resume.application.use_cases import UploadResumeUseCase, GetResumeUseCase, ListResumesUseCase
+from core.exceptions import ValidationError
+from modules.auth.api.dependencies import ensure_owner, get_current_user
+from modules.auth.domain.entities import User
+from modules.resume.application.use_cases import (
+    GetResumeUseCase,
+    ListResumesUseCase,
+    UploadResumeUseCase,
+)
 from modules.resume.infrastructure.repositories import ResumeRepository
 
 router = APIRouter(prefix="/resumes", tags=["resumes"])
+
+MAX_UPLOAD_BYTES = 10 * 1024 * 1024  # 10 MB
+ALLOWED_EXTENSIONS = (".pdf",)
 
 
 @router.post("/upload")
 async def upload_resume(
     title: str = Form("My Resume"),
     file: UploadFile = File(...),
-    authorization: str = Header(""),
+    user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    token = authorization.replace("Bearer ", "")
-    user_repo = SQLAlchemyUserRepository(db)
-    session_repo = SQLAlchemySessionRepository(db)
-    auth_uc = GetCurrentUserUseCase(user_repo, session_repo)
-    user = await auth_uc.execute(token)
+    filename = file.filename or "resume.pdf"
+    if not filename.lower().endswith(ALLOWED_EXTENSIONS):
+        raise ValidationError("Only PDF files are accepted")
 
     content = await file.read()
+    if not content:
+        raise ValidationError("Uploaded file is empty")
+    if len(content) > MAX_UPLOAD_BYTES:
+        raise ValidationError(f"File exceeds the {MAX_UPLOAD_BYTES // (1024 * 1024)} MB limit")
+
     use_case = UploadResumeUseCase(ResumeRepository(db))
-    result = await use_case.execute(user_id=str(user.id), title=title, file_content=content, filename=file.filename or "resume.pdf")
-    return result
+    return await use_case.execute(
+        user_id=str(user.id), title=title, file_content=content, filename=filename
+    )
 
 
 @router.get("/list")
-async def list_resumes(authorization: str = Header(""), db: AsyncSession = Depends(get_db)):
-    token = authorization.replace("Bearer ", "")
-    user_repo = SQLAlchemyUserRepository(db)
-    session_repo = SQLAlchemySessionRepository(db)
-    auth_uc = GetCurrentUserUseCase(user_repo, session_repo)
-    user = await auth_uc.execute(token)
-
+async def list_resumes(
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
     use_case = ListResumesUseCase(ResumeRepository(db))
     results = await use_case.execute(user_id=str(user.id))
     return {"results": [_r_to_dict(r) for r in results]}
 
 
 @router.get("/{resume_id}")
-async def get_resume(resume_id: str, authorization: str = Header(""), db: AsyncSession = Depends(get_db)):
-    token = authorization.replace("Bearer ", "")
-    user_repo = SQLAlchemyUserRepository(db)
-    session_repo = SQLAlchemySessionRepository(db)
-    auth_uc = GetCurrentUserUseCase(user_repo, session_repo)
-    await auth_uc.execute(token)
-
+async def get_resume(
+    resume_id: str,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
     use_case = GetResumeUseCase(ResumeRepository(db))
-    result = await use_case.execute(resume_id)
-    return _r_to_dict(result)
+    resume = await use_case.execute(resume_id)
+    ensure_owner(resume.user_id, user, "Resume")
+    return _r_to_dict(resume)
 
 
 def _r_to_dict(r) -> dict:

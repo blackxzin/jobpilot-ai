@@ -2,12 +2,13 @@
 from __future__ import annotations
 
 import os
-from typing import AsyncGenerator
+from collections.abc import AsyncGenerator
 
 from anthropic import AsyncAnthropic
 
-from modules.ai.domain.llm_provider import LLMProvider
 from core.config import settings
+from modules.ai.domain.llm_provider import LLMProvider
+
 
 class AnthropicProvider(LLMProvider):
     """Provider for Anthropic Claude API (messages API)."""
@@ -16,6 +17,8 @@ class AnthropicProvider(LLMProvider):
         self._provider_name = "anthropic"
         self._client = AsyncAnthropic(
             api_key=api_key or os.getenv("ANTHROPIC_API_KEY", settings.ANTHROPIC_API_KEY),
+            timeout=settings.LLM_TIMEOUT_SECONDS,
+            max_retries=settings.LLM_MAX_RETRIES,
         )
         self._model = model
 

@@ -1,22 +1,39 @@
 """Jobs API routes — local + multi-source."""
 from __future__ import annotations
 
+from asyncio import gather
+
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.database import get_db
 from core.logger import get_logger
-from modules.jobs.application.use_cases import SearchJobsUseCase, GetJobUseCase
+from modules.jobs.application.use_cases import GetJobUseCase, SearchJobsUseCase
 from modules.jobs.infrastructure.repositories import JobRepository
-from modules.users.infrastructure.providers.remoteok_client import RemoteOKClient
-from modules.users.infrastructure.providers.jobicy_client import JobicyClient
 from modules.users.infrastructure.providers.google_jobs_client import GoogleJobsClient
 from modules.users.infrastructure.providers.indeed_client import IndeedClient
+from modules.users.infrastructure.providers.jobicy_client import JobicyClient
 from modules.users.infrastructure.providers.linkedin_jobs_client import LinkedInJobsClient
+from modules.users.infrastructure.providers.remoteok_client import RemoteOKClient
 
 logger = get_logger(__name__)
 
 router = APIRouter(prefix="/jobs", tags=["jobs"])
+
+async def _search_external(source: str, client, **kwargs) -> dict:
+    """Run one external job-board search, never propagating provider failures.
+
+    An unreachable job board must not fail the whole request, so the source
+    returns an empty result set instead. The client is always closed.
+    """
+    try:
+        jobs = await client.search_jobs(**kwargs)
+        return {"results": jobs if isinstance(jobs, list) else [], "source": source}
+    except Exception as e:
+        logger.warning("job_source_search_failed", source=source, error=str(e))
+        return {"results": [], "source": source}
+    finally:
+        await client.close()
 
 
 @router.get("")
@@ -24,152 +41,92 @@ async def search_jobs(
     q: str = Query("", alias="query"),
     location: str = "",
     remote: bool = False,
-    page: int = 1,
-    per_page: int = 20,
+    page: int = Query(1, ge=1),
+    per_page: int = Query(20, ge=1, le=100),
     db: AsyncSession = Depends(get_db),
 ):
     use_case = SearchJobsUseCase(JobRepository(db))
-    results = await use_case.execute(query=q, location=location, remote=remote, page=page, per_page=per_page)
+    results = await use_case.execute(
+        query=q, location=location, remote=remote, page=page, per_page=per_page
+    )
     return {"results": [_to_dict(j) for j in results], "page": page, "per_page": per_page}
 
 
 @router.get("/remoteok")
-async def search_remoteok(q: str = Query(""), page: int = 1):
-    client = RemoteOKClient()
-    try:
-        jobs = await client.search_jobs(query=q, page=page)
-        return {"results": jobs, "source": "remoteok"}
-    except Exception as e:
-        logger.warning("remoteok_search_failed", error=str(e))
-        return {"results": [], "source": "remoteok"}
-    finally:
-        await client.close()
+async def search_remoteok(q: str = Query(""), page: int = Query(1, ge=1)):
+    return await _search_external("remoteok", RemoteOKClient(), query=q, page=page)
 
 
 @router.get("/jobicy")
-async def search_jobicy(q: str = Query(""), page: int = 1):
-    client = JobicyClient()
-    try:
-        jobs = await client.search_jobs(query=q, page=page)
-        return {"results": jobs, "source": "jobicy"}
-    except Exception as e:
-        logger.warning("jobicy_search_failed", error=str(e))
-        return {"results": [], "source": "jobicy"}
-    finally:
-        await client.close()
+async def search_jobicy(q: str = Query(""), page: int = Query(1, ge=1)):
+    return await _search_external("jobicy", JobicyClient(), query=q, page=page)
 
 
 @router.get("/google-jobs")
-async def search_google_jobs(q: str = Query(""), location: str = "", page: int = 1):
-    client = GoogleJobsClient()
-    try:
-        jobs = await client.search_jobs(query=q, location=location, page=page)
-        return {"results": jobs, "source": "google_jobs"}
-    except Exception as e:
-        logger.warning("google_jobs_search_failed", error=str(e))
-        return {"results": [], "source": "google_jobs"}
-    finally:
-        await client.close()
+async def search_google_jobs(q: str = Query(""), location: str = "", page: int = Query(1, ge=1)):
+    return await _search_external(
+        "google_jobs", GoogleJobsClient(), query=q, location=location, page=page
+    )
 
 
 @router.get("/gupy")
-async def search_gupy(q: str = Query(""), location: str = "", remote: bool = False, page: int = 1):
+async def search_gupy(
+    q: str = Query(""), location: str = "", remote: bool = False, page: int = Query(1, ge=1)
+):
+    from modules.jobs.application.use_cases import SearchGupyUseCase
+
     try:
-        from modules.jobs.application.use_cases import SearchGupyUseCase
-        use_case = SearchGupyUseCase()
-        return await use_case.execute(query=q, location=location, remote=remote, page=page)
+        return await SearchGupyUseCase().execute(
+            query=q, location=location, remote=remote, page=page
+        )
     except Exception as e:
-        logger.warning("gupy_search_failed", error=str(e))
+        logger.warning("job_source_search_failed", source="gupy", error=str(e))
         return {"results": [], "source": "gupy"}
 
 
 @router.get("/indeed")
-async def search_indeed(q: str = Query(""), location: str = "", page: int = 1):
-    client = IndeedClient()
-    try:
-        jobs = await client.search_jobs(query=q, location=location, page=page)
-        return {"results": jobs, "source": "indeed"}
-    except Exception as e:
-        logger.warning("indeed_search_failed", error=str(e))
-        return {"results": [], "source": "indeed"}
-    finally:
-        await client.close()
+async def search_indeed(q: str = Query(""), location: str = "", page: int = Query(1, ge=1)):
+    return await _search_external(
+        "indeed", IndeedClient(), query=q, location=location, page=page
+    )
 
 
 @router.get("/linkedin")
-async def search_linkedin_jobs(q: str = Query(""), location: str = "", page: int = 1):
-    client = LinkedInJobsClient()
-    try:
-        jobs = await client.search_jobs(query=q, location=location, page=page)
-        return {"results": jobs, "source": "linkedin"}
-    except Exception as e:
-        logger.warning("linkedin_jobs_search_failed", error=str(e))
-        return {"results": [], "source": "linkedin"}
-    finally:
-        await client.close()
+async def search_linkedin_jobs(q: str = Query(""), location: str = "", page: int = Query(1, ge=1)):
+    return await _search_external(
+        "linkedin", LinkedInJobsClient(), query=q, location=location, page=page
+    )
 
 
 @router.get("/geekhunter")
-async def search_geekhunter(q: str = Query(""), page: int = 1):
+async def search_geekhunter(q: str = Query(""), page: int = Query(1, ge=1)):
     from modules.users.infrastructure.providers.geekhunter_client import GeekHunterClient
-    client = GeekHunterClient()
-    try:
-        jobs = await client.search_jobs(query=q, page=page)
-        return {"results": jobs, "source": "geekhunter"}
-    except Exception as e:
-        logger.warning("geekhunter_search_failed", error=str(e))
-        return {"results": [], "source": "geekhunter"}
-    finally:
-        await client.close()
+
+    return await _search_external("geekhunter", GeekHunterClient(), query=q, page=page)
 
 
 @router.get("/programathor")
-async def search_programathor(q: str = Query(""), page: int = 1):
+async def search_programathor(q: str = Query(""), page: int = Query(1, ge=1)):
     from modules.users.infrastructure.providers.programathor_client import ProgramathorClient
-    client = ProgramathorClient()
-    try:
-        jobs = await client.search_jobs(query=q, page=page)
-        return {"results": jobs, "source": "programathor"}
-    except Exception as e:
-        logger.warning("programathor_search_failed", error=str(e))
-        return {"results": [], "source": "programathor"}
-    finally:
-        await client.close()
+
+    return await _search_external("programathor", ProgramathorClient(), query=q, page=page)
 
 
 @router.get("/search-all")
-async def search_all(q: str = Query(""), page: int = 1):
-    from asyncio import gather
+async def search_all(q: str = Query(""), page: int = Query(1, ge=1)):
+    """Query every remote-friendly source in parallel and merge the results."""
+    sources = [
+        _search_external("remoteok", RemoteOKClient(), query=q, page=page),
+        _search_external("jobicy", JobicyClient(), query=q, page=page),
+        _search_external("google_jobs", GoogleJobsClient(), query=q, page=page),
+    ]
+    outcomes = await gather(*sources, return_exceptions=True)
 
-    async def _remoteok():
-        try:
-            client = RemoteOKClient()
-            r = await client.search_jobs(query=q, page=page)
-            await client.close()
-            return {"source": "remoteok", "jobs": r if isinstance(r, list) else []}
-        except:
-            return {"source": "remoteok", "jobs": []}
-
-    async def _jobicy():
-        try:
-            client = JobicyClient()
-            r = await client.search_jobs(query=q, page=page)
-            await client.close()
-            return {"source": "jobicy", "jobs": r}
-        except:
-            return {"source": "jobicy", "jobs": []}
-
-    async def _google():
-        try:
-            client = GoogleJobsClient()
-            r = await client.search_jobs(query=q, page=page)
-            await client.close()
-            return {"source": "google_jobs", "jobs": r}
-        except:
-            return {"source": "google_jobs", "jobs": []}
-
-    results = await gather(_remoteok(), _jobicy(), _google(), return_exceptions=True)
-    return {"results": [r for r in results if isinstance(r, dict) and r.get("jobs")]}
+    merged = []
+    for outcome in outcomes:
+        if isinstance(outcome, dict) and outcome.get("results"):
+            merged.append({"source": outcome["source"], "jobs": outcome["results"]})
+    return {"results": merged}
 
 
 @router.get("/{job_id}")

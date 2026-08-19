@@ -1,7 +1,6 @@
 """Applications infrastructure — SQLAlchemy repository."""
 from __future__ import annotations
 
-from typing import Optional
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -13,7 +12,7 @@ class SQLAlchemyApplicationRepository:
     def __init__(self, session: AsyncSession):
         self._session = session
 
-    async def get_by_id(self, application_id: str) -> Optional[ApplicationModel]:
+    async def get_by_id(self, application_id: str) -> ApplicationModel | None:
         return await self._session.get(ApplicationModel, application_id)
 
     async def get_for_user(self, user_id: str) -> list[ApplicationModel]:
@@ -42,10 +41,10 @@ class SQLAlchemyApplicationRepository:
         await self._session.flush()
         return model
 
-    async def update_status(self, application_id: str, status: str) -> Optional[ApplicationModel]:
+    async def update_status(self, application_id: str, status: str) -> ApplicationModel | None:
         model = await self._session.get(ApplicationModel, application_id)
         if model:
-            from datetime import datetime, UTC
+            from datetime import UTC, datetime
             model.status = status
             model.updated_at = datetime.now(UTC)
             await self._session.flush()

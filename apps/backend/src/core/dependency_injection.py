@@ -6,8 +6,9 @@ Simple DI container that wires up services and repositories.
 
 from __future__ import annotations
 
-from typing import AsyncGenerator, TypeVar, Generic
+from collections.abc import Callable
 from contextlib import asynccontextmanager
+from typing import TypeVar
 
 T = TypeVar("T")
 
@@ -16,7 +17,7 @@ class Container:
     """Simple dependency injection container."""
 
     _services: dict[type, object] = {}
-    _factories: dict[type, callable] = {}
+    _factories: dict[type, Callable] = {}
 
     @classmethod
     def register(cls, service_type: type[T], instance: T) -> None:
@@ -24,7 +25,7 @@ class Container:
         cls._services[service_type] = instance
 
     @classmethod
-    def register_factory(cls, service_type: type[T], factory: callable) -> None:
+    def register_factory(cls, service_type: type[T], factory: Callable) -> None:
         """Register a factory function for a service type."""
         cls._factories[service_type] = factory
 

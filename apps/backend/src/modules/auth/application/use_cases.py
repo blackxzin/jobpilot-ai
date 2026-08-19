@@ -1,16 +1,18 @@
 """Auth application use cases — register, login, logout."""
 from __future__ import annotations
 
-import uuid
-import hashlib
-import secrets
-from datetime import datetime, timedelta, UTC
+from datetime import UTC, datetime, timedelta
 
 from core.exceptions import AuthenticationError, ValidationError
-from core.config import settings
+from core.logger import get_logger
+from core.security import generate_token, hash_password, needs_rehash, verify_password
+from modules.auth.domain.entities import Session, User
+from modules.auth.domain.repositories import SessionRepository, UserRepository
 
-from modules.auth.domain.entities import User, Session
-from modules.auth.domain.repositories import UserRepository, SessionRepository
+logger = get_logger(__name__)
+
+MIN_PASSWORD_LENGTH = 8
+SESSION_TTL = timedelta(days=7)
 
 
 class RegisterUseCase:
@@ -20,8 +22,10 @@ class RegisterUseCase:
     async def execute(self, email: str, password: str, full_name: str = "") -> User:
         if not email or "@" not in email:
             raise ValidationError("Valid email is required")
-        if len(password) < 8:
-            raise ValidationError("Password must be at least 8 characters")
+        if len(password) < MIN_PASSWORD_LENGTH:
+            raise ValidationError(
+                f"Password must be at least {MIN_PASSWORD_LENGTH} characters"
+            )
 
         existing = await self._user_repo.get_by_email(email)
         if existing:
@@ -29,13 +33,10 @@ class RegisterUseCase:
 
         user = User(
             email=email,
-            hashed_password=self._hash_password(password),
+            hashed_password=hash_password(password),
             full_name=full_name,
         )
         return await self._user_repo.create(user)
-
-    def _hash_password(self, password: str) -> str:
-        return hashlib.sha256(password.encode()).hexdigest()
 
 
 class LoginUseCase:
@@ -48,18 +49,22 @@ class LoginUseCase:
         if not user:
             raise AuthenticationError("Invalid email or password")
 
-        hashed = hashlib.sha256(password.encode()).hexdigest()
-        if user.hashed_password != hashed:
+        if not verify_password(password, user.hashed_password):
             raise AuthenticationError("Invalid email or password")
 
         if not user.is_active:
             raise AuthenticationError("Account is disabled")
 
-        token = secrets.token_urlsafe(48)
+        # Transparently upgrade legacy/weaker hashes on successful login.
+        if needs_rehash(user.hashed_password):
+            user.hashed_password = hash_password(password)
+            await self._user_repo.update(user)
+            logger.info("password_hash_upgraded", user_id=str(user.id))
+
         session = Session(
             user_id=user.id,
-            token=token,
-            expires_at=datetime.now(UTC) + timedelta(days=7),
+            token=generate_token(),
+            expires_at=datetime.now(UTC) + SESSION_TTL,
         )
         created = await self._session_repo.create(session)
         return user, created

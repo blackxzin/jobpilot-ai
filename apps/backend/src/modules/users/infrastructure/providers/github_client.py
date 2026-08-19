@@ -6,7 +6,6 @@ from typing import Any
 
 import httpx
 
-from core.config import settings
 from core.logger import get_logger
 
 logger = get_logger(__name__)
@@ -63,7 +62,7 @@ class GitHubClient:
     ) -> list[dict[str, Any]]:
         """Get user's public repositories with language and activity data."""
         response = await self._client.get(
-            "/user/repos",
+            f"/users/{username}/repos",
             params={
                 "sort": sort,
                 "per_page": limit,

@@ -2,8 +2,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime, UTC
-from typing import Optional
+from datetime import UTC, datetime
 from uuid import UUID, uuid4
 
 from modules.notifications.domain.enums import NotificationChannel, NotificationStatus
@@ -16,6 +15,8 @@ class Notification:
     Attributes:
         id: Unique identifier.
         user_id: Target user identifier.
+        recipient: Channel-specific address (email address, chat id, ...).
+            Transient dispatch data — not persisted.
         type: Category of notification (email, discord, telegram, push).
         title: Short headline for the notification.
         message: Full body content.
@@ -27,12 +28,13 @@ class Notification:
 
     id: UUID = field(default_factory=uuid4)
     user_id: str = ""
+    recipient: str = ""
     type: NotificationChannel = NotificationChannel.EMAIL
     title: str = ""
     message: str = ""
     channel: NotificationChannel = NotificationChannel.EMAIL
     status: NotificationStatus = NotificationStatus.PENDING
-    read_at: Optional[datetime] = None
+    read_at: datetime | None = None
     created_at: datetime = field(default_factory=lambda: datetime.now(UTC))
 
     def mark_as_read(self) -> None:

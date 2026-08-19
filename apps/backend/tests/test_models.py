@@ -5,8 +5,8 @@ import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.models import (
-    UserModel, SessionModel, ResumeModel, JobModel, ApplicationModel,
-    NotificationModel, CompanyModel, CoverLetterModel, AIAnalysisModel,
+    JobModel,
+    UserModel,
 )
 
 

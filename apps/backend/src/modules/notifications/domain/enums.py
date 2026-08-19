@@ -1,10 +1,10 @@
 """Notification channel and status enumerations."""
 from __future__ import annotations
 
-from enum import Enum
+from enum import StrEnum
 
 
-class NotificationChannel(str, Enum):
+class NotificationChannel(StrEnum):
     """Supported notification delivery channels."""
 
     EMAIL = "email"
@@ -13,7 +13,7 @@ class NotificationChannel(str, Enum):
     PUSH = "push"
 
 
-class NotificationStatus(str, Enum):
+class NotificationStatus(StrEnum):
     """Lifecycle states of a notification."""
 
     PENDING = "pending"

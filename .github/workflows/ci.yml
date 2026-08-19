@@ -38,17 +38,16 @@ jobs:
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install -r requirements.txt
-          pip install pytest pytest-asyncio httpx ruff
+          pip install -r requirements-dev.txt
 
       - name: Lint with Ruff
-        run: ruff check src/
+        run: ruff check src/ tests/
 
       - name: Run tests
         env:
-          DATABASE_URL: postgresql+asyncpg://jobpilot:jobpilot_test@localhost:5432/jobpilot_test
+          APP_ENV: test
           REDIS_URL: redis://localhost:6379/0
-        run: pytest tests/ -v --asyncio-mode=auto
+        run: pytest -v
 
   frontend-lint:
     runs-on: ubuntu-latest
@@ -74,3 +73,6 @@ jobs:
 
       - name: Lint
         run: npm run lint
+
+      - name: Build
+        run: npm run build

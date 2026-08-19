@@ -2,17 +2,16 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Optional
 
-from modules.auth.domain.entities import User, Session
+from modules.auth.domain.entities import Session, User
 
 
 class UserRepository(ABC):
     @abstractmethod
-    async def get_by_email(self, email: str) -> Optional[User]: ...
+    async def get_by_email(self, email: str) -> User | None: ...
 
     @abstractmethod
-    async def get_by_id(self, user_id: str) -> Optional[User]: ...
+    async def get_by_id(self, user_id: str) -> User | None: ...
 
     @abstractmethod
     async def create(self, user: User) -> User: ...
@@ -23,7 +22,7 @@ class UserRepository(ABC):
 
 class SessionRepository(ABC):
     @abstractmethod
-    async def get_by_token(self, token: str) -> Optional[Session]: ...
+    async def get_by_token(self, token: str) -> Session | None: ...
 
     @abstractmethod
     async def create(self, session: Session) -> Session: ...

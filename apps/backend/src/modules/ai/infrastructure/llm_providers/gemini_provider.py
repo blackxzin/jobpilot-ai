@@ -2,12 +2,13 @@
 from __future__ import annotations
 
 import os
-from typing import AsyncGenerator
+from collections.abc import AsyncGenerator
 
 from google.generativeai import GenerativeModel, configure
 
-from modules.ai.domain.llm_provider import LLMProvider
 from core.config import settings
+from modules.ai.domain.llm_provider import LLMProvider
+
 
 class GeminiProvider(LLMProvider):
     """Provider for Google Gemini API."""

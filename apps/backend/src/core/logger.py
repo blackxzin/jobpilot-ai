@@ -5,6 +5,7 @@ Uses structlog for JSON-formatted, context-aware logging.
 """
 
 import sys
+from datetime import UTC
 from typing import Any
 
 import structlog
@@ -17,8 +18,8 @@ def add_log_level(logger: Any, _method_name: str, event_dict: dict[str, Any]) ->
 
 def add_timestamp(logger: Any, _method_name: str, event_dict: dict[str, Any]) -> dict[str, Any]:
     """Processor that adds a timestamp."""
-    from datetime import datetime, timezone
-    event_dict["timestamp"] = datetime.now(timezone.utc).isoformat()
+    from datetime import datetime
+    event_dict["timestamp"] = datetime.now(UTC).isoformat()
     return event_dict
 
 

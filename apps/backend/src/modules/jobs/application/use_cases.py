@@ -1,8 +1,6 @@
 """Jobs application use cases."""
 from __future__ import annotations
 
-from typing import Optional
-
 from core.exceptions import NotFoundError
 from modules.jobs.infrastructure.repositories import JobRepository
 from modules.users.infrastructure.providers.gupy_client import GupyClient

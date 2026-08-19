@@ -5,7 +5,7 @@ import pytest
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from core.models import JobModel, JobEmbeddingModel
+from core.models import JobModel
 
 
 @pytest.mark.asyncio

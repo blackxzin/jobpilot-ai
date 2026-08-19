@@ -32,7 +32,6 @@ async def test_notifications_unread_count(client: AsyncClient):
 @pytest.mark.asyncio
 async def test_notifications_mark_read(client: AsyncClient, db_session: AsyncSession):
     import uuid
-    from datetime import datetime, UTC
 
     reg = await client.post("/api/v1/auth/register", json={"email": "notif3@test.com", "password": "pass12345"})
     token = reg.json()["token"]

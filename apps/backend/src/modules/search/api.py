@@ -1,16 +1,16 @@
 """Vector search API — semantic job matching."""
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, Header, Query
+from fastapi import APIRouter, Depends, Query
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, text
 
 from core.database import get_db
-from core.models import JobModel, JobEmbeddingModel
-from modules.auth.infrastructure.repositories import SQLAlchemyUserRepository, SQLAlchemySessionRepository
-from modules.auth.application.use_cases import GetCurrentUserUseCase
-from modules.search.infrastructure import EmbeddingService, cosine_similarity
 from core.exceptions import NotFoundError
+from core.models import JobEmbeddingModel, JobModel
+from modules.auth.api.dependencies import get_current_user
+from modules.auth.domain.entities import User
+from modules.search.infrastructure import EmbeddingService, cosine_similarity
 
 router = APIRouter(prefix="/search", tags=["search"])
 
@@ -18,17 +18,11 @@ router = APIRouter(prefix="/search", tags=["search"])
 @router.get("/semantic")
 async def semantic_search(
     q: str = Query(""),
-    limit: int = 10,
-    authorization: str = Header(""),
+    limit: int = Query(10, ge=1, le=100),
+    user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
     """Semantic job search using embeddings."""
-    token = authorization.replace("Bearer ", "")
-    user_repo = SQLAlchemyUserRepository(db)
-    session_repo = SQLAlchemySessionRepository(db)
-    auth_uc = GetCurrentUserUseCase(user_repo, session_repo)
-    await auth_uc.execute(token)
-
     # 1. Generate embedding for query
     embedder = EmbeddingService()
     query_vec = await embedder.embed_text(q)
@@ -67,14 +61,12 @@ async def semantic_search(
 
 
 @router.post("/index-job/{job_id}")
-async def index_job(job_id: str, authorization: str = Header(""), db: AsyncSession = Depends(get_db)):
+async def index_job(
+    job_id: str,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
     """Generate and store embedding for a specific job."""
-    token = authorization.replace("Bearer ", "")
-    user_repo = SQLAlchemyUserRepository(db)
-    session_repo = SQLAlchemySessionRepository(db)
-    auth_uc = GetCurrentUserUseCase(user_repo, session_repo)
-    await auth_uc.execute(token)
-
     job = await db.get(JobModel, job_id)
     if not job:
         raise NotFoundError("Job not found")

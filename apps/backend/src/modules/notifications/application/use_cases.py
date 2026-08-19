@@ -1,14 +1,12 @@
 """Notification use cases."""
 from __future__ import annotations
 
-from datetime import datetime, UTC
-from typing import Optional
 from uuid import UUID
 
+from core.logger import get_logger
 from modules.notifications.domain.entities import Notification
 from modules.notifications.domain.enums import NotificationChannel, NotificationStatus
 from modules.notifications.domain.repositories import INotificationRepository
-from core.logger import get_logger
 
 logger = get_logger(__name__)
 
@@ -26,6 +24,7 @@ class SendNotificationUseCase:
         title: str,
         message: str,
         channel: NotificationChannel,
+        recipient: str = "",
     ) -> Notification:
         """Create and dispatch a notification.
 
@@ -35,12 +34,15 @@ class SendNotificationUseCase:
             title: Short headline.
             message: Body content.
             channel: The delivery channel to use.
+            recipient: Channel address (e.g. the user's email). Required for
+                the email channel — without it there is nothing to send to.
 
         Returns:
             The persisted notification entity.
         """
         notification = Notification(
             user_id=user_id,
+            recipient=recipient,
             type=type,
             title=title,
             message=message,
@@ -85,12 +87,12 @@ class SendNotificationUseCase:
         classes imported here to avoid circular dependencies at module load.
         """
         # Import inside method to keep domain layer free of infrastructure imports.
+        from core.config import settings
         from modules.notifications.infrastructure.providers import (
-            EmailNotificationProvider,
             DiscordNotificationProvider,
+            EmailNotificationProvider,
             TelegramNotificationProvider,
         )
-        from core.config import settings
 
         dispatch_map: dict[NotificationChannel, object] = {
             NotificationChannel.EMAIL: EmailNotificationProvider(
@@ -118,7 +120,7 @@ class GetUserNotificationsUseCase:
         self,
         user_id: str,
         *,
-        status: Optional[NotificationStatus] = None,
+        status: NotificationStatus | None = None,
         limit: int = 50,
         offset: int = 0,
     ) -> list[Notification]:
@@ -144,7 +146,7 @@ class MarkNotificationReadUseCase:
     def __init__(self, repository: INotificationRepository) -> None:
         self._repository = repository
 
-    async def execute(self, notification_id: UUID) -> Optional[Notification]:
+    async def execute(self, notification_id: UUID) -> Notification | None:
         """Mark the notification as read."""
         result = await self._repository.mark_as_read(notification_id)
         if result is None:

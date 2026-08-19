@@ -2,8 +2,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime, UTC
-from typing import Optional
+from datetime import UTC, datetime
 from uuid import UUID, uuid4
 
 
@@ -11,6 +10,6 @@ from uuid import UUID, uuid4
 class CoverLetter:
     id: UUID = field(default_factory=uuid4)
     user_id: UUID = field(default_factory=uuid4)
-    job_id: Optional[UUID] = None
+    job_id: UUID | None = None
     content: str = ""
     created_at: datetime = field(default_factory=lambda: datetime.now(UTC))

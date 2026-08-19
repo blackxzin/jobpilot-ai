@@ -1,15 +1,11 @@
 """Users API routes."""
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, Header
+from fastapi import APIRouter, Depends
 from pydantic import BaseModel
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from core.database import get_db
-from core.exceptions import NotFoundError
-from modules.auth.infrastructure.repositories import SQLAlchemyUserRepository, SQLAlchemySessionRepository
-from modules.auth.application.use_cases import GetCurrentUserUseCase
-from modules.users.application.use_cases import GetProfileUseCase
+from modules.auth.api.dependencies import get_current_user
+from modules.auth.domain.entities import User
 
 router = APIRouter(prefix="/users", tags=["users"])
 
@@ -23,12 +19,7 @@ class ProfileResponse(BaseModel):
 
 
 @router.get("/me/profile", response_model=ProfileResponse)
-async def get_my_profile(authorization: str = Header(""), db: AsyncSession = Depends(get_db)):
-    token = authorization.replace("Bearer ", "")
-    user_repo = SQLAlchemyUserRepository(db)
-    session_repo = SQLAlchemySessionRepository(db)
-    auth_uc = GetCurrentUserUseCase(user_repo, session_repo)
-    user = await auth_uc.execute(token)
+async def get_my_profile(user: User = Depends(get_current_user)):
     return ProfileResponse(
         id=str(user.id),
         email=user.email,

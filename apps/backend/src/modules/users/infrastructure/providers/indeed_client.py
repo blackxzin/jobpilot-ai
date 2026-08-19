@@ -2,8 +2,13 @@
 from __future__ import annotations
 
 from typing import Any
-import httpx
 from xml.etree import ElementTree
+
+import httpx
+
+from core.logger import get_logger
+
+logger = get_logger(__name__)
 
 
 class IndeedClient:
@@ -51,7 +56,7 @@ class IndeedClient:
                     "source": "indeed",
                     "location": location or "Brasil",
                 })
-        except Exception:
-            pass
+        except ElementTree.ParseError as e:
+            logger.warning("indeed_rss_parse_failed", error=str(e))
 
         return jobs[:20]

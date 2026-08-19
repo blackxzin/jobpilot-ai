@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 import pytest
-import numpy as np
 
 from modules.search.infrastructure import EmbeddingService, cosine_similarity
 

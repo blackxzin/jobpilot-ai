@@ -1,11 +1,9 @@
 """Users application use cases."""
 from __future__ import annotations
 
-from typing import Optional
-
 from core.exceptions import NotFoundError
-from modules.users.domain.entities import UserProfile
 from modules.auth.domain.repositories import UserRepository
+from modules.users.domain.entities import UserProfile
 
 
 class GetProfileUseCase:

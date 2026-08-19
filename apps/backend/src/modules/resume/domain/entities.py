@@ -2,8 +2,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime, UTC
-from typing import Optional
+from datetime import UTC, datetime
 from uuid import UUID, uuid4
 
 
@@ -14,7 +13,7 @@ class Resume:
     title: str = ""
     file_url: str = ""
     content_text: str = ""
-    ats_score: Optional[int] = None
+    ats_score: int | None = None
     ats_breakdown: dict = field(default_factory=dict)
     created_at: datetime = field(default_factory=lambda: datetime.now(UTC))
     updated_at: datetime = field(default_factory=lambda: datetime.now(UTC))

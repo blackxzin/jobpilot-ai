@@ -1,16 +1,17 @@
 """LLM Provider Config API routes."""
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, Header
+from fastapi import APIRouter, Depends
 from pydantic import BaseModel
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.database import get_db
-from core.security import encrypt_api_key
-from modules.auth.infrastructure.repositories import SQLAlchemyUserRepository, SQLAlchemySessionRepository
-from modules.auth.application.use_cases import GetCurrentUserUseCase
+from core.exceptions import ValidationError
 from core.models import LLMProviderConfigModel
-from sqlalchemy import select
+from core.security import encrypt_api_key
+from modules.auth.api.dependencies import get_current_user
+from modules.auth.domain.entities import User
 
 router = APIRouter(prefix="/settings", tags=["settings"])
 
@@ -37,13 +38,10 @@ async def list_providers():
 
 
 @router.get("/llm")
-async def get_configs(authorization: str = Header(""), db: AsyncSession = Depends(get_db)):
-    token = authorization.replace("Bearer ", "")
-    user_repo = SQLAlchemyUserRepository(db)
-    session_repo = SQLAlchemySessionRepository(db)
-    auth_uc = GetCurrentUserUseCase(user_repo, session_repo)
-    user = await auth_uc.execute(token)
-
+async def get_configs(
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
     result = await db.execute(
         select(LLMProviderConfigModel).where(LLMProviderConfigModel.user_id == str(user.id))
     )
@@ -64,12 +62,16 @@ async def get_configs(authorization: str = Header(""), db: AsyncSession = Depend
 
 
 @router.post("/llm")
-async def save_config(body: ProviderConfigRequest, authorization: str = Header(""), db: AsyncSession = Depends(get_db)):
-    token = authorization.replace("Bearer ", "")
-    user_repo = SQLAlchemyUserRepository(db)
-    session_repo = SQLAlchemySessionRepository(db)
-    auth_uc = GetCurrentUserUseCase(user_repo, session_repo)
-    user = await auth_uc.execute(token)
+async def save_config(
+    body: ProviderConfigRequest,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    if body.provider_name not in {p["id"] for p in PROVIDERS}:
+        raise ValidationError(
+            f"Unknown provider '{body.provider_name}'. "
+            f"Allowed: {', '.join(p['id'] for p in PROVIDERS)}"
+        )
 
     # Check if already exists
     result = await db.execute(
@@ -101,5 +103,5 @@ async def save_config(body: ProviderConfigRequest, authorization: str = Header("
         )
         db.add(config)
 
-    await db.commit()
+    await db.flush()
     return {"message": f"{body.provider_name} configurado com sucesso!"}

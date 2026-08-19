@@ -2,21 +2,24 @@
 from __future__ import annotations
 
 import os
-from typing import AsyncGenerator
+from collections.abc import AsyncGenerator
 
 from openai import AsyncOpenAI
 
-from modules.ai.domain.llm_provider import LLMProvider
 from core.config import settings
+from modules.ai.domain.llm_provider import LLMProvider
+
 
 class OpenAIProvider(LLMProvider):
     """Provider for OpenAI's Chat Completions API."""
 
     def __init__(self, api_key: str | None = None, model: str = "gpt-4o", base_url: str | None = None):
         self._provider_name = "openai"
-        kwargs = dict(
-            api_key=api_key or os.getenv("OPENAI_API_KEY", settings.OPENAI_API_KEY),
-        )
+        kwargs = {
+            "api_key": api_key or os.getenv("OPENAI_API_KEY", settings.OPENAI_API_KEY),
+            "timeout": settings.LLM_TIMEOUT_SECONDS,
+            "max_retries": settings.LLM_MAX_RETRIES,
+        }
         if base_url:
             kwargs["base_url"] = base_url
         self._client = AsyncOpenAI(**kwargs)

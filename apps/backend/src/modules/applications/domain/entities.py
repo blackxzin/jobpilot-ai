@@ -2,8 +2,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime, UTC
-from typing import Optional
+from datetime import UTC, datetime
 from uuid import UUID, uuid4
 
 from modules.applications.domain.enums import ApplicationStatus
@@ -20,9 +19,9 @@ class Application:
     status: ApplicationStatus = ApplicationStatus.APPLIED
     cover_letter: str = ""
     custom_message: str = ""
-    applied_at: Optional[datetime] = None
-    responded_at: Optional[datetime] = None
-    source_platform: Optional[str] = None
+    applied_at: datetime | None = None
+    responded_at: datetime | None = None
+    source_platform: str | None = None
     tracking_data: dict = field(default_factory=dict)
     created_at: datetime = field(default_factory=lambda: datetime.now(UTC))
     updated_at: datetime = field(default_factory=lambda: datetime.now(UTC))

@@ -2,7 +2,6 @@
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Iterable, Optional
 from uuid import UUID
 
 from modules.notifications.domain.entities import Notification
@@ -29,7 +28,7 @@ class INotificationRepository(ABC):
         self,
         user_id: str,
         *,
-        status: Optional[NotificationStatus] = None,
+        status: NotificationStatus | None = None,
         limit: int = 50,
         offset: int = 0,
     ) -> list[Notification]:
@@ -47,7 +46,7 @@ class INotificationRepository(ABC):
         ...
 
     @abstractmethod
-    async def mark_as_read(self, notification_id: UUID) -> Optional[Notification]:
+    async def mark_as_read(self, notification_id: UUID) -> Notification | None:
         """Mark a notification as read.
 
         Args:

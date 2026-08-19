@@ -1,13 +1,15 @@
 """Embedding generation using LLM provider (text to vector)."""
 from __future__ import annotations
 
-import json
 import hashlib
-from typing import Any
+
+import numpy as np
 
 from core.logger import get_logger
 
 logger = get_logger(__name__)
+
+EMBEDDING_DIM = 384
 
 
 class EmbeddingService:
@@ -45,24 +47,34 @@ class EmbeddingService:
             results.append(vec)
         return results
 
-    def _fallback_embed(self, text: str, dim: int = 384) -> list[float]:
-        """Deterministic hash-based embedding (development fallback)."""
-        import numpy as np
-        from numpy import dot, linalg
+    def _fallback_embed(self, text: str, dim: int = EMBEDDING_DIM) -> list[float]:
+        """Deterministic hash-seeded embedding (development fallback).
 
+        The hash digest seeds a PRNG instead of being reinterpreted as float32
+        bytes: raw digest bytes decode to values spanning the whole float range
+        (including inf/NaN), which overflows every downstream norm and dot
+        product.
+        """
         digest = hashlib.sha256(text.encode()).digest()
-        rng = np.frombuffer(digest, dtype=np.float32)
-        rng = rng[:dim] if len(rng) >= dim else np.pad(rng, (0, dim - len(rng)))
-        rng = rng / (linalg.norm(rng) + 1e-10)
-        return rng.tolist()
+        seed = int.from_bytes(digest, "big") % (2**32)
+        rng = np.random.default_rng(seed)
+        vec = rng.standard_normal(dim)
+        vec = vec / (np.linalg.norm(vec) + 1e-10)
+        return [float(v) for v in vec]
 
 
 async def cosine_similarity(vec_a: list[float], vec_b: list[float]) -> float:
-    """Compute cosine similarity between two vectors."""
-    import numpy as np
-    a = np.array(vec_a)
-    b = np.array(vec_b)
-    norm = np.linalg.norm(a) * np.linalg.norm(b)
-    if norm == 0:
+    """Compute cosine similarity between two vectors.
+
+    Returns 0.0 when the vectors have different lengths or either is a
+    zero vector, so callers never receive NaN.
+    """
+    if not vec_a or not vec_b or len(vec_a) != len(vec_b):
         return 0.0
-    return float(np.dot(a, b) / norm)
+    a = np.asarray(vec_a, dtype=np.float64)
+    b = np.asarray(vec_b, dtype=np.float64)
+    norm = float(np.linalg.norm(a) * np.linalg.norm(b))
+    if not np.isfinite(norm) or norm == 0:
+        return 0.0
+    similarity = float(np.dot(a, b) / norm)
+    return similarity if np.isfinite(similarity) else 0.0

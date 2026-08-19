@@ -1,9 +1,9 @@
 """Notifications infrastructure — SQLAlchemy repository."""
 from __future__ import annotations
 
-from typing import Optional
 from uuid import UUID
-from sqlalchemy import select, update, func
+
+from sqlalchemy import func, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.models import NotificationModel
@@ -33,7 +33,11 @@ class SQLAlchemyNotificationRepository(INotificationRepository):
         notification.id = UUID(model.id)
         return notification
 
-    async def get_for_user(self, user_id: str, *, status: Optional[NotificationStatus] = None, limit: int = 50, offset: int = 0) -> list[Notification]:
+    async def get_by_id(self, notification_id: UUID) -> Notification | None:
+        model = await self._session.get(NotificationModel, str(notification_id))
+        return self._to_domain(model) if model else None
+
+    async def get_for_user(self, user_id: str, *, status: NotificationStatus | None = None, limit: int = 50, offset: int = 0) -> list[Notification]:
         stmt = select(NotificationModel).where(NotificationModel.user_id == user_id)
         if status:
             stmt = stmt.where(NotificationModel.status == status.value)
@@ -41,8 +45,8 @@ class SQLAlchemyNotificationRepository(INotificationRepository):
         result = await self._session.execute(stmt)
         return [self._to_domain(m) for m in result.scalars().all()]
 
-    async def mark_as_read(self, notification_id: UUID) -> Optional[Notification]:
-        from datetime import datetime, UTC
+    async def mark_as_read(self, notification_id: UUID) -> Notification | None:
+        from datetime import UTC, datetime
         result = await self._session.execute(
             update(NotificationModel).where(NotificationModel.id == str(notification_id)).values(status="read", read_at=datetime.now(UTC)).returning(NotificationModel)
         )

@@ -8,14 +8,13 @@ from __future__ import annotations
 
 import time
 import uuid
-from typing import Callable, Awaitable
+from collections.abc import Awaitable, Callable
 
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
 from starlette.responses import Response
 
 from core.logger import get_logger
-from core.exceptions import AuthenticationError, AuthorizationError
 
 logger = get_logger(__name__)
 

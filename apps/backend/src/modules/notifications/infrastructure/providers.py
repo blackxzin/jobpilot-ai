@@ -20,7 +20,18 @@ class EmailNotificationProvider:
 
     async def send(self, notification: Any) -> None:
         if not self._api_key or self._api_key in ("", "sk-placeholder"):
-            logger.info("email_notification_skipped", to=notification.user_id, title=notification.title, reason="no_api_key")
+            logger.info("email_notification_skipped", title=notification.title, reason="no_api_key")
+            return
+
+        # `user_id` is a UUID, never an address: sending it to Resend produces
+        # a hard 422. The caller must supply the resolved email address.
+        to_address = getattr(notification, "recipient", "") or ""
+        if "@" not in to_address:
+            logger.warning(
+                "email_notification_skipped",
+                title=notification.title,
+                reason="no_recipient_email",
+            )
             return
 
         async with httpx.AsyncClient(timeout=15.0) as client:
@@ -32,15 +43,15 @@ class EmailNotificationProvider:
                 },
                 json={
                     "from": self._from,
-                    "to": notification.user_id,  # In production, resolve user email
+                    "to": to_address,
                     "subject": notification.title,
                     "text": notification.message,
                 },
             )
             if resp.is_success:
-                logger.info("email_sent", to=notification.user_id, subject=notification.title)
+                logger.info("email_sent", to=to_address, subject=notification.title)
             else:
-                logger.error("email_failed", to=notification.user_id, status=resp.status_code, detail=resp.text)
+                logger.error("email_failed", to=to_address, status=resp.status_code, detail=resp.text)
                 raise RuntimeError(f"Resend API error: {resp.status_code} {resp.text}")
 
 

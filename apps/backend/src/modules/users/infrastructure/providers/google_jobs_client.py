@@ -1,9 +1,10 @@
 """Google Jobs scraper — free job search via Google."""
 from __future__ import annotations
 
-from typing import Any
-import httpx
 import re
+from typing import Any
+
+import httpx
 
 
 class GoogleJobsClient:

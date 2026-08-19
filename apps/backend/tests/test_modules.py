@@ -1,9 +1,10 @@
 """Tests for Calendar and AI Chat modules."""
 from __future__ import annotations
 
+import os
+
 import pytest
 from httpx import AsyncClient
-import os
 
 SKIP_AI = pytest.mark.skipif(
     not os.environ.get("OPENAI_API_KEY", "").startswith("sk-"),

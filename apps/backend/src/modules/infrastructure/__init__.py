@@ -1,11 +1,11 @@
 """Infrastructure layer for JobPilot AI."""
 from modules.ai.infrastructure.llm_providers import (
-    OpenAIProvider,
     AnthropicProvider,
-    OllamaProvider,
-    OpenRouterProvider,
     GeminiProvider,
     NvidiaNimProvider,
+    OllamaProvider,
+    OpenAIProvider,
+    OpenRouterProvider,
 )
 from modules.ai.infrastructure.providers.factory import LLMProviderFactory
 

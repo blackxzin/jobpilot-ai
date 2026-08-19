@@ -1,11 +1,9 @@
 """Resume application use cases — upload, parse, list."""
 from __future__ import annotations
 
-from typing import Optional
-
 from core.exceptions import NotFoundError
-from modules.resume.infrastructure.repositories import ResumeRepository
 from core.logger import get_logger
+from modules.resume.infrastructure.repositories import ResumeRepository
 
 logger = get_logger(__name__)
 
@@ -31,8 +29,9 @@ class UploadResumeUseCase:
 
     def _extract_pdf_text(self, content: bytes) -> str:
         try:
-            from pypdf import PdfReader
             import io
+
+            from pypdf import PdfReader
             reader = PdfReader(io.BytesIO(content))
             text = ""
             for page in reader.pages:
@@ -47,7 +46,7 @@ class GetResumeUseCase:
     def __init__(self, repo: ResumeRepository):
         self._repo = repo
 
-    async def execute(self, resume_id: str) -> Optional[dict]:
+    async def execute(self, resume_id: str) -> dict | None:
         resume = await self._repo.get_by_id(resume_id)
         if not resume:
             raise NotFoundError("Resume not found")

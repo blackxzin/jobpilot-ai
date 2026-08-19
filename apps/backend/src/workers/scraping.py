@@ -1,8 +1,8 @@
 """Celery tasks for job scraping."""
 from __future__ import annotations
 
-from workers.celery_app import celery_app
 from core.logger import get_logger
+from workers.celery_app import celery_app
 
 logger = get_logger(__name__)
 

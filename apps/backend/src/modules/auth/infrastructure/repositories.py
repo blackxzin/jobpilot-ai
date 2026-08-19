@@ -1,28 +1,26 @@
 """Auth infrastructure — SQLAlchemy repository implementations."""
 from __future__ import annotations
 
-from typing import Optional
-
-from sqlalchemy import select, delete
+from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from modules.auth.domain.entities import User, Session
-from modules.auth.domain.repositories import UserRepository, SessionRepository
-from core.models import UserModel, SessionModel
+from core.models import SessionModel, UserModel
+from modules.auth.domain.entities import Session, User
+from modules.auth.domain.repositories import SessionRepository, UserRepository
 
 
 class SQLAlchemyUserRepository(UserRepository):
     def __init__(self, session: AsyncSession):
         self._session = session
 
-    async def get_by_email(self, email: str) -> Optional[User]:
+    async def get_by_email(self, email: str) -> User | None:
         result = await self._session.execute(
             select(UserModel).where(UserModel.email == email)
         )
         row = result.scalar_one_or_none()
         return self._to_domain(row) if row else None
 
-    async def get_by_id(self, user_id: str) -> Optional[User]:
+    async def get_by_id(self, user_id: str) -> User | None:
         result = await self._session.execute(
             select(UserModel).where(UserModel.id == user_id)
         )
@@ -49,6 +47,7 @@ class SQLAlchemyUserRepository(UserRepository):
         if model is None:
             return user
         model.email = user.email
+        model.hashed_password = user.hashed_password
         model.full_name = user.full_name
         model.avatar_url = user.avatar_url
         model.is_active = user.is_active
@@ -75,7 +74,7 @@ class SQLAlchemySessionRepository(SessionRepository):
     def __init__(self, session: AsyncSession):
         self._session = session
 
-    async def get_by_token(self, token: str) -> Optional[Session]:
+    async def get_by_token(self, token: str) -> Session | None:
         result = await self._session.execute(
             select(SessionModel).where(SessionModel.token == token)
         )
@@ -99,7 +98,7 @@ class SQLAlchemySessionRepository(SessionRepository):
         )
 
     async def delete_expired(self) -> int:
-        from datetime import datetime, UTC
+        from datetime import UTC, datetime
         result = await self._session.execute(
             delete(SessionModel).where(SessionModel.expires_at < datetime.now(UTC))
         )
