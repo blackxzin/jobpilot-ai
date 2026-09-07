@@ -41,6 +41,43 @@ docker compose exec backend python -m scripts.seed_demo --reset
 
 ---
 
+## A demonstração
+
+Todas as telas abaixo são a conta de demonstração rodando **sem nenhuma chave de API**.
+Os números vêm dos dados semeados; os scores e textos vêm do analisador local.
+
+### Entrada
+
+<img src="docs/screenshots/login.png" alt="Tela de login com o botão Explorar a demonstração" width="100%">
+
+### Dashboard
+
+Taxas de conversão, funil por estágio, empresas mais aplicadas, competências extraídas
+do currículo e atividade dos últimos 30 dias.
+
+<img src="docs/screenshots/dashboard.png" alt="Dashboard com KPIs, funil de candidaturas e atividade" width="100%">
+
+### Candidaturas
+
+Pipeline com sete estágios e as cinco ações de IA por candidatura.
+
+<img src="docs/screenshots/applications.png" alt="Lista de candidaturas com pipeline e ações de IA" width="100%">
+
+### Análise de compatibilidade
+
+Score, o porquê separado em pontos fortes e lacunas, e sugestões acionáveis.
+
+<img src="docs/screenshots/analysis.png" alt="Painel de compatibilidade entre currículo e vaga" width="100%">
+
+### Busca semântica
+
+Ranqueia por significado. `kubernetes terraform plataforma` encontra a vaga de
+Engenheiro de Plataforma sem que o termo apareça no título.
+
+<img src="docs/screenshots/semantic.png" alt="Resultados da busca semântica ranqueados por relevância" width="100%">
+
+---
+
 ## Modos de operação da IA
 
 | Modo | Quando é usado | O que funciona |
