@@ -1,6 +1,8 @@
 """Tests for notification module — CRUD + providers."""
 from __future__ import annotations
 
+from types import SimpleNamespace
+
 import pytest
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -83,3 +85,37 @@ async def test_telegram_provider_skips_without_token():
     from modules.notifications.domain.entities import Notification
     n = Notification(title="Test", message="Msg")
     await provider.send(n)  # Should log skip, not crash
+
+
+# ── Provider dispatch ───────────────────────────────────────────────────────
+
+@pytest.mark.asyncio
+async def test_email_is_skipped_without_a_recipient_address():
+    """user_id used to be sent to Resend as the address; every send failed."""
+    from modules.notifications.infrastructure.providers import EmailNotificationProvider
+
+    provider = EmailNotificationProvider(api_key="re_key", from_address="a@b.com")
+    notification = SimpleNamespace(title="t", message="m", recipient="not-an-email")
+
+    # Returns rather than raising: nothing was sent, and nothing blew up.
+    assert await provider.send(notification) is None
+
+
+@pytest.mark.asyncio
+async def test_email_is_skipped_without_an_api_key():
+    from modules.notifications.infrastructure.providers import EmailNotificationProvider
+
+    provider = EmailNotificationProvider(api_key="")
+    assert await provider.send(SimpleNamespace(title="t", message="m", recipient="a@b.com")) is None
+
+
+@pytest.mark.asyncio
+async def test_discord_and_telegram_are_skipped_without_configuration():
+    from modules.notifications.infrastructure.providers import (
+        DiscordNotificationProvider,
+        TelegramNotificationProvider,
+    )
+
+    notification = SimpleNamespace(title="t", message="m", recipient="")
+    assert await DiscordNotificationProvider(webhook_url="").send(notification) is None
+    assert await TelegramNotificationProvider(bot_token="", chat_id="").send(notification) is None

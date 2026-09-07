@@ -20,6 +20,7 @@ from modules.ai.infrastructure.llm_providers.prompt_builder import (
     build_career_answer_prompt,
     build_compare_job_prompt,
     build_cover_letter_prompt,
+    build_profile_suggestions_prompt,
     build_tailored_resume_prompt,
 )
 
@@ -60,3 +61,7 @@ class PromptDrivenProvider(LLMProvider):
 
     async def answer_question(self, question: str, context: str = "", **kwargs) -> str:
         return await self.generate(build_career_answer_prompt(question, context), **kwargs)
+
+    async def suggest_profile(self, resume: str, target_role: str = "", **kwargs) -> dict:
+        prompt = build_profile_suggestions_prompt(resume or "", target_role)
+        return parse_json_response(await self.generate(prompt, **kwargs))

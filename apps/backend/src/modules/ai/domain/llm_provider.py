@@ -82,6 +82,24 @@ class LLMProvider(ABC):
         ...
 
     @abstractmethod
+    async def suggest_profile(self, resume: str, target_role: str = "") -> dict:
+        """Suggest how to present this resume on a professional profile.
+
+        Grounded in the resume: the caller supplies the candidate's own text,
+        and nothing in the result may be invented.
+
+        Returns dict with:
+            - headline: str
+            - about: str
+            - skills: list[str]
+            - suggested_roles: list[str]
+            - experience_years: int
+            - gaps: list[str]
+            - analysis: str
+        """
+        ...
+
+    @abstractmethod
     async def health_check(self) -> bool:
         """Check if the provider is reachable and configured correctly."""
         ...

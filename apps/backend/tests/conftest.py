@@ -19,6 +19,34 @@ TEST_DATABASE_URL = "sqlite+aiosqlite:///./test.db"
 
 
 @pytest.fixture(autouse=True)
+def hermetic_llm_settings():
+    """Keep ambient credentials out of the test run.
+
+    `OPENAI_API_KEY` is commonly exported in a developer's shell for unrelated
+    tools. pydantic-settings picks it up, so the suite silently started making
+    real, billable calls to a hosted provider — and failed for reasons that had
+    nothing to do with the code under test. Tests exercise the offline
+    analyzer, which is deterministic and free.
+    """
+    saved = {
+        name: getattr(settings, name)
+        for name in (
+            "OPENAI_API_KEY",
+            "ANTHROPIC_API_KEY",
+            "GEMINI_API_KEY",
+            "OPENROUTER_API_KEY",
+            "EMBEDDING_API_KEY",
+            "EMAIL_API_KEY",
+        )
+    }
+    for name in saved:
+        setattr(settings, name, "")
+    yield
+    for name, value in saved.items():
+        setattr(settings, name, value)
+
+
+@pytest.fixture(autouse=True)
 def isolate_rate_limiter():
     """Keep the shared rate-limit counters out of unrelated tests.
 

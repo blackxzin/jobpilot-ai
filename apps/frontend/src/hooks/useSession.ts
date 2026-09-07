@@ -1,8 +1,14 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { createDemoClient, IS_STATIC_DEMO } from "@/demo/client";
 import { ApiError, createClient, TOKEN_STORAGE_KEY } from "@/lib/api";
 import type { Session } from "@/lib/types";
+
+/** In the static demo every request is answered in the browser. */
+function clientFor(token: string) {
+  return IS_STATIC_DEMO ? createDemoClient() : createClient(token);
+}
 
 interface AuthPayload {
   user_id: string;
@@ -23,7 +29,7 @@ export function useSession() {
   const [user, setUser] = useState<Session | null>(null);
   const [restoring, setRestoring] = useState(true);
 
-  const client = useMemo(() => createClient(token), [token]);
+  const client = useMemo(() => clientFor(token), [token]);
 
   const store = useCallback((next: AuthPayload | null) => {
     if (next) {
@@ -56,7 +62,7 @@ export function useSession() {
 
     // Validate before trusting it: a stored token may have expired while the
     // tab was closed, and restoring it blindly renders a broken shell.
-    createClient(stored)
+    clientFor(stored)
       .get<{ id: string; email: string; full_name: string }>("/auth/me")
       .then((profile) => {
         localStorage.setItem(TOKEN_STORAGE_KEY, stored);
@@ -74,7 +80,7 @@ export function useSession() {
 
   const login = useCallback(
     async (email: string, password: string) => {
-      store(await createClient("").post<AuthPayload>("/auth/login", { email, password }));
+      store(await clientFor("").post<AuthPayload>("/auth/login", { email, password }));
     },
     [store],
   );
@@ -82,7 +88,7 @@ export function useSession() {
   const register = useCallback(
     async (email: string, password: string, fullName: string) => {
       store(
-        await createClient("").post<AuthPayload>("/auth/register", {
+        await clientFor("").post<AuthPayload>("/auth/register", {
           email,
           password,
           full_name: fullName,
@@ -94,7 +100,7 @@ export function useSession() {
 
   /** Sign in to the shared demo account, when the instance exposes one. */
   const loginAsDemo = useCallback(async () => {
-    store(await createClient("").post<AuthPayload>("/auth/demo"));
+    store(await clientFor("").post<AuthPayload>("/auth/demo"));
   }, [store]);
 
   const logout = useCallback(async () => {

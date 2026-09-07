@@ -207,6 +207,58 @@ def audit_resume(resume: str) -> tuple[int, list[str], list[str]]:
     return min(score, 100), strengths, suggestions
 
 
+# Role suggestions are driven by which skill clusters the resume actually
+# evidences, so nothing is proposed that the document does not support.
+_ROLE_SIGNALS = {
+    "Desenvolvedor(a) Backend": {"python", "java", "go", "node", "django", "fastapi", "spring", "rails", "laravel"},
+    "Desenvolvedor(a) Frontend": {"react", "vue", "angular", "svelte", "typescript", "css", "html", "tailwind"},
+    "Engenheiro(a) de Dados": {"spark", "airflow", "etl", "pandas", "sql", "bi"},
+    "Engenheiro(a) de Machine Learning": {"pytorch", "tensorflow", "sklearn", "learning", "machine"},
+    "Engenheiro(a) de Plataforma / SRE": {"kubernetes", "terraform", "ansible", "linux", "observability", "sre", "cicd", "devops"},
+    "Desenvolvedor(a) Mobile": {"android", "ios", "flutter", "swift", "kotlin", "react-native", "dart"},
+}
+
+# Two independent formats, so a CV written either way is read correctly.
+_YEARS_PATTERNS = (
+    re.compile(r"(\d{1,2})\s*\+?\s*anos?\s+de\s+experiencia"),
+    re.compile(r"(\d{1,2})\s*\+?\s*years?\s+of\s+experience"),
+)
+
+_YEAR_RANGE = re.compile(r"(19|20)\d{2}")
+
+
+def _infer_experience_years(resume: str) -> int:
+    """Read years of experience from the resume, never guess it.
+
+    Prefers an explicit statement; falls back to the span between the earliest
+    and latest years mentioned. Returns 0 when the document says neither.
+    """
+    normalized = _strip_accents((resume or "").lower())
+
+    for pattern in _YEARS_PATTERNS:
+        match = pattern.search(normalized)
+        if match:
+            return int(match.group(1))
+
+    # finditer, not findall: the pattern is grouped, so findall would return
+    # just the century digits.
+    years = [int(match.group()) for match in _YEAR_RANGE.finditer(resume or "")]
+    if len(years) >= 2:
+        span = max(years) - min(years)
+        return span if 0 < span <= 50 else 0
+    return 0
+
+
+def _suggest_roles(skills: list[str]) -> list[str]:
+    """Return roles whose signal skills appear in the resume, strongest first."""
+    scored = [
+        (role, len(signals & set(skills)))
+        for role, signals in _ROLE_SIGNALS.items()
+    ]
+    matched = sorted((s for s in scored if s[1] > 0), key=lambda item: -item[1])
+    return [role for role, _ in matched[:3]]
+
+
 def _bullets(items, empty: str) -> str:
     listed = [i for i in items if i]
     if not listed:
@@ -346,6 +398,38 @@ class OfflineProvider(LLMProvider):
             "Enquanto isso, tudo que não depende de geração de texto livre continua funcionando: "
             "matching, ATS Score, carta de apresentação e currículo direcionado usam o analisador local."
         )
+
+    async def suggest_profile(self, resume: str, target_role: str = "", **kwargs) -> dict:
+        skills = sorted(extract_skills(resume))
+        score, strengths, suggestions = audit_resume(resume)
+        years = _infer_experience_years(resume)
+        headline_skills = ", ".join(skills[:3]) if skills else "desenvolvimento de software"
+
+        return {
+            "headline": (
+                f"{target_role or 'Profissional de tecnologia'} · {headline_skills}"
+            )[:120],
+            "about": (
+                f"Trabalho com {headline_skills}"
+                + (f", com cerca de {years} anos de experiência" if years else "")
+                + ". Foco em entregar do problema à solução, com resultados mensuráveis.\n\n"
+                "_Rascunho montado pelo analisador local a partir do seu currículo. "
+                "Configure um provedor de IA para uma redação completa._"
+            ),
+            "skills": skills,
+            "suggested_roles": _suggest_roles(skills),
+            "experience_years": years,
+            "gaps": suggestions,
+            "analysis": (
+                f"Seu currículo pontua {score}/100 na leitura automatizada. "
+                + (
+                    "Pontos fortes: " + "; ".join(strengths) + "."
+                    if strengths
+                    else "Comece adicionando seções e competências explícitas."
+                )
+            ),
+            "provider": "offline",
+        }
 
     async def health_check(self) -> bool:
         return True

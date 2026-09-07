@@ -5,7 +5,8 @@ import tseslint from "typescript-eslint";
 
 export default [
   {
-    ignores: [".next/**", "node_modules/**", "test-results/**", "next-env.d.ts"],
+    // Build output: .next for the server build, out for the static export.
+    ignores: [".next/**", "out/**", "node_modules/**", "test-results/**", "next-env.d.ts"],
   },
   js.configs.recommended,
   ...tseslint.configs.recommended,

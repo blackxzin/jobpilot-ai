@@ -3,6 +3,7 @@
 import { LogOut, Menu, Moon, Sun, X } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { Logo } from "@/components/Logo";
+import { DemoBanner } from "@/components/DemoBanner";
 import { NotificationBell } from "@/components/NotificationBell";
 import { Badge } from "@/components/ui";
 import { TABS } from "@/lib/constants";
@@ -147,6 +148,8 @@ export function AppShell({
           </nav>
         )}
       </header>
+
+      <DemoBanner />
 
       <main className="mx-auto max-w-7xl space-y-5 px-4 py-6">{children}</main>
     </div>

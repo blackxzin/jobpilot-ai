@@ -15,12 +15,12 @@ class NvidiaNimProvider(OpenAICompatibleProvider):
     def __init__(
         self,
         api_key: str | None = None,
-        model: str = "meta/llama-3.2-3b-instruct",
+        model: str = "",
         base_url: str | None = None,
     ):
         super().__init__(
             api_key=api_key or settings.OPENAI_API_KEY,
-            model=model,
+            model=model or settings.NVIDIA_NIM_MODEL,
             base_url=base_url or settings.NVIDIA_NIM_ENDPOINT,
         )
 

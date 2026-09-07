@@ -50,12 +50,24 @@ Revisão completa do backend, frontend e infraestrutura. O que foi encontrado e 
 - **Erros:** o frontend mostrava sucesso e falha no mesmo banner verde. Agora há toasts tipados, e o cliente de API propaga a mensagem do servidor em vez de trocá-la por um texto genérico.
 - **Login:** registrava primeiro e caía para login, criando conta a cada e-mail digitado errado. Fluxos separados.
 - **Dependências:** `pgvector`, `prometheus-client`, `requests` e `Jinja2` estavam declaradas e não usadas. Dois clientes de vagas sem nenhuma referência foram removidos.
-- **Testes:** 89 → 108. Workers saíram de 0% para 82–97% de cobertura.
-- **CI:** health check nos serviços, relatório de cobertura, varredura de segredos.
+- **Testes:** 89 → 172, cobertura de 61% para 80%, agora exigida no CI.
+- **CI:** health check nos serviços, gate de cobertura, varredura de segredos.
+
+### Segunda rodada
+
+| Problema | Correção |
+|----------|----------|
+| **O modelo padrão da NVIDIA foi descontinuado** em 2026-08-26; toda chamada respondia 410 e o app mostrava um erro genérico | Modelo configurável em `NVIDIA_NIM_MODEL`, com um único ponto de verdade. Erros de provedor viraram mensagens acionáveis: modelo descontinuado, chave recusada, limite de taxa, timeout |
+| Padrão do modelo divergia entre o factory e a lista mostrada na tela de configuração | Ambos leem a mesma configuração |
+| **A suíte de testes lia `OPENAI_API_KEY` do shell do desenvolvedor** e fazia chamadas reais e cobradas a um provedor hospedado | Fixture que zera as credenciais; os testes exercitam o analisador local, determinístico e gratuito |
+| **Análise do LinkedIn pedia ao modelo para inferir o perfil a partir da URL**, sem acesso à página — uma biografia inteiramente inventada | Reescrita para partir do currículo do próprio usuário: headline, resumo, cargos sustentados pela experiência e lacunas. Anos de experiência são lidos do texto, nunca chutados |
+| Estado do OAuth num dicionário do processo — o fluxo só funcionava se o callback caísse na mesma réplica | Redis com `GETDEL` atômico e TTL, e fallback em memória para instância única |
+| Comando de reset do demo documentado no README não funcionava | `PYTHONPATH` e diretório corrigidos |
+| Container de injeção de dependência e cinco módulos de domínio sem nenhum importador | Removidos |
 
 ### Verificação
 
-- 108 testes passando, 4 pulados (dependem de chave de LLM opcional).
+- 172 testes passando, 4 pulados (dependem de chave de LLM opcional). Cobertura de 80%.
 - `ruff check` limpo em `src/` e `tests/`.
 - `tsc --noEmit`, `eslint` e `next build` limpos.
 - Stack completa validada com `docker compose up`: os 6 serviços sobem, o backend fica saudável, o frontend conversa com a API, o demo entra e todas as telas renderizam sem erro de console.
@@ -88,17 +100,14 @@ Revisão completa do backend, frontend e infraestrutura. O que foi encontrado e 
 
 | Item | Observação |
 |------|-----------|
-| **Revogar a chave da NVIDIA** | Está no histórico público do Git. Removê-la do arquivo não basta |
-| Cobertura em 67% | Alvo é 80%. Falta principalmente nos clientes de sites de vagas, que dependem de rede |
-| Estado do OAuth em memória | Só funciona com uma réplica do backend. Mover para Redis antes de escalar horizontalmente |
+| **Revogar a chave da NVIDIA** | Foi removida do histórico, mas esteve pública. Só a revogação em build.nvidia.com resolve |
 | `search-all` cobre 3 das 8 fontes | As demais exigem chave ou raspagem instável |
-| Análise de perfil do LinkedIn | O modelo infere o perfil a partir da URL, sem acessar a página. É um palpite, não um dado |
 | Currículo não é armazenado | Só o texto extraído é gravado; `file_url` é um rótulo |
+| Sem testes E2E no frontend | Playwright já está nas dependências; os fluxos foram verificados manualmente |
 
 ### Próximos passos sugeridos
 
 1. Revogar e rotacionar a chave exposta.
 2. Testes E2E no frontend (Playwright já está nas dependências).
-3. Mover o estado do OAuth para Redis.
-4. Armazenar o PDF original em storage de objetos.
-5. Expor os `job_matches` do worker em uma tela de recomendações.
+3. Armazenar o PDF original em storage de objetos.
+4. Expor os `job_matches` do worker em uma tela de recomendações.

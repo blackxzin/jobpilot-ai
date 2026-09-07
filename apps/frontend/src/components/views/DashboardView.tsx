@@ -3,7 +3,6 @@
 import {
   Award,
   Building2,
-  CheckCircle2,
   ClipboardList,
   Github,
   Linkedin,
@@ -16,7 +15,7 @@ import {
 import { useEffect, useState } from "react";
 import { Badge, Button, Card, EmptyState, Meter, SectionHeader, Skeleton } from "@/components/ui";
 import { formatDate, humanizeStatus } from "@/lib/format";
-import type { Analytics, ApplicationStats, GithubImport, LinkedInAnalysis } from "@/lib/types";
+import type { Analytics, ApplicationStats, GithubImport, ProfileSuggestion } from "@/lib/types";
 
 /** Counts up to `value` so a number that just changed draws the eye. */
 function AnimatedNumber({ value, suffix = "" }: { value: number; suffix?: string }) {
@@ -164,10 +163,11 @@ export function DashboardView({
   onGithubUsernameChange,
   githubData,
   onImportGithub,
-  linkedinUrl,
-  onLinkedinUrlChange,
-  linkedinData,
-  onAnalyzeLinkedin,
+  targetRole,
+  onTargetRoleChange,
+  profileSuggestion,
+  onSuggestProfile,
+  hasResume,
   importing,
 }: {
   analytics: Analytics | null;
@@ -177,10 +177,12 @@ export function DashboardView({
   onGithubUsernameChange: (value: string) => void;
   githubData: GithubImport | null;
   onImportGithub: () => void;
-  linkedinUrl: string;
-  onLinkedinUrlChange: (value: string) => void;
-  linkedinData: LinkedInAnalysis | null;
-  onAnalyzeLinkedin: () => void;
+  targetRole: string;
+  onTargetRoleChange: (value: string) => void;
+  profileSuggestion: ProfileSuggestion | null;
+  onSuggestProfile: () => void;
+  /** Positioning is derived from the resume, so it is unavailable without one. */
+  hasResume: boolean;
   importing: string;
 }) {
   if (loading) {
@@ -358,40 +360,87 @@ export function DashboardView({
 
           <div className="surface-inset space-y-3 p-4">
             <h3 className="flex items-center gap-1.5 text-sm font-medium">
-              <Linkedin size={14} /> LinkedIn
+              <Linkedin size={14} /> Posicionamento no LinkedIn
             </h3>
+            <p className="text-[11px] leading-relaxed text-faint">
+              Gerado a partir do seu currículo, não do endereço do perfil — nada é inventado.
+            </p>
             <div className="flex gap-2">
               <input
-                value={linkedinUrl}
-                onChange={(event) => onLinkedinUrlChange(event.target.value)}
-                onKeyDown={(event) => event.key === "Enter" && onAnalyzeLinkedin()}
-                placeholder="https://linkedin.com/in/..."
-                aria-label="URL do perfil do LinkedIn"
+                value={targetRole}
+                onChange={(event) => onTargetRoleChange(event.target.value)}
+                onKeyDown={(event) => event.key === "Enter" && hasResume && onSuggestProfile()}
+                placeholder="Cargo-alvo (opcional)"
+                aria-label="Cargo-alvo"
                 className="field"
               />
               <Button
                 size="sm"
-                onClick={onAnalyzeLinkedin}
-                loading={importing === "linkedin"}
+                onClick={onSuggestProfile}
+                loading={importing === "profile"}
+                disabled={!hasResume}
                 className="shrink-0"
               >
-                Analisar
+                Gerar
               </Button>
             </div>
-            {linkedinData && (
-              <div className="space-y-1.5 text-xs">
-                {linkedinData.name && (
-                  <p className="flex items-center gap-1 font-medium text-accent">
-                    <CheckCircle2 size={11} /> {linkedinData.name}
-                  </p>
+
+            {!hasResume && (
+              <p className="text-[11px] text-[var(--warning)]">
+                Envie um currículo na aba Currículos para liberar esta análise.
+              </p>
+            )}
+
+            {profileSuggestion && (
+              <div className="space-y-2.5 border-t border-hair pt-3 text-xs">
+                {profileSuggestion.headline && (
+                  <div>
+                    <p className="text-[11px] font-medium text-dim">Headline sugerida</p>
+                    <p className="text-accent">{profileSuggestion.headline}</p>
+                  </div>
                 )}
-                {linkedinData.headline && <p className="text-dim">{linkedinData.headline}</p>}
-                {linkedinData.analysis && <p className="text-faint">{linkedinData.analysis}</p>}
-                <div className="flex flex-wrap gap-1">
-                  {(linkedinData.skills ?? []).slice(0, 10).map((skill) => (
-                    <Badge key={skill}>{skill}</Badge>
-                  ))}
-                </div>
+                {profileSuggestion.about && (
+                  <div>
+                    <p className="text-[11px] font-medium text-dim">Sobre</p>
+                    <p className="whitespace-pre-wrap text-faint">{profileSuggestion.about}</p>
+                  </div>
+                )}
+                {(profileSuggestion.suggested_roles?.length ?? 0) > 0 && (
+                  <div className="space-y-1">
+                    <p className="text-[11px] font-medium text-dim">
+                      Cargos que sua experiência sustenta
+                    </p>
+                    <div className="flex flex-wrap gap-1">
+                      {profileSuggestion.suggested_roles?.map((role) => (
+                        <Badge key={role} tone="info">
+                          {role}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {(profileSuggestion.skills?.length ?? 0) > 0 && (
+                  <div className="flex flex-wrap gap-1">
+                    {profileSuggestion.skills?.slice(0, 12).map((skill) => (
+                      <Badge key={skill}>{skill}</Badge>
+                    ))}
+                  </div>
+                )}
+                {(profileSuggestion.gaps?.length ?? 0) > 0 && (
+                  <div className="space-y-1">
+                    <p className="text-[11px] font-medium text-[var(--warning)]">
+                      O que fortaleceria o perfil
+                    </p>
+                    <ul className="list-inside list-disc space-y-0.5 text-faint">
+                      {profileSuggestion.gaps?.map((gap) => (
+                        <li key={gap}>{gap}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                {profileSuggestion.analysis && (
+                  <p className="text-faint">{profileSuggestion.analysis}</p>
+                )}
               </div>
             )}
           </div>

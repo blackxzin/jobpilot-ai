@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import secrets
 import uuid
-from datetime import UTC, datetime, timedelta
+from datetime import UTC, datetime
 
 import httpx
 from fastapi import APIRouter, Depends, Header, Request, Response
@@ -25,6 +25,7 @@ from modules.auth.application.use_cases import (
     RegisterUseCase,
 )
 from modules.auth.domain.entities import User
+from modules.auth.infrastructure.oauth_state import consume_state, store_state
 from modules.auth.infrastructure.repositories import SQLAlchemySessionRepository, SQLAlchemyUserRepository
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -156,19 +157,6 @@ async def get_me(user: User = Depends(get_current_user)):
 
 # ── LinkedIn OAuth ──────────────────────────────────────────────────────────
 
-# state -> (redirect_url, issued_at). In-memory: fine for a single instance,
-# move to Redis when running more than one backend replica.
-OAUTH_STATE_TTL = timedelta(minutes=10)
-MAX_PENDING_STATES = 1000
-LINKEDIN_STATE_CACHE: dict[str, tuple[str, datetime]] = {}
-
-
-def _purge_expired_states(now: datetime) -> None:
-    """Drop expired states so the cache cannot grow without bound."""
-    for key in [k for k, (_, issued) in LINKEDIN_STATE_CACHE.items() if now - issued > OAUTH_STATE_TTL]:
-        LINKEDIN_STATE_CACHE.pop(key, None)
-
-
 @router.get("/linkedin/login")
 async def linkedin_login(request: Request):
     """Redirect user to LinkedIn OAuth authorization page."""
@@ -177,13 +165,11 @@ async def linkedin_login(request: Request):
             "LinkedIn OAuth is not configured. Set LINKEDIN_CLIENT_ID and LINKEDIN_CLIENT_SECRET."
         )
 
-    now = datetime.now(UTC)
-    _purge_expired_states(now)
-    if len(LINKEDIN_STATE_CACHE) >= MAX_PENDING_STATES:
-        raise AuthenticationError("Too many pending OAuth flows. Try again shortly.")
-
     state = secrets.token_urlsafe(32)
-    LINKEDIN_STATE_CACHE[state] = (str(request.query_params.get("redirect", "/")), now)
+    try:
+        await store_state(state, str(request.query_params.get("redirect", "/")))
+    except RuntimeError as e:
+        raise AuthenticationError("Too many pending OAuth flows. Try again shortly.") from e
 
     auth_url = (
         f"https://www.linkedin.com/oauth/v2/authorization?"
@@ -212,9 +198,7 @@ async def linkedin_callback(
         raise AuthenticationError(f"LinkedIn OAuth error: {error}")
 
     now = datetime.now(UTC)
-    _purge_expired_states(now)
-    entry = LINKEDIN_STATE_CACHE.pop(state, None)  # one-time use
-    if entry is None:
+    if await consume_state(state) is None:
         raise AuthenticationError("Invalid or expired OAuth state. Try again.")
     if not code:
         raise AuthenticationError("Missing OAuth authorization code")

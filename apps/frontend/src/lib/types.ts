@@ -175,11 +175,14 @@ export interface GithubImport {
   total_repos: number;
 }
 
-export interface LinkedInAnalysis {
-  name?: string;
+/** Profile positioning derived from the user's own resume. */
+export interface ProfileSuggestion {
   headline?: string;
+  about?: string;
   skills?: string[];
-  experience_years?: number | string;
   suggested_roles?: string[];
+  experience_years?: number;
+  gaps?: string[];
   analysis?: string;
+  url?: string;
 }

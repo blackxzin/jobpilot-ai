@@ -142,3 +142,31 @@ def build_career_answer_prompt(question: str, context: str = "") -> str:
         "Answer in the same language as the question.\n\n"
         f"{context_line}Question: {question}"
     )
+
+
+def build_profile_suggestions_prompt(resume: str, target_role: str = "") -> str:
+    """Build the LinkedIn-positioning prompt shared by every LLM provider.
+
+    Grounded in the candidate's own resume. The previous version asked the
+    model to infer a person's profile from nothing but a LinkedIn URL, which
+    produced confident, entirely invented biographies.
+    """
+    target_line = f"\nTarget role the candidate is aiming for: {target_role}" if target_role else ""
+
+    return f"""You are a career strategist reviewing a candidate's resume to improve how they
+present themselves on LinkedIn.
+
+RESUME:
+{resume[:6000]}{target_line}
+
+Return ONLY a JSON object with exactly these keys:
+- "headline": a LinkedIn headline of at most 120 characters, in the resume's language
+- "about": a 3-4 sentence LinkedIn "About" section, first person, in the resume's language
+- "skills": array of skills to list, ordered by how strongly the resume evidences them
+- "suggested_roles": array of job titles this experience actually supports
+- "experience_years": integer, years of professional experience the resume shows
+- "gaps": array of things missing from the resume that would strengthen the profile
+- "analysis": two or three sentences of positioning advice, in the resume's language
+
+Every claim must be supported by the resume. Never invent employers, titles or dates.
+No prose outside the JSON."""

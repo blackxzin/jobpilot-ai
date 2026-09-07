@@ -6,6 +6,7 @@ from pydantic import BaseModel
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from core.config import settings
 from core.database import get_db
 from core.exceptions import ValidationError
 from core.models import LLMProviderConfigModel
@@ -15,12 +16,14 @@ from modules.auth.domain.entities import User
 
 router = APIRouter(prefix="/settings", tags=["settings"])
 
+# `models` is a hint for the user, not a whitelist — hosted providers retire
+# models on their own schedule, so the field says what is known to work today.
 PROVIDERS = [
     {"id": "openai", "name": "OpenAI", "models": "gpt-4o, gpt-4o-mini, gpt-4", "needs_key": True, "needs_url": False},
     {"id": "anthropic", "name": "Anthropic Claude", "models": "claude-sonnet-4-20250514, claude-haiku-3-5", "needs_key": True, "needs_url": False},
     {"id": "gemini", "name": "Google Gemini", "models": "gemini-2.0-flash, gemini-2.0-pro", "needs_key": True, "needs_url": False},
     {"id": "ollama", "name": "Ollama (local)", "models": "llama3.1, mistral, qwen2", "needs_key": False, "needs_url": True},
-    {"id": "nvidia_nim", "name": "NVIDIA NIM", "models": "nvidia/llama-3.3-70b-instruct", "needs_key": True, "needs_url": True},
+    {"id": "nvidia_nim", "name": "NVIDIA NIM", "models": settings.NVIDIA_NIM_MODEL, "needs_key": True, "needs_url": True},
     {"id": "openrouter", "name": "OpenRouter", "models": "openai/gpt-4o, meta-llama/llama-3.1", "needs_key": True, "needs_url": False},
 ]
 

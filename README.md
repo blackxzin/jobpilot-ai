@@ -8,6 +8,15 @@ candidaturas.
 Score, carta e currículo direcionado; configurar um provedor de LLM melhora a qualidade
 e libera o chat aberto.
 
+### ▶ [Abrir a demonstração](https://blackxzin.github.io/JOBPILOT_AI/)
+
+Roda no navegador, sem instalar nada. É o frontend real, com as respostas da API
+servidas a partir de dados capturados de uma instância rodando — dashboard, pipeline,
+compatibilidade, ATS Score, cartas e busca semântica, todos funcionando de verdade.
+
+Upload de currículo, busca em sites de vagas e chat precisam do backend. Para esses,
+suba a stack completa — leva 2 minutos.
+
 ---
 
 ## Começar em 2 minutos
@@ -19,24 +28,25 @@ cp .env.example .env
 docker compose up -d
 ```
 
-Abra <http://localhost:3000> e clique em **Explorar a demonstração**.
+Abra `http://localhost:3000` e clique em **Explorar a demonstração**.
 
 Isso cria uma conta com dados prontos — 8 vagas indexadas, 7 candidaturas em estágios
 diferentes, agenda, notificações, um currículo com ATS Score e métricas reais no
 dashboard. Nenhuma chave, nenhum cadastro, nenhum acesso a site de vagas.
 
-| Serviço | URL |
-|---------|-----|
-| Frontend | <http://localhost:3000> |
-| API | <http://localhost:8000> |
-| Documentação da API | <http://localhost:8000/docs> |
+| Serviço | Endereço local |
+|---------|----------------|
+| Frontend | `http://localhost:3000` |
+| API | `http://localhost:8000` |
+| Documentação da API | `http://localhost:8000/docs` |
 
 Para desligar o modo demonstração, remova `DEMO_MODE=true` do `.env`. Ele é recusado
 automaticamente quando `APP_ENV=production`.
 
 ```bash
 # Recriar os dados da demonstração do zero
-docker compose exec backend python -m scripts.seed_demo --reset
+docker compose exec -e PYTHONPATH=/app/src -w /app/src backend \
+  python -m scripts.seed_demo --reset
 ```
 
 ---
@@ -45,10 +55,6 @@ docker compose exec backend python -m scripts.seed_demo --reset
 
 Todas as telas abaixo são a conta de demonstração rodando **sem nenhuma chave de API**.
 Os números vêm dos dados semeados; os scores e textos vêm do analisador local.
-
-### Entrada
-
-<img src="docs/screenshots/login.png" alt="Tela de login com o botão Explorar a demonstração" width="100%">
 
 ### Dashboard
 
@@ -75,6 +81,10 @@ Ranqueia por significado. `kubernetes terraform plataforma` encontra a vaga de
 Engenheiro de Plataforma sem que o termo apareça no título.
 
 <img src="docs/screenshots/semantic.png" alt="Resultados da busca semântica ranqueados por relevância" width="100%">
+
+### Entrada
+
+<img src="docs/screenshots/login.png" alt="Tela de login com o botão Explorar a demonstração" width="100%">
 
 ---
 
@@ -104,7 +114,7 @@ As chaves são criptografadas com Fernet antes de irem para o banco.
 | **Vagas** | Base local + RemoteOK, Jobicy, LinkedIn, Google Jobs, Indeed, Gupy, GeekHunter, Programathor |
 | **Busca semântica** | Embeddings com API compatível com OpenAI ou vetorizador local; ranqueamento vetorizado em NumPy |
 | **Currículos** | Upload de PDF com validação de assinatura e limite em streaming, extração de texto, ATS Score assíncrono |
-| **IA** | Compatibilidade, ATS Score, carta de apresentação, currículo direcionado, auto apply, chat |
+| **IA** | Compatibilidade, ATS Score, carta de apresentação, currículo direcionado, auto apply, chat, posicionamento de perfil |
 | **Candidaturas** | Pipeline com 7 estágios, estatísticas, verificação de posse em toda rota |
 | **Agenda** | Entrevistas, prazos e lembretes |
 | **Analytics** | Taxas de entrevista/proposta/rejeição/resposta, top empresas, top competências, série de 30 dias |
@@ -130,7 +140,8 @@ Telas: Dashboard, Vagas, Busca IA, Candidaturas, Agenda, Currículos, Chat, IA.
 | Cache / fila | Redis 7 |
 | Workers | Celery + Celery Beat |
 | Container | Docker Compose (6 serviços) |
-| CI | GitHub Actions — lint, testes com cobertura, build, varredura de segredos |
+| CI | GitHub Actions — lint, testes com cobertura mínima de 80%, build, varredura de segredos |
+| Demo | GitHub Pages, publicada a cada push (`.github/workflows/demo.yml`) |
 
 ---
 
@@ -158,8 +169,8 @@ npm run dev
 
 ```bash
 cd apps/backend
-PYTHONPATH=src pytest -q                                  # 108 testes
-PYTHONPATH=src pytest --cov=src --cov-report=term-missing # com cobertura
+PYTHONPATH=src pytest -q                                  # 172 testes
+PYTHONPATH=src pytest --cov=src --cov-report=term-missing # cobertura, mínimo 80%
 ruff check src tests                                       # lint
 
 cd apps/frontend
@@ -200,6 +211,7 @@ Tudo em `.env` (veja `.env.example`). O essencial:
 | `DEMO_MODE` | `false` | Semeia a conta de demonstração e habilita `POST /auth/demo` |
 | `LLM_TIMEOUT_SECONDS` | `60` | Teto por chamada de LLM |
 | `EMBEDDING_API_KEY` | vazio | Vazio usa o vetorizador local |
+| `NVIDIA_NIM_MODEL` | `meta/llama-3.3-70b-instruct` | Provedores hospedados descontinuam modelos; confira em build.nvidia.com |
 | `RATE_LIMIT_ENABLED` | `true` | Limites por IP em login, registro e OAuth |
 | `SENTRY_DSN` | vazio | Preenchido, ativa o Sentry |
 | `POSTGRES_HOST_PORT` | `5433` | Porta no host, para não colidir com um Postgres local |

@@ -9,13 +9,12 @@ from sqlalchemy.orm import selectinload
 
 from core.config import settings
 from core.database import get_db
-from core.exceptions import JobPilotException, NotFoundError
+from core.exceptions import JobPilotException, NotFoundError, ValidationError
 from core.logger import get_logger
 from core.models import JobModel, LLMProviderConfigModel
 from core.security import decrypt_api_key
 from core.validators import validate_uuid
 from modules.ai.application.llm_service import LLMService
-from modules.ai.infrastructure.llm_providers.json_parsing import parse_json_response
 from modules.ai.infrastructure.providers.factory import LLMProviderFactory
 from modules.auth.api.dependencies import ensure_owner, get_current_user
 from modules.auth.domain.entities import User
@@ -27,8 +26,16 @@ router = APIRouter(prefix="/ai", tags=["ai"])
 
 # ── Request models ──────────────────────────────────────────────────────────
 
-class LinkedInRequest(BaseModel):
-    url: str
+class ProfileSuggestionRequest(BaseModel):
+    """Input for profile positioning.
+
+    `resume_id` is optional: without it the user's most recent resume is used,
+    which is what the UI sends.
+    """
+
+    resume_id: str = ""
+    target_role: str = ""
+    url: str = ""
 
 
 class GitHubRequest(BaseModel):
@@ -135,33 +142,35 @@ def _job_to_prompt_dict(job: JobModel) -> dict:
 # ── Routes ──────────────────────────────────────────────────────────────────
 
 @router.post("/linkedin/analyze")
-async def analyze_linkedin(
-    body: LinkedInRequest,
+async def suggest_profile(
+    body: ProfileSuggestionRequest,
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    provider = await _get_provider(str(user.id), db)
-    llm = LLMService(provider)
+    """Suggest how to present the user's experience on a professional profile.
 
-    prompt = f"""You are a career analyst. Based on this LinkedIn URL, infer the most likely profile information.
+    This used to ask the model to infer a person's profile from a LinkedIn URL
+    alone, which produced a confident, wholly invented biography — the model
+    has no access to the page. It now works from the user's own uploaded
+    resume, so every suggestion is traceable to something they wrote.
+    """
+    if body.resume_id:
+        resume = await _load_owned_resume(db, body.resume_id, user)
+    else:
+        resume = await ResumeRepository(db).get_latest_for_user(str(user.id))
+        if resume is None:
+            raise ValidationError(
+                "Envie um currículo primeiro — as sugestões de perfil são geradas a "
+                "partir dele, não do endereço do LinkedIn."
+            )
 
-LinkedIn URL: {body.url}
+    llm = LLMService(await _get_provider(str(user.id), db))
+    result = await llm.suggest_profile(resume.content_text or "", body.target_role)
 
-Return a JSON with these keys:
-- "name": inferred full name
-- "headline": likely headline/title
-- "skills": array of likely technical and professional skills
-- "experience_years": estimated years of experience
-- "suggested_roles": array of job roles this person would be a good fit for
-- "analysis": brief career analysis in Portuguese
-
-Return ONLY valid JSON."""
-    result = await llm.generate(prompt, cache_key=f"linkedin:{body.url}")
-    parsed = parse_json_response(result)
-    if "parse_error" in parsed:
-        # The model answered in prose. Surfacing it beats returning an empty shape.
-        return {"analysis": result, "url": body.url}
-    return {**parsed, "url": body.url}
+    if "parse_error" in result:
+        # The model answered in prose. Surfacing it beats an empty shape.
+        return {"analysis": result.get("raw", ""), "url": body.url}
+    return {**result, "url": body.url}
 
 
 @router.post("/github/import")

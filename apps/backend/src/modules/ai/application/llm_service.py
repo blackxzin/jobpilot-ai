@@ -23,6 +23,35 @@ logger = get_logger(__name__)
 
 T = TypeVar("T")
 
+# Analyses of the same input are stable and expensive; an hour is long enough
+# to help and short enough that an edited resume is not served stale.
+CACHE_TTL_SECONDS = 3600
+
+
+def _explain(provider: str, operation: str, exc: Exception) -> str:
+    """Turn a provider exception into something the user can act on.
+
+    Hosted providers retire models on a schedule and answer with an opaque
+    HTTP error. Reporting only "provider failed" left the user with no idea
+    that the fix is to pick a different model.
+    """
+    detail = str(exc)
+    lowered = detail.lower()
+
+    if "end of life" in lowered or "no longer available" in lowered or "410" in detail:
+        return (
+            f"O modelo configurado para '{provider}' foi descontinuado pelo provedor. "
+            "Escolha outro modelo em Configurações → IA."
+        )
+    if "401" in detail or "unauthorized" in lowered or "invalid api key" in lowered:
+        return f"A chave de API de '{provider}' foi recusada. Verifique-a em Configurações → IA."
+    if "429" in detail or "rate limit" in lowered:
+        return f"O provedor '{provider}' está limitando as requisições. Tente de novo em instantes."
+    if "timeout" in lowered or "timed out" in lowered:
+        return f"O provedor '{provider}' não respondeu a tempo. Tente de novo."
+
+    return f"O provedor '{provider}' falhou em {operation}: {detail}"
+
 
 class LLMService:
     """Application service that wraps LLM providers with caching and logging."""
@@ -54,9 +83,7 @@ class LLMService:
                 error_type=type(exc).__name__,
                 error=str(exc),
             )
-            raise LLMProviderError(
-                f"LLM provider '{self.provider_name}' failed during {operation}: {exc}"
-            ) from exc
+            raise LLMProviderError(_explain(self.provider_name, operation, exc)) from exc
 
     async def _get_cache(self):
         """Lazy-init Redis client."""
@@ -83,7 +110,7 @@ class LLMService:
 
         if cache_key:
             cache = await self._get_cache()
-            await cache.setex(f"llm:{cache_key}", 3600, result)  # 1h TTL
+            await cache.set(f"llm:{cache_key}", result, ex=CACHE_TTL_SECONDS)
 
         logger.info("llm_generate", provider=self.provider_name, cached=cache_key is not None)
         return result
@@ -142,25 +169,14 @@ class LLMService:
         logger.info("llm_tailor_resume_complete", provider=self.provider_name, length=len(result))
         return result
 
+    async def suggest_profile(self, resume: str, target_role: str = "", **kwargs) -> dict:
+        """Suggest professional-profile positioning from the user's own resume."""
+        logger.info("llm_suggest_profile", provider=self.provider_name)
+        return await self._call(
+            "suggest_profile",
+            lambda: self._provider.suggest_profile(resume, target_role, **kwargs),
+        )
+
     async def health_check(self) -> bool:
         """Check provider health."""
         return await self._provider.health_check()
-
-
-# ── Convenience functions ────────────────────────────────────────────────
-# These use the factory for quick access when provider is not yet injected
-
-async def quick_generate(prompt: str, provider_name: str = "openai", model: str = "") -> str:
-    """One-shot generate with auto provider selection."""
-    from modules.ai.infrastructure.providers.factory import LLMProviderFactory
-    provider = LLMProviderFactory.create(provider_name, model=model)
-    service = LLMService(provider)
-    return await service.generate(prompt)
-
-
-async def quick_analyze_resume(resume: str, job_desc: str, provider_name: str = "openai") -> dict:
-    """One-shot resume analysis."""
-    from modules.ai.infrastructure.providers.factory import LLMProviderFactory
-    provider = LLMProviderFactory.create(provider_name)
-    service = LLMService(provider)
-    return await service.analyze_resume(resume, job_desc)

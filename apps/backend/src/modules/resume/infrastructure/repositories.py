@@ -14,6 +14,16 @@ class ResumeRepository:
     async def get_by_id(self, resume_id: str) -> ResumeModel | None:
         return await self._session.get(ResumeModel, resume_id)
 
+    async def get_latest_for_user(self, user_id: str) -> ResumeModel | None:
+        """Return the user's most recently uploaded resume, if any."""
+        result = await self._session.execute(
+            select(ResumeModel)
+            .where(ResumeModel.user_id == user_id)
+            .order_by(ResumeModel.created_at.desc())
+            .limit(1)
+        )
+        return result.scalar_one_or_none()
+
     async def list_by_user(self, user_id: str) -> list[ResumeModel]:
         result = await self._session.execute(
             select(ResumeModel).where(ResumeModel.user_id == user_id).order_by(ResumeModel.created_at.desc())

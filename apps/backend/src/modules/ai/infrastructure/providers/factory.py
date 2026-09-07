@@ -13,7 +13,9 @@ _REGISTRY: dict[str, tuple[str, str, str]] = {
     "anthropic": ("anthropic_provider", "AnthropicProvider", "claude-sonnet-4-20250514"),
     "gemini": ("gemini_provider", "GeminiProvider", "gemini-2.0-flash"),
     "ollama": ("ollama_provider", "OllamaProvider", "llama3.1"),
-    "nvidia_nim": ("nvidia_nim_provider", "NvidiaNimProvider", "meta/llama-3.2-3b-instruct"),
+    # Empty default: the provider reads the configured model, so the choice
+    # lives in one place instead of drifting between here and settings.
+    "nvidia_nim": ("nvidia_nim_provider", "NvidiaNimProvider", ""),
     "openrouter": ("openrouter_provider", "OpenRouterProvider", "openai/gpt-4o"),
     "offline": ("offline_provider", "OfflineProvider", "offline-analyzer"),
 }
@@ -62,6 +64,9 @@ class LLMProviderFactory:
         provider_cls = getattr(import_module(f"{_PACKAGE}.{module_name}"), class_name)
 
         kwargs: dict = {"model": model or default_model}
+        if not kwargs["model"]:
+            # An empty default means the provider supplies its own from settings.
+            kwargs.pop("model")
         # Ollama is self-hosted and takes no key; passing one would be ignored
         # at best and rejected at worst.
         if name != "ollama":

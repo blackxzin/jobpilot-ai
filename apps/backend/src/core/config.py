@@ -45,6 +45,11 @@ class Settings(BaseSettings):
     # ── LLM Providers ─────────────────────────────────
     OPENAI_API_KEY: str = ""
     NVIDIA_NIM_ENDPOINT: str = "https://integrate.api.nvidia.com/v1"
+    # Hosted models are retired on a schedule; NVIDIA removed
+    # meta/llama-3.2-3b-instruct on 2026-08-26, which broke every request that
+    # relied on the hard-coded default. Keep this configurable and check
+    # https://build.nvidia.com for what is currently served.
+    NVIDIA_NIM_MODEL: str = "meta/llama-3.3-70b-instruct"
     ANTHROPIC_API_KEY: str = ""
     GEMINI_API_KEY: str = ""
     OPENROUTER_API_KEY: str = ""

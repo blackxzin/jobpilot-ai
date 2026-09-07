@@ -1,16 +1,19 @@
 "use client";
 
 import { useEffect } from "react";
+import { IS_STATIC_DEMO } from "@/demo/client";
 
 /**
  * Registers the PWA service worker.
  *
- * Only in production: in development the worker caches the dev bundle and
- * serves stale chunks after a hot reload, which looks like a broken build.
+ * Skipped in development, where the worker caches the dev bundle and serves
+ * stale chunks after a hot reload, and in the static demo, where the app shell
+ * it caches is served under a repository path and a stale cache would keep
+ * showing an old deploy.
  */
 export function ServiceWorkerRegistration() {
   useEffect(() => {
-    if (process.env.NODE_ENV !== "production") return;
+    if (process.env.NODE_ENV !== "production" || IS_STATIC_DEMO) return;
     if (!("serviceWorker" in navigator)) return;
 
     navigator.serviceWorker.register("/sw.js").catch(() => {

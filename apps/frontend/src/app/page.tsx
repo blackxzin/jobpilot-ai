@@ -18,6 +18,7 @@ import { SettingsView } from "@/components/views/SettingsView";
 import { useSession } from "@/hooks/useSession";
 import { useTheme } from "@/hooks/useTheme";
 import { useToast } from "@/hooks/useToast";
+import { createDemoClient, IS_STATIC_DEMO } from "@/demo/client";
 import { createClient } from "@/lib/api";
 import type {
   Analytics,
@@ -30,7 +31,7 @@ import type {
   GithubImport,
   Job,
   JobSearchResponse,
-  LinkedInAnalysis,
+  ProfileSuggestion,
   LlmConfig,
   MatchResult,
   Notification,
@@ -98,8 +99,8 @@ export default function Home() {
   // ── Imports ─────────────────────────────────────────────────────
   const [githubUsername, setGithubUsername] = useState("");
   const [githubData, setGithubData] = useState<GithubImport | null>(null);
-  const [linkedinUrl, setLinkedinUrl] = useState("");
-  const [linkedinData, setLinkedinData] = useState<LinkedInAnalysis | null>(null);
+  const [targetRole, setTargetRole] = useState("");
+  const [profileSuggestion, setProfileSuggestion] = useState<ProfileSuggestion | null>(null);
   const [importing, setImporting] = useState("");
 
   // ── Chat ────────────────────────────────────────────────────────
@@ -125,6 +126,10 @@ export default function Home() {
 
   // Instance capabilities drive which entry points the login screen offers.
   useEffect(() => {
+    if (IS_STATIC_DEMO) {
+      setMeta({ demo_mode: true, linkedin_oauth: false });
+      return;
+    }
     createClient("")
       .get<InstanceMeta>("/meta")
       .then(setMeta)
@@ -221,7 +226,8 @@ export default function Home() {
   async function loginWithLinkedIn() {
     setLoginError("");
     try {
-      const { auth_url } = await createClient("").get<{ auth_url: string }>("/auth/linkedin/login");
+      const api = IS_STATIC_DEMO ? createDemoClient() : createClient("");
+      const { auth_url } = await api.get<{ auth_url: string }>("/auth/linkedin/login");
       window.location.href = auth_url;
     } catch (error) {
       setLoginError(handleApiError(error));
@@ -434,15 +440,16 @@ export default function Home() {
     setImporting("");
   }
 
-  async function analyzeLinkedin() {
-    if (!linkedinUrl.trim()) return;
-    setImporting("linkedin");
+  async function suggestProfile() {
+    setImporting("profile");
     const data = await guard(() =>
-      client.post<LinkedInAnalysis>("/ai/linkedin/analyze", { url: linkedinUrl.trim() }),
+      client.post<ProfileSuggestion>("/ai/linkedin/analyze", {
+        target_role: targetRole.trim(),
+      }),
     );
     if (data) {
-      setLinkedinData(data);
-      toast.success("Perfil analisado.");
+      setProfileSuggestion(data);
+      toast.success("Sugestões geradas a partir do seu currículo.");
     }
     setImporting("");
   }
@@ -534,10 +541,11 @@ export default function Home() {
             onGithubUsernameChange={setGithubUsername}
             githubData={githubData}
             onImportGithub={importGithub}
-            linkedinUrl={linkedinUrl}
-            onLinkedinUrlChange={setLinkedinUrl}
-            linkedinData={linkedinData}
-            onAnalyzeLinkedin={analyzeLinkedin}
+            targetRole={targetRole}
+            onTargetRoleChange={setTargetRole}
+            profileSuggestion={profileSuggestion}
+            onSuggestProfile={suggestProfile}
+            hasResume={resumes.length > 0}
             importing={importing}
           />
         )}
