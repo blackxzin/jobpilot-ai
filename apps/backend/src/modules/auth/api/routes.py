@@ -15,6 +15,7 @@ from core.config import settings
 from core.database import get_db
 from core.exceptions import AuthenticationError, ConfigurationError
 from core.models import SessionModel, UserModel
+from core.rate_limit import enforce_rate_limit
 from core.security import generate_token
 from modules.auth.api.dependencies import extract_bearer_token, get_current_user
 from modules.auth.application.use_cases import (
@@ -27,6 +28,10 @@ from modules.auth.domain.entities import User
 from modules.auth.infrastructure.repositories import SQLAlchemySessionRepository, SQLAlchemyUserRepository
 
 router = APIRouter(prefix="/auth", tags=["auth"])
+
+# LinkedIn's token endpoint is a third party; without a deadline a hung
+# response holds an HTTP worker open indefinitely.
+OAUTH_HTTP_TIMEOUT_SECONDS = 15.0
 
 
 # ── DTOs ────────────────────────────────────────────────────────────────────
@@ -57,7 +62,13 @@ class UserResponse(BaseModel):
 # ── Routes ──────────────────────────────────────────────────────────────────
 
 @router.post("/register", response_model=AuthResponse)
-async def register(body: RegisterRequest, db: AsyncSession = Depends(get_db)):
+async def register(body: RegisterRequest, request: Request, db: AsyncSession = Depends(get_db)):
+    await enforce_rate_limit(
+        request,
+        "register",
+        settings.RATE_LIMIT_REGISTER_ATTEMPTS,
+        settings.RATE_LIMIT_WINDOW_SECONDS,
+    )
     user_repo = SQLAlchemyUserRepository(db)
     session_repo = SQLAlchemySessionRepository(db)
     use_case = RegisterUseCase(user_repo)
@@ -75,12 +86,48 @@ async def register(body: RegisterRequest, db: AsyncSession = Depends(get_db)):
 
 
 @router.post("/login", response_model=AuthResponse)
-async def login(body: LoginRequest, db: AsyncSession = Depends(get_db)):
+async def login(body: LoginRequest, request: Request, db: AsyncSession = Depends(get_db)):
+    await enforce_rate_limit(
+        request, "login", settings.RATE_LIMIT_LOGIN_ATTEMPTS, settings.RATE_LIMIT_WINDOW_SECONDS
+    )
     user_repo = SQLAlchemyUserRepository(db)
     session_repo = SQLAlchemySessionRepository(db)
     use_case = LoginUseCase(user_repo, session_repo)
     user, session = await use_case.execute(body.email, body.password)
 
+    return AuthResponse(
+        user_id=str(user.id),
+        email=user.email,
+        full_name=user.full_name,
+        token=session.token,
+    )
+
+
+@router.post("/demo", response_model=AuthResponse)
+async def demo_login(request: Request, db: AsyncSession = Depends(get_db)):
+    """Sign in to the shared demo account.
+
+    Exists so the UI never has to embed the demo password in client-side code,
+    and so the whole flow is a no-op unless DEMO_MODE is explicitly enabled.
+    """
+    if not settings.DEMO_MODE:
+        raise ConfigurationError("O modo demonstração não está habilitado nesta instância.")
+
+    await enforce_rate_limit(
+        request, "demo", settings.RATE_LIMIT_LOGIN_ATTEMPTS, settings.RATE_LIMIT_WINDOW_SECONDS
+    )
+
+    # Seeding is idempotent, so a restarted or freshly migrated database still
+    # serves a populated demo rather than a 401.
+    from core.demo import seed_demo_data
+
+    await seed_demo_data()
+
+    user_repo = SQLAlchemyUserRepository(db)
+    session_repo = SQLAlchemySessionRepository(db)
+    user, session = await LoginUseCase(user_repo, session_repo).execute(
+        settings.DEMO_EMAIL, settings.DEMO_PASSWORD
+    )
     return AuthResponse(
         user_id=str(user.id),
         email=user.email,
@@ -150,8 +197,17 @@ async def linkedin_login(request: Request):
 
 
 @router.get("/linkedin/callback")
-async def linkedin_callback(code: str = "", state: str = "", error: str = "", db: AsyncSession = Depends(get_db)):
+async def linkedin_callback(
+    request: Request,
+    code: str = "",
+    state: str = "",
+    error: str = "",
+    db: AsyncSession = Depends(get_db),
+):
     """Handle LinkedIn OAuth callback — exchange code for token, create/login user."""
+    await enforce_rate_limit(
+        request, "oauth", settings.RATE_LIMIT_LOGIN_ATTEMPTS, settings.RATE_LIMIT_WINDOW_SECONDS
+    )
     if error:
         raise AuthenticationError(f"LinkedIn OAuth error: {error}")
 
@@ -164,7 +220,7 @@ async def linkedin_callback(code: str = "", state: str = "", error: str = "", db
         raise AuthenticationError("Missing OAuth authorization code")
 
     # 1. Exchange authorization code for access token
-    async with httpx.AsyncClient() as client:
+    async with httpx.AsyncClient(timeout=OAUTH_HTTP_TIMEOUT_SECONDS) as client:
         token_resp = await client.post(
             "https://www.linkedin.com/oauth/v2/accessToken",
             data={

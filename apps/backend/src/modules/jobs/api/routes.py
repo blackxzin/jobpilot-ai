@@ -4,11 +4,14 @@ from __future__ import annotations
 from asyncio import gather
 
 from fastapi import APIRouter, Depends, Query
+from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.database import get_db
 from core.logger import get_logger
-from modules.jobs.application.use_cases import GetJobUseCase, SearchJobsUseCase
+from core.validators import validate_uuid
+from modules.auth.api.dependencies import get_current_user
+from modules.jobs.application.use_cases import CreateJobUseCase, GetJobUseCase, SearchJobsUseCase
 from modules.jobs.infrastructure.repositories import JobRepository
 from modules.users.infrastructure.providers.google_jobs_client import GoogleJobsClient
 from modules.users.infrastructure.providers.indeed_client import IndeedClient
@@ -18,20 +21,41 @@ from modules.users.infrastructure.providers.remoteok_client import RemoteOKClien
 
 logger = get_logger(__name__)
 
-router = APIRouter(prefix="/jobs", tags=["jobs"])
+router = APIRouter(
+    prefix="/jobs",
+    tags=["jobs"],
+    dependencies=[Depends(get_current_user)],
+)
+
+
+class JobCreate(BaseModel):
+    title: str = Field(min_length=1, max_length=255)
+    company_name: str = Field(min_length=1, max_length=255)
+    description: str = ""
+    location: str = ""
+    location_type: str = ""
+    is_remote: bool = False
+    apply_url: str = ""
+    seniority: str = ""
 
 async def _search_external(source: str, client, **kwargs) -> dict:
     """Run one external job-board search, never propagating provider failures.
 
-    An unreachable job board must not fail the whole request, so the source
-    returns an empty result set instead. The client is always closed.
+    An unreachable board must not fail the whole request. The response carries
+    an explicit `available` flag: returning a bare empty list made "this board
+    is down" indistinguishable from "no jobs match", and the UI showed the
+    wrong message for hours-long outages.
     """
     try:
         jobs = await client.search_jobs(**kwargs)
-        return {"results": jobs if isinstance(jobs, list) else [], "source": source}
+        return {
+            "results": jobs if isinstance(jobs, list) else [],
+            "source": source,
+            "available": True,
+        }
     except Exception as e:
         logger.warning("job_source_search_failed", source=source, error=str(e))
-        return {"results": [], "source": source}
+        return {"results": [], "source": source, "available": False}
     finally:
         await client.close()
 
@@ -50,6 +74,25 @@ async def search_jobs(
         query=q, location=location, remote=remote, page=page, per_page=per_page
     )
     return {"results": [_to_dict(j) for j in results], "page": page, "per_page": per_page}
+
+
+@router.post("")
+async def create_job(
+    body: JobCreate,
+    db: AsyncSession = Depends(get_db),
+):
+    use_case = CreateJobUseCase(JobRepository(db))
+    job = await use_case.execute(
+        company_name=body.company_name,
+        title=body.title,
+        description=body.description,
+        location=body.location,
+        location_type=body.location_type,
+        is_remote=body.is_remote,
+        apply_url=body.apply_url,
+        seniority=body.seniority,
+    )
+    return _to_dict(job)
 
 
 @router.get("/remoteok")
@@ -76,12 +119,13 @@ async def search_gupy(
     from modules.jobs.application.use_cases import SearchGupyUseCase
 
     try:
-        return await SearchGupyUseCase().execute(
+        result = await SearchGupyUseCase().execute(
             query=q, location=location, remote=remote, page=page
         )
+        return {"results": result.get("results", result), "source": "gupy", "available": True}
     except Exception as e:
         logger.warning("job_source_search_failed", source="gupy", error=str(e))
-        return {"results": [], "source": "gupy"}
+        return {"results": [], "source": "gupy", "available": False}
 
 
 @router.get("/indeed")
@@ -113,26 +157,40 @@ async def search_programathor(q: str = Query(""), page: int = Query(1, ge=1)):
 
 
 @router.get("/search-all")
-async def search_all(q: str = Query(""), page: int = Query(1, ge=1)):
+async def search_all(
+    q: str = Query(""),
+    page: int = Query(1, ge=1),
+):
     """Query every remote-friendly source in parallel and merge the results."""
-    sources = [
+    outcomes = await gather(
         _search_external("remoteok", RemoteOKClient(), query=q, page=page),
         _search_external("jobicy", JobicyClient(), query=q, page=page),
         _search_external("google_jobs", GoogleJobsClient(), query=q, page=page),
-    ]
-    outcomes = await gather(*sources, return_exceptions=True)
+        return_exceptions=True,
+    )
 
-    merged = []
+    merged, unavailable = [], []
     for outcome in outcomes:
-        if isinstance(outcome, dict) and outcome.get("results"):
+        if not isinstance(outcome, dict):
+            continue
+        if not outcome.get("available"):
+            unavailable.append(outcome["source"])
+            continue
+        if outcome.get("results"):
             merged.append({"source": outcome["source"], "jobs": outcome["results"]})
-    return {"results": merged}
+
+    # Reported explicitly so the UI can say "2 of 3 boards responded" rather
+    # than implying the query simply had no matches.
+    return {"results": merged, "unavailable_sources": unavailable}
 
 
 @router.get("/{job_id}")
-async def get_job(job_id: str, db: AsyncSession = Depends(get_db)):
+async def get_job(
+    job_id: str,
+    db: AsyncSession = Depends(get_db),
+):
     use_case = GetJobUseCase(JobRepository(db))
-    job = await use_case.execute(job_id)
+    job = await use_case.execute(validate_uuid(job_id, "job_id"))
     return _to_dict(job)
 
 
@@ -142,6 +200,7 @@ def _to_dict(job):
         "source": job.source,
         "title": job.title,
         "company_id": job.company_id,
+        "company": job.company.name if job.company else "",
         "description": job.description,
         "location": job.location,
         "location_type": job.location_type,

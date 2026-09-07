@@ -56,8 +56,15 @@ class LLMProvider(ABC):
         ...
 
     @abstractmethod
-    async def generate_cover_letter(self, resume: str, job: dict) -> str:
-        """Generate a personalized cover letter for a specific job."""
+    async def generate_cover_letter(
+        self, resume: str, job: dict, language: str = "pt-BR", tone: str = "professional", **kwargs
+    ) -> str:
+        """Generate a personalized cover letter for a specific job.
+
+        Args:
+            language: BCP-47-ish language code the letter should be written in (e.g. "pt-BR", "en").
+            tone: One of "professional", "formal", "enthusiastic", "casual".
+        """
         ...
 
     @abstractmethod

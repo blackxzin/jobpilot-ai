@@ -13,7 +13,6 @@ from modules.applications.application.use_cases import (
     CreateApplicationDTO,
     CreateApplicationUseCase,
     GetApplicationStatsUseCase,
-    GetUserApplicationsUseCase,
     UpdateApplicationStatusUseCase,
     UpdateStatusDTO,
 )
@@ -71,11 +70,20 @@ async def list_applications(
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    use_case = GetUserApplicationsUseCase(SQLAlchemyApplicationRepository(db))
-    apps = await use_case.execute(
-        user_id=str(user.id), status=status or None, source_platform=source or None
-    )
-    return {"results": [_app_to_dict(a) for a in apps]}
+    repository = SQLAlchemyApplicationRepository(db)
+    rows = await repository.get_for_user_with_job(str(user.id))
+
+    results = [
+        {**_app_to_dict(application), "job_title": job_title, "company": company}
+        for application, job_title, company in rows
+        if (not status or _status_value(application.status) == status)
+        and (not source or application.source_platform == source)
+    ]
+    return {"results": results}
+
+
+def _status_value(status) -> str:
+    return status.value if hasattr(status, "value") else str(status)
 
 
 @router.get("/stats")

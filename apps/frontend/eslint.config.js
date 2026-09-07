@@ -1,4 +1,6 @@
 import js from "@eslint/js";
+import reactHooks from "eslint-plugin-react-hooks";
+import globals from "globals";
 import tseslint from "typescript-eslint";
 
 export default [
@@ -7,32 +9,37 @@ export default [
   },
   js.configs.recommended,
   ...tseslint.configs.recommended,
+
+  // Build tooling runs in Node.
   {
-    files: ["**/*.js", "**/*.mjs"],
+    files: ["*.js", "*.mjs", "*.ts"],
+    languageOptions: { globals: globals.node },
+  },
+
+  // The service worker has its own global scope (self, caches, clients) that
+  // neither the browser nor the Node preset covers.
+  {
+    files: ["public/sw.js"],
     languageOptions: {
-      globals: { process: "readonly", module: "writable", require: "readonly", __dirname: "readonly" },
+      globals: { ...globals.serviceworker, ...globals.browser },
+      ecmaVersion: 2022,
     },
   },
+
   {
-    files: ["**/*.{ts,tsx}"],
+    files: ["src/**/*.{ts,tsx}"],
     languageOptions: {
+      globals: { ...globals.browser, ...globals.es2021 },
       parserOptions: { ecmaFeatures: { jsx: true } },
-      globals: {
-        window: "readonly",
-        document: "readonly",
-        localStorage: "readonly",
-        fetch: "readonly",
-        FormData: "readonly",
-        URLSearchParams: "readonly",
-        console: "readonly",
-        process: "readonly",
-        setTimeout: "readonly",
-        clearTimeout: "readonly",
-      },
     },
+    plugins: { "react-hooks": reactHooks },
     rules: {
-      "@typescript-eslint/no-explicit-any": "off",
-      "@typescript-eslint/no-unused-vars": ["warn", { argsIgnorePattern: "^_" }],
+      ...reactHooks.configs.recommended.rules,
+      // Application code is fully typed; `any` here means a shape was never
+      // modelled, which is what the types in src/lib/types.ts exist to prevent.
+      "@typescript-eslint/no-explicit-any": "error",
+      "@typescript-eslint/no-unused-vars": ["error", { argsIgnorePattern: "^_" }],
+      "no-console": ["warn", { allow: ["warn", "error"] }],
     },
   },
 ];

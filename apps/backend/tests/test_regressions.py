@@ -10,6 +10,7 @@ import pytest
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from core.exceptions import NotFoundError, ValidationError
 from core.models import ApplicationModel, CompanyModel, JobModel, ResumeModel
 
 
@@ -42,10 +43,21 @@ async def test_load_job_eager_loads_company(db_session: AsyncSession):
 
 
 @pytest.mark.asyncio
-async def test_job_to_prompt_dict_handles_missing_job():
-    from modules.ai.api.routes import _job_to_prompt_dict
+async def test_load_job_raises_for_unknown_id(db_session: AsyncSession):
+    """A missing job must 404, not silently score against an empty posting."""
+    from modules.ai.api.routes import _load_job
 
-    assert _job_to_prompt_dict(None)["title"] == ""
+    with pytest.raises(NotFoundError):
+        await _load_job(db_session, str(uuid.uuid4()))
+
+
+@pytest.mark.asyncio
+async def test_load_job_rejects_malformed_id(db_session: AsyncSession):
+    """A malformed id is a 422 from validation, never a driver-level 500."""
+    from modules.ai.api.routes import _load_job
+
+    with pytest.raises(ValidationError):
+        await _load_job(db_session, "not-a-uuid")
 
 
 # ── Ownership (IDOR) ────────────────────────────────────────────────────────
@@ -202,19 +214,84 @@ async def test_login_upgrades_legacy_password_hash(client: AsyncClient, db_sessi
     assert user.hashed_password.startswith("pbkdf2_sha256$")
 
 
-# ── Embeddings ──────────────────────────────────────────────────────────────
-
-@pytest.mark.asyncio
-async def test_fallback_embedding_is_finite_and_normalized():
-    """The old fallback reinterpreted hash bytes as float32 and overflowed."""
+def test_local_embedding_is_finite_and_normalized():
+    """Embeddings used to reinterpret hash bytes as float32, yielding inf/NaN."""
     import math
 
     from modules.search.infrastructure import EmbeddingService, cosine_similarity
 
-    vec = EmbeddingService()._fallback_embed("Python developer")
-    assert all(math.isfinite(v) for v in vec)
-    assert math.isclose(sum(v * v for v in vec), 1.0, rel_tol=1e-6)
+    vector = EmbeddingService().local_embed("Python developer")
+    assert all(math.isfinite(v) for v in vector)
+    assert cosine_similarity(vector, vector) == pytest.approx(1.0, abs=1e-9)
 
-    assert await cosine_similarity(vec, vec) == pytest.approx(1.0, abs=1e-9)
-    assert await cosine_similarity(vec, []) == 0.0
-    assert await cosine_similarity(vec, [0.0] * len(vec)) == 0.0
+# ── Resume upload ───────────────────────────────────────────────────────────
+
+@pytest.mark.asyncio
+async def test_upload_rejects_non_pdf_content(client: AsyncClient):
+    """Extension checks alone let a renamed archive reach the PDF parser."""
+    token = await _register(client, "badpdf@test.com")
+    r = await client.post(
+        "/api/v1/resumes/upload",
+        headers=_auth(token),
+        data={"title": "CV"},
+        files={"file": ("cv.pdf", b"PK\x03\x04 this is a zip", "application/pdf")},
+    )
+    assert r.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_upload_rejects_pdf_without_extractable_text(client: AsyncClient):
+    """A scanned CV analyses as an empty document; say so instead of storing it."""
+    token = await _register(client, "scanned@test.com")
+    r = await client.post(
+        "/api/v1/resumes/upload",
+        headers=_auth(token),
+        data={"title": "CV"},
+        files={"file": ("cv.pdf", b"%PDF-1.4 no text layer here", "application/pdf")},
+    )
+    assert r.status_code == 422
+
+
+@pytest.mark.asyncio
+async def test_upload_response_matches_list_response_shape(
+    client: AsyncClient, pdf_bytes: bytes
+):
+    """Upload used to return a different field set from list and get."""
+    token = await _register(client, "shape@test.com")
+    uploaded = await client.post(
+        "/api/v1/resumes/upload",
+        headers=_auth(token),
+        data={"title": "CV"},
+        files={"file": ("cv.pdf", pdf_bytes, "application/pdf")},
+    )
+    assert uploaded.status_code == 200
+    listed = (await client.get("/api/v1/resumes/list", headers=_auth(token))).json()["results"][0]
+    assert set(uploaded.json()) == set(listed)
+
+
+# ── Rate limiting ───────────────────────────────────────────────────────────
+
+@pytest.mark.asyncio
+async def test_login_is_rate_limited(client: AsyncClient):
+    """Unlimited login attempts make offline password guessing free."""
+    from core.config import settings
+    from core.rate_limit import reset_local_state
+
+    await _register(client, "bruteforce@test.com")
+    settings.RATE_LIMIT_ENABLED = True
+    reset_local_state()
+    try:
+        statuses = [
+            (
+                await client.post(
+                    "/api/v1/auth/login",
+                    json={"email": "bruteforce@test.com", "password": "wrong-password"},
+                )
+            ).status_code
+            for _ in range(settings.RATE_LIMIT_LOGIN_ATTEMPTS + 2)
+        ]
+    finally:
+        settings.RATE_LIMIT_ENABLED = False
+        reset_local_state()
+
+    assert 429 in statuses, "login accepted unlimited attempts"

@@ -1,8 +1,4 @@
-"""
-JobPilot AI — Middleware
-
-Request logging, authentication, and rate limiting middleware.
-"""
+"""JobPilot AI — HTTP middleware."""
 
 from __future__ import annotations
 
@@ -51,14 +47,3 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
 
         response.headers["X-Request-Id"] = request_id
         return response
-
-
-class AuthMiddleware(BaseHTTPMiddleware):
-    """Validates authentication tokens from Better Auth sessions."""
-
-    async def dispatch(
-        self, request: Request, call_next: Callable[[Request], Awaitable[Response]]
-    ) -> Response:
-        # TODO: integrate with Better Auth session verification
-        # For MVP, pass through — auth is handled at route level
-        return await call_next(request)

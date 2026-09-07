@@ -14,14 +14,48 @@ sys.path.insert(0, str(Path(__file__).parent))
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.responses import JSONResponse
 
 from core.config import settings
 from core.database import dispose_db, get_engine
+from core.exceptions import (
+    AuthenticationError,
+    AuthorizationError,
+    ConfigurationError,
+    JobPilotException,
+    LLMProviderError,
+    NotFoundError,
+    ValidationError,
+)
 from core.logger import get_logger
-from core.middleware import AuthMiddleware, RequestLoggingMiddleware
+from core.middleware import RequestLoggingMiddleware
 from core.redis_client import close_redis
 
 logger = get_logger(__name__)
+
+APP_VERSION = "1.0.0"
+
+
+def _init_error_tracking() -> None:
+    """Wire Sentry when a DSN is configured.
+
+    SENTRY_DSN was already a setting but nothing consumed it, so production
+    errors went nowhere but the container log.
+    """
+    if not settings.SENTRY_DSN:
+        return
+    try:
+        import sentry_sdk
+
+        sentry_sdk.init(
+            dsn=settings.SENTRY_DSN,
+            environment=settings.APP_ENV,
+            traces_sample_rate=0.1,
+            send_default_pii=False,
+        )
+        logger.info("sentry_initialised", environment=settings.APP_ENV)
+    except Exception as e:
+        logger.warning("sentry_init_failed", error=str(e))
 
 
 @asynccontextmanager
@@ -29,6 +63,7 @@ async def lifespan(app: FastAPI):
     """Manage application startup and shutdown lifecycle."""
     # ── Startup ──────────────────────────────────────────
     logger.info("starting_jobpilot", env=settings.APP_ENV)
+    _init_error_tracking()
     engine = get_engine()
     # Auto-create tables in development; production uses Alembic migrations.
     if settings.APP_ENV == "development":
@@ -40,6 +75,11 @@ async def lifespan(app: FastAPI):
         async with engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
         logger.info("database_tables_ready", tables=len(Base.metadata.tables))
+
+    if settings.DEMO_MODE:
+        from core.demo import seed_demo_data
+
+        await seed_demo_data()
     yield
     # ── Shutdown ─────────────────────────────────────────
     logger.info("shutting_down_jobpilot")
@@ -62,7 +102,7 @@ def create_app() -> FastAPI:
         - Application tracking and analytics
         - Multi-provider LLM abstraction
         """,
-        version="0.1.0",
+        version=APP_VERSION,
         docs_url="/docs",
         redoc_url="/redoc",
         lifespan=lifespan,
@@ -76,22 +116,20 @@ def create_app() -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
-    # Custom middleware
     app.add_middleware(RequestLoggingMiddleware)
-    app.add_middleware(AuthMiddleware)
 
-    # Exception handlers
-    from starlette.responses import JSONResponse
+    # ── Exception handlers ───────────────────────────────
+    # Each domain error maps to one status code in exactly one place, so a
+    # route can raise a meaningful error without knowing about HTTP.
+    from core.rate_limit import RateLimitExceeded
 
-    from core.exceptions import (
-        AuthenticationError,
-        AuthorizationError,
-        ConfigurationError,
-        JobPilotException,
-        LLMProviderError,
-        NotFoundError,
-        ValidationError,
-    )
+    @app.exception_handler(RateLimitExceeded)
+    async def rate_limit_handler(request, exc):
+        return JSONResponse(
+            status_code=429,
+            content={"detail": exc.message},
+            headers={"Retry-After": "60"},
+        )
 
     @app.exception_handler(AuthenticationError)
     async def auth_exception_handler(request, exc):
@@ -152,16 +190,68 @@ def create_app() -> FastAPI:
     app.include_router(analytics_router, prefix=api_prefix)
     app.include_router(search_router, prefix=api_prefix)
 
-    # ── Health check ─────────────────────────────────────
-    @app.get("/health", tags=["health"])
-    async def health_check():
+    # ── Public capability probe ──────────────────────────
+    @app.get("/api/v1/meta", tags=["meta"])
+    async def api_metadata():
+        """What this instance supports, for the UI to adapt to.
+
+        The client cannot otherwise tell whether the demo entry point exists,
+        and rendering a button that always 503s is worse than hiding it.
+        """
         return {
-            "status": "healthy",
-            "version": "0.1.0",
-            "environment": settings.APP_ENV,
+            "version": APP_VERSION,
+            "demo_mode": settings.DEMO_MODE,
+            "linkedin_oauth": bool(settings.LINKEDIN_CLIENT_ID and settings.LINKEDIN_CLIENT_SECRET),
         }
 
+    # ── Health checks ────────────────────────────────────
+    @app.get("/health", tags=["health"])
+    async def health_check():
+        """Liveness: the process is up and serving. Never touches a dependency."""
+        return {
+            "status": "healthy",
+            "version": APP_VERSION,
+            "environment": settings.APP_ENV,
+            "demo_mode": settings.DEMO_MODE,
+        }
+
+    @app.get("/health/ready", tags=["health"])
+    async def readiness_check():
+        """Readiness: the database and cache actually answer.
+
+        An orchestrator routing traffic on liveness alone sends requests to a
+        backend whose database is unreachable, so every one of them 500s.
+        """
+        checks = {"database": await _check_database(), "redis": await _check_redis()}
+        ready = all(checks.values())
+        return JSONResponse(
+            status_code=200 if ready else 503,
+            content={"status": "ready" if ready else "degraded", "checks": checks},
+        )
+
     return app
+
+
+async def _check_database() -> bool:
+    from sqlalchemy import text
+
+    try:
+        async with get_engine().connect() as conn:
+            await conn.execute(text("SELECT 1"))
+        return True
+    except Exception as e:
+        logger.warning("healthcheck_database_failed", error=str(e))
+        return False
+
+
+async def _check_redis() -> bool:
+    try:
+        from core.redis_client import get_redis
+
+        return bool(await (await get_redis()).ping())
+    except Exception as e:
+        logger.warning("healthcheck_redis_failed", error=str(e))
+        return False
 
 
 app = create_app()

@@ -7,7 +7,10 @@ All settings are validated at startup.
 
 from functools import lru_cache
 
+from pydantic import model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+DEFAULT_SECRET_KEY = "change-me-in-production"
 
 
 class Settings(BaseSettings):
@@ -15,7 +18,7 @@ class Settings(BaseSettings):
     APP_NAME: str = "JobPilot AI"
     APP_ENV: str = "development"  # development, staging, production
     DEBUG: bool = True
-    SECRET_KEY: str = "change-me-in-production"
+    SECRET_KEY: str = DEFAULT_SECRET_KEY
     API_V1_PREFIX: str = "/api/v1"
     FRONTEND_URL: str = "http://localhost:3000"
     ALLOWED_ORIGINS: list[str] = ["http://localhost:3000", "http://localhost:8000"]
@@ -46,6 +49,9 @@ class Settings(BaseSettings):
     GEMINI_API_KEY: str = ""
     OPENROUTER_API_KEY: str = ""
     OLLAMA_BASE_URL: str = "http://ollama:11434"
+    # Separate from the chat keys: embeddings are billed and rate-limited on
+    # their own, and semantic search works locally when this is unset.
+    EMBEDDING_API_KEY: str = ""
     # Hard ceiling for a single LLM call. Without it a slow provider keeps an
     # HTTP worker and a DB session busy indefinitely.
     LLM_TIMEOUT_SECONDS: float = 60.0
@@ -76,6 +82,46 @@ class Settings(BaseSettings):
     LINKEDIN_CLIENT_ID: str = ""
     LINKEDIN_CLIENT_SECRET: str = ""
     LINKEDIN_REDIRECT_URI: str = "http://localhost:8000/api/v1/auth/linkedin/callback"
+
+    # ── Rate limiting ────────────────────────────────
+    RATE_LIMIT_ENABLED: bool = True
+    # Windows are per client IP. Login is the password-guessing surface;
+    # register is the account-enumeration surface.
+    RATE_LIMIT_WINDOW_SECONDS: int = 300
+    RATE_LIMIT_LOGIN_ATTEMPTS: int = 10
+    RATE_LIMIT_REGISTER_ATTEMPTS: int = 5
+
+    # ── Demo ─────────────────────────────────────────
+    # Seeds a ready-to-explore account so the app can be demonstrated with no
+    # API keys, no job-board access and no manual data entry.
+    DEMO_MODE: bool = False
+    DEMO_EMAIL: str = "demo@jobpilot.ai"
+    DEMO_PASSWORD: str = "jobpilot-demo"
+
+    @property
+    def is_production(self) -> bool:
+        return self.APP_ENV.lower() in ("production", "prod")
+
+    @model_validator(mode="after")
+    def _reject_insecure_production(self) -> "Settings":
+        """Refuse to boot a production instance with the shipped defaults.
+
+        SECRET_KEY derives the Fernet key that encrypts every stored LLM API
+        key. Left at its default, those keys are decryptable by anyone holding
+        a copy of this repository.
+        """
+        if self.is_production:
+            if self.SECRET_KEY == DEFAULT_SECRET_KEY or len(self.SECRET_KEY) < 32:
+                raise ValueError(
+                    "SECRET_KEY must be set to a unique value of at least 32 characters "
+                    "when APP_ENV=production. Generate one with: "
+                    "python -c 'import secrets; print(secrets.token_urlsafe(48))'"
+                )
+            if self.DEBUG:
+                raise ValueError("DEBUG must be false when APP_ENV=production")
+            if self.DEMO_MODE:
+                raise ValueError("DEMO_MODE must be false when APP_ENV=production")
+        return self
 
     model_config = SettingsConfigDict(
         env_file=".env",

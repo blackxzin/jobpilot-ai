@@ -20,10 +20,14 @@ class ResumeRepository:
         )
         return result.scalars().all()
 
-    async def create(self, user_id: str, title: str, content_text: str, file_url: str) -> dict:
-        import uuid
+    async def create(self, user_id: str, title: str, content_text: str, file_url: str) -> ResumeModel:
+        """Persist a resume and return the row.
+
+        Returns the model rather than a dict so the route serializes uploads
+        the same way it serializes list and get — the three used to disagree
+        on field names.
+        """
         model = ResumeModel(
-            id=str(uuid.uuid4()),
             user_id=user_id,
             title=title,
             content_text=content_text,
@@ -31,11 +35,4 @@ class ResumeRepository:
         )
         self._session.add(model)
         await self._session.flush()
-        return {
-            "id": model.id,
-            "user_id": model.user_id,
-            "title": model.title,
-            "content_text": model.content_text[:200],
-            "file_url": model.file_url,
-            "created_at": str(model.created_at),
-        }
+        return model

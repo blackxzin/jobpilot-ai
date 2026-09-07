@@ -41,5 +41,12 @@ htmlcov/
 logs/
 *.log
 
+# ── Test output ─────────────────────────────────────
+test-results/
+playwright-report/
+coverage.xml
+.ruff_cache/
+.pytest_cache/
+
 # ── Project ─────────────────────────────────────────
 test.db

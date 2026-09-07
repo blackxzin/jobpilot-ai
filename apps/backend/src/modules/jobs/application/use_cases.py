@@ -32,3 +32,14 @@ class GetJobUseCase:
         if not job:
             raise NotFoundError("Job not found")
         return job
+
+
+class CreateJobUseCase:
+    def __init__(self, job_repo: JobRepository):
+        self._job_repo = job_repo
+
+    async def execute(self, company_name: str, **job_fields):
+        company = await self._job_repo.get_or_create_company(company_name)
+        job = await self._job_repo.create({**job_fields, "company_id": company.id, "source": "manual"})
+        job.company = company
+        return job

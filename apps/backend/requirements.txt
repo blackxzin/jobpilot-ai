@@ -24,7 +24,6 @@ celery>=5.4.0
 openai>=1.40.0
 anthropic>=0.27.0
 google-generativeai>=0.8.0
-requests>=2.32.0
 
 # ── Validation & Serialization ──────
 pydantic>=2.6.0
@@ -36,8 +35,8 @@ pypdf>=4.0.0
 
 # ── Observability ───────────────────
 structlog>=24.1.0
+# Initialised in main.py when SENTRY_DSN is set.
 sentry-sdk[fastapi]>=2.0.0
-prometheus-client>=0.20.0
 
 # ── Security ────────────────────────
 cryptography>=42.0.0
@@ -45,8 +44,8 @@ cryptography>=42.0.0
 # ── Utility ────────────────────────
 python-dotenv>=1.0.0
 httpx>=0.27.0
-Jinja2>=3.1.0
 
-# ── Vector Search ──────────────────
-pgvector>=0.3.0
+# ── Semantic search ────────────────
+# Embeddings are stored as JSON and scored with numpy; no pgvector binding
+# is imported, so the package is not a dependency.
 numpy>=1.26.0

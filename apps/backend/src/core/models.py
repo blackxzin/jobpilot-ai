@@ -281,8 +281,12 @@ class CoverLetterModel(Base):
     id = Column(UUID(as_uuid=False), primary_key=True, default=_uuid)
     user_id = Column(UUID(as_uuid=False), ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
     job_id = Column(UUID(as_uuid=False), ForeignKey("jobs.id", ondelete="SET NULL"), nullable=True)
+    title = Column(String(255), default="")
     content = Column(Text, default="")
+    language = Column(String(10), default="pt-BR")
+    tone = Column(String(20), default="professional")
     created_at = Column(DateTime(timezone=True), default=_utcnow)
+    updated_at = Column(DateTime(timezone=True), default=_utcnow, onupdate=_utcnow)
 
 
 # ── AI Analysis ─────────────────────────────────────────────────────────────

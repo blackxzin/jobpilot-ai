@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from celery import Celery
+from celery.schedules import crontab
 
 from core.config import settings
 
@@ -17,6 +18,20 @@ celery_app = Celery(
         "workers.auto_apply",
     ],
 )
+
+# Without a schedule the celery-beat service in docker-compose starts, connects
+# to Redis, and then sits idle forever — the "scheduled scraping" the docs
+# promised never ran.
+celery_app.conf.beat_schedule = {
+    "refresh-job-board": {
+        "task": "workers.scraping.scrape_all_sources",
+        "schedule": crontab(minute=0, hour="*/6"),
+    },
+    "deliver-pending-notifications": {
+        "task": "workers.email_notifications.deliver_pending_notifications",
+        "schedule": crontab(minute="*/5"),
+    },
+}
 
 celery_app.conf.update(
     task_serializer="json",

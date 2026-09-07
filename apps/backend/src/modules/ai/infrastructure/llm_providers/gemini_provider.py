@@ -4,23 +4,27 @@ from __future__ import annotations
 import os
 from collections.abc import AsyncGenerator
 
-from google.generativeai import GenerativeModel, configure
-
 from core.config import settings
-from modules.ai.domain.llm_provider import LLMProvider
+from modules.ai.infrastructure.llm_providers.base import PromptDrivenProvider
+
+DEFAULT_MAX_TOKENS = 4096
+DEFAULT_TEMPERATURE = 0.7
 
 
-class GeminiProvider(LLMProvider):
-    """Provider for Google Gemini API."""
+class GeminiProvider(PromptDrivenProvider):
+    """Provider for the Google Gemini API."""
 
     def __init__(self, api_key: str | None = None, model: str = "gemini-2.0-flash"):
-        self._provider_name = "gemini"
+        # Imported here rather than at module scope: the SDK emits a
+        # deprecation warning on import, which should not fire for users who
+        # never select Gemini.
+        from google.generativeai import GenerativeModel, configure
+
         self._model_name = model
-        api_key = api_key or os.getenv("GEMINI_API_KEY", settings.GEMINI_API_KEY)
-        if api_key:
-            configure(api_key=api_key)
-        self._model = GenerativeModel(model)
-        self._api_key = api_key or ""
+        resolved_key = api_key or os.getenv("GEMINI_API_KEY", settings.GEMINI_API_KEY)
+        if resolved_key:
+            configure(api_key=resolved_key)
+        self._client = GenerativeModel(model)
 
     @property
     def model(self) -> str:
@@ -28,109 +32,33 @@ class GeminiProvider(LLMProvider):
 
     @property
     def provider_name(self) -> str:
-        return self._provider_name
+        return "gemini"
+
+    def _generation_config(self, kwargs: dict) -> dict:
+        return {
+            "temperature": kwargs.get("temperature", DEFAULT_TEMPERATURE),
+            "max_output_tokens": kwargs.get("max_tokens", DEFAULT_MAX_TOKENS),
+        }
 
     async def generate(self, prompt: str, **kwargs) -> str:
-        response = await self._model.generate_content_async(
-            prompt,
-            generation_config={
-                "temperature": kwargs.get("temperature", 0.7),
-                "max_output_tokens": kwargs.get("max_tokens", 4096),
-            },
+        response = await self._client.generate_content_async(
+            prompt, generation_config=self._generation_config(kwargs)
         )
         return response.text or ""
 
     async def stream_generate(self, prompt: str, **kwargs) -> AsyncGenerator[str, None]:
-        response = await self._model.generate_content_async(
-            prompt,
-            stream=True,
-            generation_config={
-                "temperature": kwargs.get("temperature", 0.7),
-                "max_output_tokens": kwargs.get("max_tokens", 4096),
-            },
+        response = await self._client.generate_content_async(
+            prompt, stream=True, generation_config=self._generation_config(kwargs)
         )
         async for chunk in response:
-            yield chunk.text
-
-    async def summarize(self, text: str, **kwargs) -> str:
-        return await self.generate(f"Summarize concisely:\n\n{text}", **kwargs)
-
-    async def analyze_resume(self, resume: str, job_description: str, **kwargs) -> dict:
-        prompt = (
-            f'Analyze resume vs job description. Return ONLY valid JSON with '
-            f'these keys: score (0-100), matched_skills (array), missing_skills (array), '
-            f'suggestions (array), strengths (array).\n\n'
-            f'RESUME:\n{resume}\n\nJOB:\n{job_description}'
-        )
-        result = await self.generate(prompt, **kwargs)
-        return self._parse_json(result)
-
-    async def compare_job(self, resume: str, job: dict, **kwargs) -> dict:
-        prompt = (
-            f'Compare resume to job. Return ONLY valid JSON with keys: '
-            f'compatibility_score (0-100), match_reasons (array of {{text, type}}), '
-            f'suggestions (array).\n\n'
-            f'RESUME:\n{resume}\n\nJOB: {job.get("title", "")} at {job.get("company", "")}\n'
-            f'SKILLS: {", ".join(job.get("skills", []))}\n'
-            f'DESC: {job.get("description", "")[:500]}'
-        )
-        result = await self.generate(prompt, **kwargs)
-        return self._parse_json(result)
-
-    async def generate_cover_letter(self, resume: str, job: dict, **kwargs) -> str:
-        prompt = (
-            f'Write a cover letter (3 paragraphs, max 400 words).\n\n'
-            f'Resume:\n{resume}\n\n'
-            f'Applying for: {job.get("title", "")} at {job.get("company", "")}\n'
-            f'Requirements: {", ".join(job.get("requirements", []))}\n\n'
-            f'Reference resume only. Never invent experiences.'
-        )
-        return await self.generate(prompt, **kwargs)
-
-    async def answer_question(self, question: str, context: str = "", **kwargs) -> str:
-        prompt = (
-            f'You are a career coach.\n'
-            f'{f"Context: {context}\n" if context else ""}'
-            f'Question: {question}\n\n'
-            f'Provide a helpful answer.'
-        )
-        return await self.generate(prompt, **kwargs)
-
-    async def generate_tailored_resume(self, resume: str, job: dict) -> str:
-        prompt = (
-            f'Tailor this resume for the target job. Return ONLY the resume.\n\n'
-            f'ORIGINAL RESUME:\n{resume}\n\n'
-            f'TARGET: {job.get("title", "")} at {job.get("company", "")}\n'
-            f'DESCRIPTION: {job.get("description", "")[:500]}\n\n'
-            f'Keep all experience. Rewrite bullets for relevance. Add professional summary and relevant skills section. Markdown.'
-        )
-        return await self.generate(prompt)
+            if chunk.text:
+                yield chunk.text
 
     async def health_check(self) -> bool:
         try:
-            # Test with a minimal generation
-            test_model = GenerativeModel(self._model_name)
-            await test_model.generate_content_async("hi", generation_config={"max_output_tokens": 1})
+            await self._client.generate_content_async(
+                "ping", generation_config={"max_output_tokens": 1}
+            )
             return True
         except Exception:
             return False
-
-    def _parse_json(self, text: str) -> dict:
-        import json
-        import re
-        try:
-            return json.loads(text)
-        except json.JSONDecodeError:
-            pass
-        block_match = re.search(r'```json\s*(\{.*?\})\s*```', text, re.DOTALL)
-        if block_match:
-            try:
-                return json.loads(block_match.group(1))
-            except json.JSONDecodeError:
-                pass
-        try:
-            start = text.index("{")
-            end = text.rindex("}") + 1
-            return json.loads(text[start:end])
-        except (ValueError, json.JSONDecodeError):
-            return {"error": "Failed to parse LLM response", "raw": text}

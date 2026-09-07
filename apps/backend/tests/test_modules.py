@@ -102,7 +102,7 @@ async def test_linkedin(client: AsyncClient):
 
 
 @pytest.mark.asyncio
-async def test_full_flow(client: AsyncClient):
+async def test_full_flow(client: AsyncClient, pdf_bytes: bytes):
     """Full flow: register → create job → upload resume → matching → cover letter"""
     # Register
     reg = await client.post("/api/v1/auth/register", json={"email": "full@test.com", "password": "pass12345"})
@@ -111,10 +111,9 @@ async def test_full_flow(client: AsyncClient):
     user_id = reg.json()["user_id"]
 
     # Upload resume
-    resume_bytes = b"%PDF-1.4 fake pdf content"
     resume_r = await client.post("/api/v1/resumes/upload",
         headers={"Authorization": f"Bearer {token}"},
-        data={"title": "CV"}, files={"file": ("test.pdf", resume_bytes, "application/pdf")},
+        data={"title": "CV"}, files={"file": ("test.pdf", pdf_bytes, "application/pdf")},
     )
     assert resume_r.status_code == 200
     resume_id = resume_r.json()["id"]

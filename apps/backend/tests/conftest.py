@@ -9,11 +9,28 @@ import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
+from core.config import settings
 from core.database import Base, get_db
+from core.rate_limit import reset_local_state
 from main import create_app
 
 # Use SQLite for tests (fast, no external deps)
 TEST_DATABASE_URL = "sqlite+aiosqlite:///./test.db"
+
+
+@pytest.fixture(autouse=True)
+def isolate_rate_limiter():
+    """Keep the shared rate-limit counters out of unrelated tests.
+
+    Every test registers a user from the same client address, so the real
+    limit would reject the suite after a handful of tests. Tests that assert
+    the limit re-enable it explicitly.
+    """
+    settings.RATE_LIMIT_ENABLED = False
+    reset_local_state()
+    yield
+    settings.RATE_LIMIT_ENABLED = True
+    reset_local_state()
 
 
 @pytest.fixture(scope="session")
@@ -49,3 +66,45 @@ async def client(db_session: AsyncSession) -> AsyncGenerator[AsyncClient, None]:
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as ac:
         yield ac
+
+
+def build_pdf(text: str = "Python developer with FastAPI and PostgreSQL experience") -> bytes:
+    """Build a minimal single-page PDF whose text pypdf can actually extract.
+
+    Tests used a `b"%PDF-1.4 fake"` string, which has the right magic bytes but
+    no text layer — indistinguishable from a scanned CV, which the upload now
+    rejects on purpose.
+    """
+    escaped = text.replace("\\", "\\\\").replace("(", "\\(").replace(")", "\\)")
+    stream = f"BT /F1 12 Tf 72 720 Td ({escaped}) Tj ET".encode()
+
+    objects = [
+        b"<< /Type /Catalog /Pages 2 0 R >>",
+        b"<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
+        b"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] "
+        b"/Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >>",
+        b"<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>",
+        b"<< /Length " + str(len(stream)).encode() + b" >>\nstream\n" + stream + b"\nendstream",
+    ]
+
+    out = bytearray(b"%PDF-1.4\n")
+    offsets = []
+    for index, body in enumerate(objects, start=1):
+        offsets.append(len(out))
+        out += f"{index} 0 obj\n".encode() + body + b"\nendobj\n"
+
+    xref_at = len(out)
+    out += f"xref\n0 {len(objects) + 1}\n".encode() + b"0000000000 65535 f \n"
+    for offset in offsets:
+        out += f"{offset:010d} 00000 n \n".encode()
+    out += (
+        f"trailer\n<< /Size {len(objects) + 1} /Root 1 0 R >>\nstartxref\n{xref_at}\n".encode()
+        + b"%%EOF\n"
+    )
+    return bytes(out)
+
+
+@pytest.fixture
+def pdf_bytes() -> bytes:
+    """A small, genuinely parseable PDF for upload tests."""
+    return build_pdf()

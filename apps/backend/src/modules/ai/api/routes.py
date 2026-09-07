@@ -1,9 +1,6 @@
 """AI analysis routes — matching, ATS, cover letter, chat, LinkedIn & GitHub import."""
 from __future__ import annotations
 
-import json
-import re
-
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 from sqlalchemy import select
@@ -12,11 +9,13 @@ from sqlalchemy.orm import selectinload
 
 from core.config import settings
 from core.database import get_db
-from core.exceptions import NotFoundError
+from core.exceptions import JobPilotException, NotFoundError
 from core.logger import get_logger
 from core.models import JobModel, LLMProviderConfigModel
 from core.security import decrypt_api_key
+from core.validators import validate_uuid
 from modules.ai.application.llm_service import LLMService
+from modules.ai.infrastructure.llm_providers.json_parsing import parse_json_response
 from modules.ai.infrastructure.providers.factory import LLMProviderFactory
 from modules.auth.api.dependencies import ensure_owner, get_current_user
 from modules.auth.domain.entities import User
@@ -46,6 +45,11 @@ class AnalysisRequest(BaseModel):
     resume_id: str
 
 
+class CoverLetterRequest(AnalysisRequest):
+    language: str = "pt-BR"
+    tone: str = "professional"
+
+
 class TailorResumeRequest(BaseModel):
     resume_id: str
     job_id: str
@@ -59,7 +63,12 @@ class AutoApplyRequest(BaseModel):
 # ── Helpers ─────────────────────────────────────────────────────────────────
 
 async def _get_provider(user_id: str, db: AsyncSession):
-    """Return the LLM provider configured by the user, or the app default."""
+    """Return the LLM provider configured by the user, or a working default.
+
+    Resolution order: the user's own active configuration, then the app-wide
+    NVIDIA NIM key, then the offline analyzer. The last step matters — without
+    it a fresh install answers every AI request with a 502.
+    """
     result = await db.execute(
         select(LLMProviderConfigModel)
         .where(
@@ -71,59 +80,56 @@ async def _get_provider(user_id: str, db: AsyncSession):
     config = result.scalars().first()
     if config:
         api_key = decrypt_api_key(config.api_key_encrypted) if config.api_key_encrypted else ""
-        return LLMProviderFactory.create(
+        return LLMProviderFactory.create_with_fallback(
             config.provider_name,
             api_key=api_key,
             base_url=config.base_url or "",
             model=config.model or "",
         )
-    # Fallback: OPENAI_API_KEY holds an OpenAI-compatible NVIDIA NIM key.
-    return LLMProviderFactory.create("nvidia_nim", api_key=settings.OPENAI_API_KEY)
+    # OPENAI_API_KEY holds an OpenAI-compatible NVIDIA NIM key when set.
+    return LLMProviderFactory.create_with_fallback(
+        "nvidia_nim", api_key=settings.OPENAI_API_KEY
+    )
 
 
-async def _load_job(db: AsyncSession, job_id: str) -> JobModel | None:
-    """Load a job with its company eagerly loaded.
+async def _load_job(db: AsyncSession, job_id: str) -> JobModel:
+    """Load a job by id, or raise NotFoundError.
 
-    The company relationship must be eager-loaded: touching a lazy relationship
-    inside async SQLAlchemy raises MissingGreenlet.
+    Relationships are eager-loaded: touching a lazy relationship inside async
+    SQLAlchemy raises MissingGreenlet. The id is validated first so a
+    malformed UUID is a 422 rather than a driver-level 500.
     """
     result = await db.execute(
-        select(JobModel).options(selectinload(JobModel.company)).where(JobModel.id == job_id)
+        select(JobModel)
+        .options(selectinload(JobModel.company), selectinload(JobModel.requirements))
+        .where(JobModel.id == validate_uuid(job_id, "job_id"))
     )
-    return result.scalar_one_or_none()
+    job = result.scalar_one_or_none()
+    if job is None:
+        raise NotFoundError("Job not found")
+    return job
 
 
 async def _load_owned_resume(db: AsyncSession, resume_id: str, user: User):
     """Load a resume and verify it belongs to the current user."""
-    resume = await ResumeRepository(db).get_by_id(resume_id)
+    resume = await ResumeRepository(db).get_by_id(validate_uuid(resume_id, "resume_id"))
     if not resume:
         raise NotFoundError("Resume not found")
     ensure_owner(resume.user_id, user, "Resume")
     return resume
 
 
-def _job_to_prompt_dict(job: JobModel | None) -> dict:
+def _job_to_prompt_dict(job: JobModel) -> dict:
     """Build the plain dict the LLM providers expect from a job."""
-    if job is None:
-        return {"title": "", "company": "", "description": "", "requirements": [], "skills": []}
+    requirements = [r.requirement for r in (job.requirements or []) if r.category != "skill"]
+    skills = [r.requirement for r in (job.requirements or []) if r.category == "skill"]
     return {
         "title": job.title or "",
         "company": job.company.name if job.company else "",
         "description": job.description or "",
-        "requirements": [],
-        "skills": [],
+        "requirements": requirements,
+        "skills": skills,
     }
-
-
-def _extract_json(text: str) -> dict | None:
-    """Best-effort extraction of a JSON object from an LLM response."""
-    match = re.search(r"\{.*\}", text, re.DOTALL)
-    if not match:
-        return None
-    try:
-        return json.loads(match.group())
-    except json.JSONDecodeError:
-        return None
 
 
 # ── Routes ──────────────────────────────────────────────────────────────────
@@ -150,9 +156,12 @@ Return a JSON with these keys:
 - "analysis": brief career analysis in Portuguese
 
 Return ONLY valid JSON."""
-    result = await llm.generate(prompt)
-    parsed = _extract_json(result)
-    return parsed if parsed is not None else {"analysis": result}
+    result = await llm.generate(prompt, cache_key=f"linkedin:{body.url}")
+    parsed = parse_json_response(result)
+    if "parse_error" in parsed:
+        # The model answered in prose. Surfacing it beats returning an empty shape.
+        return {"analysis": result, "url": body.url}
+    return {**parsed, "url": body.url}
 
 
 @router.post("/github/import")
@@ -174,9 +183,15 @@ async def import_github(
             "skills": skills,
             "total_repos": len(repos),
         }
+    except JobPilotException:
+        raise
     except Exception as e:
+        # Surfacing the raw client exception would leak internals; the log keeps it.
         logger.warning("github_import_failed", username=body.username, error=str(e))
-        return {"error": str(e)}
+        raise NotFoundError(
+            f"Não foi possível importar o perfil '{body.username}' do GitHub. "
+            "Verifique se o usuário existe e é público."
+        ) from e
     finally:
         await client.close()
 
@@ -187,14 +202,9 @@ async def chat_ai(
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    provider = await _get_provider(str(user.id), db)
-    llm = LLMService(provider)
-
-    prompt = f"""You are a career coach assistant for JobPilot AI. Be practical, direct, and helpful. Answer in Portuguese.
-
-User: {body.message}"""
-    response = await llm.generate(prompt)
-    return {"response": response}
+    llm = LLMService(await _get_provider(str(user.id), db))
+    response = await llm.answer_question(body.message, body.context)
+    return {"response": response, "provider": llm.provider_name}
 
 
 @router.post("/match")
@@ -205,8 +215,6 @@ async def match_job(
 ):
     resume = await _load_owned_resume(db, body.resume_id, user)
     job = await _load_job(db, body.job_id)
-    if not job:
-        raise NotFoundError("Job not found")
 
     llm = LLMService(await _get_provider(str(user.id), db))
     return await llm.compare_job(resume.content_text, _job_to_prompt_dict(job))
@@ -222,21 +230,33 @@ async def ats_score(
     job = await _load_job(db, body.job_id)
 
     llm = LLMService(await _get_provider(str(user.id), db))
-    return await llm.analyze_resume(resume.content_text, job.description if job else "")
+    return await llm.analyze_resume(resume.content_text or "", job.description or "")
 
 
 @router.post("/cover-letter")
 async def cover_letter(
-    body: AnalysisRequest,
+    body: CoverLetterRequest,
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
+    """Generate a cover letter and persist it so it shows up in cover-letter history."""
+    from modules.cover_letters.application.use_cases import GenerateCoverLetterUseCase
+    from modules.cover_letters.infrastructure.repositories import CoverLetterRepository
+
     resume = await _load_owned_resume(db, body.resume_id, user)
     job = await _load_job(db, body.job_id)
 
     llm = LLMService(await _get_provider(str(user.id), db))
-    result = await llm.generate_cover_letter(resume.content_text, _job_to_prompt_dict(job))
-    return {"cover_letter": result}
+    use_case = GenerateCoverLetterUseCase(llm, CoverLetterRepository(db))
+    saved = await use_case.execute(
+        user_id=str(user.id),
+        job_id=body.job_id,
+        resume_text=resume.content_text or "",
+        job=_job_to_prompt_dict(job),
+        language=body.language,
+        tone=body.tone,
+    )
+    return {"cover_letter": saved["content"], "id": saved["id"]}
 
 
 @router.post("/tailor-resume")
@@ -270,8 +290,6 @@ async def auto_apply(
 
     resume = await _load_owned_resume(db, body.resume_id, user)
     job = await _load_job(db, body.job_id)
-    if not job:
-        raise NotFoundError("Job not found")
 
     llm = LLMService(await _get_provider(str(user.id), db))
     job_dict = _job_to_prompt_dict(job)
@@ -291,14 +309,9 @@ async def auto_apply(
         )
     )
 
-    try:
-        from workers.auto_apply import auto_apply as auto_apply_task
-
-        auto_apply_task.delay(str(user.id), body.job_id, body.resume_id)
-    except Exception as e:
-        # The application row is already persisted; the async task is best-effort.
-        logger.warning("auto_apply_task_dispatch_failed", error=str(e))
-
+    # No background dispatch here: this route already generated both documents
+    # and persisted the application. Queueing `workers.auto_apply` as well
+    # would redo the same work for a job that is already applied to.
     return {
         "application_id": str(application.id),
         "tailored_resume": tailored,

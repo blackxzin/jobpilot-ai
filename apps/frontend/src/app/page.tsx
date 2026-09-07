@@ -1,1014 +1,683 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { Rocket } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
+import { AiResultPanel, type AiResult } from "@/components/AiResultPanel";
+import { AmbientBackground } from "@/components/AmbientBackground";
+import { AppShell } from "@/components/AppShell";
+import { LoginScreen } from "@/components/LoginScreen";
+import { ToastStack } from "@/components/ui";
+import { ApplicationsView } from "@/components/views/ApplicationsView";
+import { CalendarView, EMPTY_EVENT_DRAFT, type EventDraft } from "@/components/views/CalendarView";
+import { ChatView, type ChatMessage } from "@/components/views/ChatView";
+import { DashboardView } from "@/components/views/DashboardView";
+import { EMPTY_JOB_DRAFT, JobsView, type NewJobDraft } from "@/components/views/JobsView";
+import { ResumesView } from "@/components/views/ResumesView";
+import { SemanticView } from "@/components/views/SemanticView";
+import { SettingsView } from "@/components/views/SettingsView";
+import { useSession } from "@/hooks/useSession";
+import { useTheme } from "@/hooks/useTheme";
+import { useToast } from "@/hooks/useToast";
+import { createClient } from "@/lib/api";
+import type {
+  Analytics,
+  Application,
+  ApplicationStats,
+  AtsResult,
+  CalendarEvent,
+  CoverLetter,
+  ExternalJob,
+  GithubImport,
+  Job,
+  JobSearchResponse,
+  LinkedInAnalysis,
+  LlmConfig,
+  MatchResult,
+  Notification,
+  Resume,
+  SemanticHit,
+} from "@/lib/types";
 
-const TOKEN_STORAGE_KEY = "jobpilot-token";
+interface InstanceMeta {
+  demo_mode: boolean;
+  linkedin_oauth: boolean;
+}
 
 export default function Home() {
-  const [token, setToken] = useState("");
+  const session = useSession();
+  const { client, user, restoring, handleApiError } = session;
+  const theme = useTheme();
+  const toast = useToast();
+
   const [tab, setTab] = useState("dashboard");
-  const [theme, setTheme] = useState("dark");
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [restoring, setRestoring] = useState(true);
+  const [meta, setMeta] = useState<InstanceMeta>({ demo_mode: false, linkedin_oauth: false });
+  const [loginError, setLoginError] = useState("");
 
-  useEffect(() => {
-    const saved = localStorage.getItem("jobpilot-theme") || "dark";
-    setTheme(saved);
-    document.documentElement.setAttribute("data-theme", saved);
-  }, []);
-
-  // Keep the session across reloads: the token lives in state, so without
-  // this the user is silently logged out on every refresh.
-  function storeToken(value: string) {
-    setToken(value);
-    if (value) localStorage.setItem(TOKEN_STORAGE_KEY, value);
-    else localStorage.removeItem(TOKEN_STORAGE_KEY);
-  }
-
-  function toggleTheme() {
-    const next = theme === "dark" ? "light" : "dark";
-    setTheme(next);
-    localStorage.setItem("jobpilot-theme", next);
-    document.documentElement.setAttribute("data-theme", next);
-  }
-  const [msg, setMsg] = useState("");
-  const [linkedinUrl, setLinkedinUrl] = useState("");
-
-  const [apps, setApps] = useState<any[]>([]);
-  const [resumes, setResumes] = useState<any[]>([]);
-  const [stats, setStats] = useState<any>(null);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [searchResults, setSearchResults] = useState<any[]>([]);
-  const [searching, setSearching] = useState(false);
-  const [searchSource, setSearchSource] = useState("remoteok");
-  const [showLogin, setShowLogin] = useState(true);
-  const [loginEmail, setLoginEmail] = useState("");
-  const [loginPass, setLoginPass] = useState("");
-
-  // LLM config
-  const [llmConfigs, setLlmConfigs] = useState<any[]>([]);
-  const [editingProvider, setEditingProvider] = useState("");
-  const [editKey, setEditKey] = useState("");
-  const [editUrl, setEditUrl] = useState("");
-  const [editModel, setEditModel] = useState("");
-
-  // AI analysis
-  const [analyzing, setAnalyzing] = useState<string>("");
-  const [analysisResult, setAnalysisResult] = useState<any>(null);
-  const [coverLetter, setCoverLetter] = useState("");
-  const [tailoredResume, setTailoredResume] = useState("");
-
-  // LinkedIn & GitHub
-  const [githubUsername, setGithubUsername] = useState("");
-  const [githubData, setGithubData] = useState<any>(null);
-  const [linkedinData, setLinkedinData] = useState<any>(null);
-  const [importing, setImporting] = useState(false);
-
-  // Calendar
-  const [events, setEvents] = useState<any[]>([]);
-  const [newEvent, setNewEvent] = useState({ title: "", event_type: "interview", date: "", notes: "", location: "" });
-  const [showNewEvent, setShowNewEvent] = useState(false);
-
-  // Chat
-  const [chatMsg, setChatMsg] = useState("");
-  const [chatHistory, setChatHistory] = useState<{role: string, text: string}[]>([]);
-  const [chatting, setChatting] = useState(false);
-
-  // Notifications
-  const [notifications, setNotifications] = useState<any[]>([]);
+  // ── Data ────────────────────────────────────────────────────────
+  const [analytics, setAnalytics] = useState<Analytics | null>(null);
+  const [stats, setStats] = useState<ApplicationStats | null>(null);
+  const [applications, setApplications] = useState<Application[]>([]);
+  const [resumes, setResumes] = useState<Resume[]>([]);
+  const [events, setEvents] = useState<CalendarEvent[]>([]);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
-  const [showNotifications, setShowNotifications] = useState(false);
+  const [llmConfigs, setLlmConfigs] = useState<LlmConfig[]>([]);
+  const [coverLetters, setCoverLetters] = useState<CoverLetter[]>([]);
+  const [loadingData, setLoadingData] = useState(true);
 
-  // Analytics
-  const [analytics, setAnalytics] = useState<any>(null);
+  // ── Job search ──────────────────────────────────────────────────
+  const [source, setSource] = useState("remoteok");
+  const [query, setQuery] = useState("");
+  const [filters, setFilters] = useState<string[]>([]);
+  const [jobResults, setJobResults] = useState<(Job | ExternalJob)[]>([]);
+  const [sourceAvailable, setSourceAvailable] = useState(true);
+  const [searching, setSearching] = useState(false);
+  const [searched, setSearched] = useState(false);
+  const [jobDraft, setJobDraft] = useState<NewJobDraft>(EMPTY_JOB_DRAFT);
+  const [creatingJob, setCreatingJob] = useState(false);
 
-  // Semantic search
+  // ── Semantic search ─────────────────────────────────────────────
   const [semanticQuery, setSemanticQuery] = useState("");
-  const [semanticResults, setSemanticResults] = useState<any[]>([]);
+  const [semanticResults, setSemanticResults] = useState<SemanticHit[]>([]);
   const [semanticSearching, setSemanticSearching] = useState(false);
+  const [semanticSearched, setSemanticSearched] = useState(false);
+  const [indexedJobs, setIndexedJobs] = useState(0);
 
-  const api = (path: string, opts?: any) =>
-    fetch(`/api/v1${path}`, {
-      ...opts,
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}`, ...opts?.headers },
-    });
+  // ── Calendar ────────────────────────────────────────────────────
+  const [eventDraft, setEventDraft] = useState<EventDraft>(EMPTY_EVENT_DRAFT);
+  const [creatingEvent, setCreatingEvent] = useState(false);
 
-  async function fetchNotifications() {
-    const r = await api("/notifications?limit=20");
-    if (r.ok) setNotifications((await r.json()).results);
-    const u = await api("/notifications/unread-count");
-    if (u.ok) setUnreadCount((await u.json()).unread_count);
-  }
+  // ── AI ──────────────────────────────────────────────────────────
+  const [aiResult, setAiResult] = useState<AiResult>(null);
+  const [busyAction, setBusyAction] = useState("");
+  const [savingCoverLetter, setSavingCoverLetter] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
+  const [language, setLanguage] = useState("pt-BR");
+  const [tone, setTone] = useState("professional");
 
-  async function fetchAnalytics() {
-    const r = await api("/analytics/overview");
-    if (r.ok) setAnalytics(await r.json());
-  }
+  // ── Imports ─────────────────────────────────────────────────────
+  const [githubUsername, setGithubUsername] = useState("");
+  const [githubData, setGithubData] = useState<GithubImport | null>(null);
+  const [linkedinUrl, setLinkedinUrl] = useState("");
+  const [linkedinData, setLinkedinData] = useState<LinkedInAnalysis | null>(null);
+  const [importing, setImporting] = useState("");
 
-  async function markRead(id: string) {
-    await api(`/notifications/${id}/read`, { method: "PATCH" });
-    fetchNotifications();
-  }
+  // ── Chat ────────────────────────────────────────────────────────
+  const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
+  const [chatDraft, setChatDraft] = useState("");
+  const [chatting, setChatting] = useState(false);
+  const [uploading, setUploading] = useState(false);
 
-  useEffect(() => { if (token) { fetchApps(); fetchResumes(); fetchLlmConfigs(); fetchEvents(); fetchNotifications(); fetchAnalytics(); } }, [token]);
+  const usingLocalAnalyzer = llmConfigs.every((config) => !config.has_key);
 
-  async function doLogin() {
-    const email = loginEmail || "user@jobpilot.ai";
-    const pass = loginPass || "jobpilot123";
-    let r = await api("/auth/register", { method: "POST", body: JSON.stringify({ email, password: pass, full_name: email.split("@")[0] }) });
-    if (!r.ok) r = await api("/auth/login", { method: "POST", body: JSON.stringify({ email, password: pass }) });
-    if (r.ok) { const d = await r.json(); storeToken(d.token); setShowLogin(false); setMsg(""); }
-    else setMsg("Erro ao entrar");
-  }
+  /** Runs an API call and reports any failure as a toast instead of silently. */
+  const guard = useCallback(
+    async <T,>(action: () => Promise<T>): Promise<T | undefined> => {
+      try {
+        return await action();
+      } catch (error) {
+        toast.error(handleApiError(error));
+        return undefined;
+      }
+    },
+    [handleApiError, toast],
+  );
 
-  async function linkedinLogin() {
-    const r = await api("/auth/linkedin/login");
-    if (r.ok) { const d = await r.json(); window.location.href = d.auth_url; }
-    else setMsg("Erro ao conectar com LinkedIn");
-  }
-
-  // Restore an existing session, or pick up the token from an OAuth redirect.
+  // Instance capabilities drive which entry points the login screen offers.
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const urlToken = params.get("token");
-    if (urlToken) {
-      storeToken(urlToken);
-      setShowLogin(false);
-      window.history.replaceState({}, "", "/");
-    } else {
-      const saved = localStorage.getItem(TOKEN_STORAGE_KEY);
-      if (saved) { storeToken(saved); setShowLogin(false); }
-    }
-    setRestoring(false);
+    createClient("")
+      .get<InstanceMeta>("/meta")
+      .then(setMeta)
+      .catch(() => setMeta({ demo_mode: false, linkedin_oauth: false }));
   }, []);
 
-  async function logout() {
+  const refreshNotifications = useCallback(async () => {
+    const [list, count] = await Promise.all([
+      client.get<{ results: Notification[] }>("/notifications?limit=20"),
+      client.get<{ unread_count: number }>("/notifications/unread-count"),
+    ]);
+    setNotifications(list.results);
+    setUnreadCount(count.unread_count);
+  }, [client]);
+
+  const refreshApplications = useCallback(async () => {
+    const [list, summary] = await Promise.all([
+      client.get<{ results: Application[] }>("/applications/list"),
+      client.get<ApplicationStats>("/applications/stats"),
+    ]);
+    setApplications(list.results);
+    setStats(summary);
+  }, [client]);
+
+  // Load everything the shell needs once a session exists. Failures are
+  // reported once rather than per-endpoint, so a cold backend does not
+  // produce six identical toasts.
+  useEffect(() => {
+    if (!user) return;
+    let cancelled = false;
+
+    (async () => {
+      setLoadingData(true);
+      try {
+        const [analyticsData, applicationList, applicationStats, resumeList, eventList, configs] =
+          await Promise.all([
+            client.get<Analytics>("/analytics/overview"),
+            client.get<{ results: Application[] }>("/applications/list"),
+            client.get<ApplicationStats>("/applications/stats"),
+            client.get<{ results: Resume[] }>("/resumes/list"),
+            client.get<{ events: CalendarEvent[] }>("/calendar"),
+            client.get<{ configs: LlmConfig[] }>("/settings/llm"),
+          ]);
+        if (cancelled) return;
+        setAnalytics(analyticsData);
+        setApplications(applicationList.results);
+        setStats(applicationStats);
+        setResumes(resumeList.results);
+        setEvents(eventList.events);
+        setLlmConfigs(configs.configs);
+        await refreshNotifications();
+
+        // Cheap probe purely for the "N vagas indexadas" counter, which would
+        // otherwise read zero until the user ran their first search.
+        const probe = await client.get<{ indexed_jobs: number }>(
+          "/search/semantic?q=engenharia&limit=1",
+        );
+        if (!cancelled) setIndexedJobs(probe.indexed_jobs);
+      } catch (error) {
+        if (!cancelled) toast.error(handleApiError(error));
+      } finally {
+        if (!cancelled) setLoadingData(false);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+    // `toast` and `handleApiError` are stable callbacks; re-running on them
+    // would refetch the whole dashboard on every toast.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, client, refreshNotifications]);
+
+  // ── Auth actions ────────────────────────────────────────────────
+
+  async function login(email: string, password: string) {
+    setLoginError("");
     try {
-      await api("/auth/logout", { method: "POST" });
-    } catch {
-      // Network failure must not trap the user in a logged-in shell.
+      await session.login(email, password);
+    } catch (error) {
+      setLoginError(handleApiError(error));
     }
-    storeToken(""); setShowLogin(true); setApps([]); setResumes([]);
   }
+
+  async function register(email: string, password: string, fullName: string) {
+    setLoginError("");
+    try {
+      await session.register(email, password, fullName);
+    } catch (error) {
+      setLoginError(handleApiError(error));
+    }
+  }
+
+  async function loginWithLinkedIn() {
+    setLoginError("");
+    try {
+      const { auth_url } = await createClient("").get<{ auth_url: string }>("/auth/linkedin/login");
+      window.location.href = auth_url;
+    } catch (error) {
+      setLoginError(handleApiError(error));
+    }
+  }
+
+  async function loginAsDemo() {
+    setLoginError("");
+    try {
+      await session.loginAsDemo();
+    } catch (error) {
+      setLoginError(handleApiError(error));
+    }
+  }
+
+  // ── Jobs ────────────────────────────────────────────────────────
 
   async function searchJobs() {
     setSearching(true);
-    setMsg("");
-    try {
-      const r = await api(`/jobs/${searchSource}?q=${encodeURIComponent(searchQuery)}&page=1`);
-      if (r.ok) {
-        const d = await r.json();
-        setSearchResults(d.results || []);
-        if (!(d.results || []).length) setMsg("Nenhuma vaga encontrada nessa fonte.");
-      } else {
-        setSearchResults([]);
-        setMsg("Erro ao buscar vagas. Tente outra fonte.");
-      }
-    } catch {
-      setSearchResults([]);
-      setMsg("Falha de conexão com o servidor.");
-    }
+    setSearched(true);
+    const terms = [query.trim(), ...filters].filter(Boolean).join(" ");
+    const path =
+      source === "local"
+        ? `/jobs?query=${encodeURIComponent(terms)}&page=1`
+        : `/jobs/${source}?q=${encodeURIComponent(terms)}&page=1`;
+
+    const response = await guard(() =>
+      client.get<JobSearchResponse<Job | ExternalJob>>(path),
+    );
+    setJobResults(response?.results ?? []);
+    setSourceAvailable(response?.available ?? true);
     setSearching(false);
   }
 
-  async function fetchApps() {
-    const r = await api("/applications/list");
-    if (r.ok) setApps((await r.json()).results);
-    const s = await api("/applications/stats");
-    if (s.ok) setStats(await s.json());
+  async function createJob() {
+    if (!jobDraft.title.trim() || !jobDraft.company_name.trim()) {
+      toast.error("Informe ao menos o título e a empresa.");
+      return;
+    }
+    setCreatingJob(true);
+    const created = await guard(() => client.post<Job>("/jobs", jobDraft));
+    if (created) {
+      toast.success("Vaga cadastrada.");
+      setJobDraft(EMPTY_JOB_DRAFT);
+      // Index it so it becomes reachable from semantic search straight away.
+      await guard(() => client.post(`/search/index-job/${created.id}`));
+      setSource("local");
+      setQuery("");
+      setFilters([]);
+      const list = await guard(() => client.get<JobSearchResponse<Job>>("/jobs?query=&page=1"));
+      setJobResults(list?.results ?? []);
+      setSearched(true);
+      setSourceAvailable(true);
+    }
+    setCreatingJob(false);
   }
 
-  async function fetchResumes() {
-    const r = await api("/resumes/list");
-    if (r.ok) setResumes((await r.json()).results);
-  }
-
-  async function fetchEvents() {
-    const r = await api("/calendar");
-    if (r.ok) setEvents((await r.json()).events);
-  }
-
-  async function createEvent() {
-    const r = await api("/calendar", { method: "POST", body: JSON.stringify(newEvent) });
-    if (r.ok) { setMsg("Evento criado!"); setShowNewEvent(false); fetchEvents(); setNewEvent({ title: "", event_type: "interview", date: "", notes: "", location: "" }); }
-    else setMsg("Erro ao criar evento");
-  }
-
-  async function deleteEvent(id: string) {
-    await api(`/calendar/${id}`, { method: "DELETE" });
-    fetchEvents();
-  }
-
-  async function updateEventStatus(id: string, status: string) {
-    await api(`/calendar/${id}`, { method: "PATCH", body: JSON.stringify({ status }) });
-    fetchEvents();
-  }
-
-  async function sendChat() {
-    if (!chatMsg.trim()) return;
-    setChatHistory(h => [...h, { role: "user", text: chatMsg }]);
-    setChatting(true);
-    const msg = chatMsg;
-    setChatMsg("");
-    const r = await api("/ai/chat", { method: "POST", body: JSON.stringify({ message: msg }) });
-    if (r.ok) { const d = await r.json(); setChatHistory(h => [...h, { role: "assistant", text: d.response }]); }
-    else setChatHistory(h => [...h, { role: "assistant", text: "Erro ao processar mensagem." }]);
-    setChatting(false);
-  }
-
-  async function fetchLlmConfigs() {
-    const r = await api("/settings/llm");
-    if (r.ok) setLlmConfigs((await r.json()).configs);
-  }
-
-  async function uploadResume(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    const form = e.currentTarget;
-    const fd = new FormData(form);
-    const r = await fetch(`/api/v1/resumes/upload`, { method: "POST", headers: { Authorization: `Bearer ${token}` }, body: fd });
-    if (r.ok) { setMsg("Currículo enviado!"); fetchResumes(); } else setMsg("Erro no upload");
-  }
-
-  async function updateStatus(appId: string, status: string) {
-    await api(`/applications/${appId}/status`, { method: "PATCH", body: JSON.stringify({ status }) });
-    fetchApps();
-  }
-
-  async function saveLlmConfig(providerName: string) {
-    const body: any = { provider_name: providerName, api_key: editKey, base_url: editUrl, model: editModel };
-    const r = await api("/settings/llm", { method: "POST", body: JSON.stringify(body) });
-    if (r.ok) { setMsg(`${providerName} configurado!`); setEditingProvider(""); setEditKey(""); setEditUrl(""); setEditModel(""); fetchLlmConfigs(); }
-    else setMsg("Erro ao salvar");
-  }
-
-  async function importGithub() {
-    if (!githubUsername) return;
-    setImporting(true);
-    const r = await api("/ai/github/import", { method: "POST", body: JSON.stringify({ username: githubUsername }) });
-    if (r.ok) { const d = await r.json(); setGithubData(d); setMsg("GitHub importado!"); }
-    else setMsg("Erro ao importar GitHub");
-    setImporting(false);
-  }
-
-  async function analyzeLinkedin() {
-    if (!linkedinUrl) return;
-    setImporting(true);
-    const r = await api("/ai/linkedin/analyze", { method: "POST", body: JSON.stringify({ url: linkedinUrl }) });
-    if (r.ok) { const d = await r.json(); setLinkedinData(d); setAnalysisResult(d); setMsg("LinkedIn analisado!"); }
-    else setMsg("Erro ao analisar LinkedIn");
-    setImporting(false);
-  }
-
-  async function runMatching(appId: string, jobId: string, resumeId: string) {
-    setAnalyzing(appId);
-    setCoverLetter("");
-    setAnalysisResult(null);
-    const r = await api("/ai/match", { method: "POST", body: JSON.stringify({ job_id: jobId, resume_id: resumeId }) });
-    if (r.ok) setAnalysisResult(await r.json());
-    else setMsg("Erro na análise");
-    setAnalyzing("");
-  }
-
-  async function runAts(resumeId: string, jobId: string) {
-    setAnalyzing("ats");
-    setAnalysisResult(null);
-    setCoverLetter("");
-    const r = await api("/ai/ats-score", { method: "POST", body: JSON.stringify({ job_id: jobId, resume_id: resumeId }) });
-    if (r.ok) setAnalysisResult(await r.json());
-    else setMsg("Erro no ATS");
-    setAnalyzing("");
-  }
-
-  async function runCoverLetter(resumeId: string, jobId: string) {
-    setAnalyzing("cover");
-    setAnalysisResult(null);
-    setCoverLetter("");
-    setTailoredResume("");
-    const r = await api("/ai/cover-letter", { method: "POST", body: JSON.stringify({ job_id: jobId, resume_id: resumeId }) });
-    if (r.ok) { const d = await r.json(); setCoverLetter(d.cover_letter); }
-    else setMsg("Erro na carta");
-    setAnalyzing("");
-  }
-
-  async function runTailorResume(resumeId: string, jobId: string) {
-    setAnalyzing("tailor");
-    setAnalysisResult(null);
-    setCoverLetter("");
-    setTailoredResume("");
-    const r = await api("/ai/tailor-resume", { method: "POST", body: JSON.stringify({ resume_id: resumeId, job_id: jobId }) });
-    if (r.ok) { const d = await r.json(); setTailoredResume(d.tailored_resume); setMsg("Currículo personalizado gerado!"); }
-    else setMsg("Erro ao gerar currículo");
-    setAnalyzing("");
-  }
-
-  async function runAutoApply(resumeId: string, jobId: string) {
-    setAnalyzing("auto-apply");
-    setMsg("Gerando currículo, carta e candidatura...");
-    const r = await api("/ai/auto-apply", { method: "POST", body: JSON.stringify({ resume_id: resumeId, job_id: jobId }) });
-    if (r.ok) { const d = await r.json(); setMsg("✅ Candidatura automática criada!"); setTailoredResume(d.tailored_resume); setCoverLetter(d.cover_letter); fetchApps(); }
-    else setMsg("Erro no auto apply");
-    setAnalyzing("");
-  }
-
-  async function semanticSearch() {
+  async function runSemanticSearch() {
     if (!semanticQuery.trim()) return;
     setSemanticSearching(true);
-    const r = await api(`/search/semantic?q=${encodeURIComponent(semanticQuery)}&limit=10`);
-    if (r.ok) setSemanticResults((await r.json()).results);
+    setSemanticSearched(true);
+    const response = await guard(() =>
+      client.get<{ results: SemanticHit[]; indexed_jobs: number }>(
+        `/search/semantic?q=${encodeURIComponent(semanticQuery)}&limit=12`,
+      ),
+    );
+    setSemanticResults(response?.results ?? []);
+    setIndexedJobs(response?.indexed_jobs ?? 0);
     setSemanticSearching(false);
   }
 
+  // ── Calendar ────────────────────────────────────────────────────
+
+  async function createEvent() {
+    if (!eventDraft.title.trim()) {
+      toast.error("Informe um título para o evento.");
+      return;
+    }
+    setCreatingEvent(true);
+    const created = await guard(() => client.post("/calendar", eventDraft));
+    if (created) {
+      toast.success("Evento criado.");
+      setEventDraft(EMPTY_EVENT_DRAFT);
+      const list = await guard(() => client.get<{ events: CalendarEvent[] }>("/calendar"));
+      if (list) setEvents(list.events);
+    }
+    setCreatingEvent(false);
+  }
+
+  async function deleteEvent(id: string) {
+    const done = await guard(() => client.delete(`/calendar/${id}`));
+    if (done !== undefined) {
+      setEvents((current) => current.filter((event) => event.id !== id));
+      toast.success("Evento removido.");
+    }
+  }
+
+  async function updateEventStatus(id: string, status: string) {
+    const done = await guard(() => client.patch(`/calendar/${id}`, { status }));
+    if (done !== undefined) {
+      setEvents((current) =>
+        current.map((event) => (event.id === id ? { ...event, status } : event)),
+      );
+    }
+  }
+
+  // ── AI actions ──────────────────────────────────────────────────
+
+  async function runAiAction(actionId: string, application: Application) {
+    const payload = { job_id: application.job_id, resume_id: application.resume_id };
+    setBusyAction(`${actionId}:${application.id}`);
+
+    try {
+      if (actionId === "match") {
+        const data = await guard(() => client.post<MatchResult>("/ai/match", payload));
+        if (data) setAiResult({ kind: "match", data });
+      } else if (actionId === "ats") {
+        const data = await guard(() => client.post<AtsResult>("/ai/ats-score", payload));
+        if (data) setAiResult({ kind: "ats", data });
+      } else if (actionId === "cover") {
+        const data = await guard(() =>
+          client.post<{ cover_letter: string; id: string }>("/ai/cover-letter", {
+            ...payload,
+            language,
+            tone,
+          }),
+        );
+        if (data) setAiResult({ kind: "cover", id: data.id, content: data.cover_letter });
+      } else if (actionId === "tailor") {
+        const data = await guard(() =>
+          client.post<{ tailored_resume: string }>("/ai/tailor-resume", payload),
+        );
+        if (data) {
+          setAiResult({
+            kind: "resume",
+            content: data.tailored_resume,
+            title: application.job_title,
+          });
+        }
+      } else if (actionId === "auto") {
+        const data = await guard(() =>
+          client.post<{ cover_letter: string; tailored_resume: string }>("/ai/auto-apply", payload),
+        );
+        if (data) {
+          toast.success("Candidatura automática registrada.");
+          setAiResult({
+            kind: "resume",
+            content: data.tailored_resume,
+            title: application.job_title,
+          });
+          await guard(refreshApplications);
+        }
+      }
+    } finally {
+      setBusyAction("");
+    }
+  }
+
+  async function updateApplicationStatus(id: string, status: string) {
+    const updated = await guard(() =>
+      client.patch<Application>(`/applications/${id}/status`, { status }),
+    );
+    if (updated) {
+      setApplications((current) =>
+        current.map((application) =>
+          application.id === id ? { ...application, status: updated.status } : application,
+        ),
+      );
+      const fresh = await guard(() => client.get<Analytics>("/analytics/overview"));
+      if (fresh) setAnalytics(fresh);
+      await guard(refreshApplications);
+    }
+  }
+
+  async function loadCoverLetters() {
+    const list = await guard(() => client.get<CoverLetter[]>("/cover-letters"));
+    if (list) setCoverLetters(list);
+  }
+
+  async function saveCoverLetter(id: string, content: string) {
+    setSavingCoverLetter(true);
+    const saved = await guard(() => client.patch(`/cover-letters/${id}`, { content }));
+    if (saved !== undefined) {
+      setAiResult({ kind: "cover", id, content });
+      toast.success("Carta atualizada.");
+    }
+    setSavingCoverLetter(false);
+  }
+
+  async function deleteCoverLetter(id: string) {
+    const done = await guard(() => client.delete(`/cover-letters/${id}`));
+    if (done !== undefined) {
+      setCoverLetters((current) => current.filter((letter) => letter.id !== id));
+      toast.success("Carta removida.");
+    }
+  }
+
+  // ── Imports, resumes, chat ──────────────────────────────────────
+
+  async function importGithub() {
+    if (!githubUsername.trim()) return;
+    setImporting("github");
+    const data = await guard(() =>
+      client.post<GithubImport>("/ai/github/import", { username: githubUsername.trim() }),
+    );
+    if (data) {
+      setGithubData(data);
+      toast.success(`Perfil de ${githubUsername} importado.`);
+    }
+    setImporting("");
+  }
+
+  async function analyzeLinkedin() {
+    if (!linkedinUrl.trim()) return;
+    setImporting("linkedin");
+    const data = await guard(() =>
+      client.post<LinkedInAnalysis>("/ai/linkedin/analyze", { url: linkedinUrl.trim() }),
+    );
+    if (data) {
+      setLinkedinData(data);
+      toast.success("Perfil analisado.");
+    }
+    setImporting("");
+  }
+
+  async function uploadResume(formData: FormData) {
+    setUploading(true);
+    const created = await guard(() => client.upload<Resume>("/resumes/upload", formData));
+    if (created) {
+      toast.success("Currículo enviado. O ATS Score aparece em instantes.");
+      const list = await guard(() => client.get<{ results: Resume[] }>("/resumes/list"));
+      if (list) setResumes(list.results);
+    }
+    setUploading(false);
+  }
+
+  async function sendChat() {
+    const message = chatDraft.trim();
+    if (!message) return;
+
+    setChatHistory((current) => [...current, { role: "user", text: message }]);
+    setChatDraft("");
+    setChatting(true);
+
+    const response = await guard(() =>
+      client.post<{ response: string }>("/ai/chat", { message }),
+    );
+    if (response) {
+      setChatHistory((current) => [...current, { role: "assistant", text: response.response }]);
+    }
+    setChatting(false);
+  }
+
+  async function markNotificationRead(id: string) {
+    const done = await guard(() => client.patch(`/notifications/${id}/read`));
+    if (done !== undefined) await guard(refreshNotifications);
+  }
+
+  // ── Render ──────────────────────────────────────────────────────
+
   if (restoring) {
     return (
-      <div className="flex min-h-screen items-center justify-center p-4">
-        <p className="text-sm text-zinc-400">Carregando…</p>
-      </div>
-    );
-  }
-
-  if (showLogin) {
-    return (
-      <div className="flex min-h-screen items-center justify-center p-4">
-        <div className="w-full max-w-sm space-y-6">
-          <div className="text-center">
-            <h1 className="text-3xl font-bold text-emerald-400">JobPilot AI</h1>
-            <p className="text-zinc-400 text-sm mt-1">Copiloto de carreira inteligente</p>
-          </div>
-          <div className="bg-zinc-900 rounded-xl p-4 sm:p-6 space-y-3 border border-zinc-800">
-            <input value={loginEmail} onChange={e => setLoginEmail(e.target.value)} placeholder="Email (opcional)" className="w-full bg-zinc-800 rounded-lg px-4 py-2.5 text-sm border border-zinc-700" />
-            <input value={loginPass} onChange={e => setLoginPass(e.target.value)} type="password" placeholder="Senha (opcional)" className="w-full bg-zinc-800 rounded-lg px-4 py-2.5 text-sm border border-zinc-700" />
-            <button onClick={doLogin} className="w-full bg-emerald-600 hover:bg-emerald-500 text-white py-2.5 rounded-lg font-medium text-sm">Entrar</button>
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-zinc-700" /></div>
-              <div className="relative flex justify-center text-xs"><span className="bg-zinc-900 px-2 text-zinc-500">ou</span></div>
-            </div>
-            <button onClick={linkedinLogin} className="w-full bg-blue-600 hover:bg-blue-500 text-white py-2.5 rounded-lg font-medium text-sm flex items-center justify-center gap-2">
-              <span>🔗</span> Entrar com LinkedIn
-            </button>
-            <p className="text-xs text-zinc-500 text-center">Deixe em branco para entrar rápido</p>
-            {msg && <p className="text-sm text-center text-red-400">{msg}</p>}
-          </div>
+      <div className="flex min-h-screen items-center justify-center">
+        <AmbientBackground />
+        <div className="flex items-center gap-2.5 text-sm text-faint">
+          <Rocket size={16} className="animate-breathe text-accent" />
+          Carregando…
         </div>
       </div>
     );
   }
 
-  const tabs = ["dashboard", "jobs", "semantic", "calendar", "applications", "resumes", "chat", "ia"];
-  const sources = [
-  { id: "remoteok", name: "RemoteOK", desc: "Vagas remotas mundo todo" },
-    { id: "jobicy", name: "Jobicy", desc: "Vagas remotas tech" },
-    { id: "google-jobs", name: "Google Jobs", desc: "Vagas do Google" },
-    { id: "gupy", name: "Gupy", desc: "Vagas Brasil (fallback)" },
-    { id: "indeed", name: "Indeed", desc: "Vagas Brasil (fallback)" },
-    { id: "linkedin", name: "LinkedIn Jobs", desc: "Vagas LinkedIn (fallback)" },
-  ];
-
-  const llmProviders = [
-    { id: "openai", name: "OpenAI", icon: "🤖", models: "gpt-4o, gpt-4o-mini", needs_url: false },
-    { id: "anthropic", name: "Anthropic Claude", icon: "🟣", models: "claude-sonnet-4, claude-haiku-3.5", needs_url: false },
-    { id: "gemini", name: "Google Gemini", icon: "🔵", models: "gemini-2.0-flash, gemini-2.0-pro", needs_url: false },
-    { id: "nvidia_nim", name: "NVIDIA NIM", icon: "🟢", models: "nvidia/llama-3.3-70b-instruct", needs_url: true },
-    { id: "ollama", name: "Ollama (local)", icon: "🦙", models: "llama3.1, mistral, qwen2", needs_key: false },
-    { id: "openrouter", name: "OpenRouter", icon: "🔀", models: "openai/gpt-4o, meta-llama/llama-3.1", needs_url: false },
-  ];
+  if (!user) {
+    return (
+      <>
+        <LoginScreen
+          onLogin={login}
+          onRegister={register}
+          onLinkedIn={loginWithLinkedIn}
+          onDemo={loginAsDemo}
+          demoAvailable={meta.demo_mode}
+          error={loginError}
+        />
+        <ToastStack toasts={toast.toasts} onDismiss={toast.dismiss} />
+      </>
+    );
+  }
 
   return (
-    <div className="min-h-screen" style={{background: 'var(--bg-page)', color: 'var(--text-primary)'}}>
-      <nav className="border-b" style={{borderColor: 'var(--border)', backgroundColor: 'var(--bg-nav)'}}>
-        <div className="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between">
-          <span className="text-emerald-400 font-bold text-lg">JobPilot AI</span>
-          <button onClick={() => setMenuOpen(!menuOpen)} className="md:hidden text-lg" style={{color: 'var(--text-secondary)'}}>
-            {menuOpen ? "✕" : "☰"}
-          </button>
-          <div className="hidden md:flex items-center gap-4">
-            <div className="flex gap-1 rounded-lg p-1" style={{backgroundColor: 'var(--bg-input)'}}>
-              {tabs.map(t => (
-                <button key={t} onClick={() => setTab(t)} className={`px-3 py-1.5 rounded-md text-xs font-medium capitalize ${tab === t ? "bg-emerald-600 text-white" : "text-zinc-400 hover:text-white"}`}>
-                  {t === "ia" ? "🤖 IA" : t}
-                </button>
-              ))}
-            </div>
-            <div className="relative">
-              <button onClick={() => setShowNotifications(!showNotifications)} className="text-sm relative" style={{color: 'var(--text-secondary)'}}>
-                🔔 {unreadCount > 0 && <span className="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] rounded-full w-4 h-4 flex items-center justify-center font-bold">{unreadCount}</span>}
-              </button>
-              {showNotifications && (
-                <div className="absolute right-0 top-8 w-72 sm:w-80 shadow-xl z-50 max-h-80 overflow-y-auto rounded-xl" style={{backgroundColor: 'var(--bg-card)', border: '1px solid', borderColor: 'var(--border)'}}>
-                  <div className="p-3 border-b" style={{borderColor: 'var(--border)'}}>
-                    <div className="flex justify-between items-center">
-                      <span className="text-xs font-semibold">Notificações</span>
-                      <button onClick={() => setShowNotifications(false)} className="text-xs" style={{color: 'var(--text-muted)'}}>✕</button>
-                    </div>
-                  </div>
-                  {notifications.length === 0 ? (
-                    <p className="text-xs p-4 text-center" style={{color: 'var(--text-muted)'}}>Nenhuma notificação</p>
-                  ) : (
-                    notifications.slice(0, 10).map((n: any) => (
-                      <div key={n.id} onClick={() => { if (n.status !== "read") markRead(n.id); }}
-                        className="p-3 border-b cursor-pointer" style={{borderColor: 'var(--border)', borderLeft: n.status === "pending" || n.status === "sent" ? '2px solid #10b981' : '2px solid transparent'}}>
-                        <p className="text-xs font-medium">{n.title}</p>
-                        <p className="text-[11px] truncate" style={{color: 'var(--text-secondary)'}}>{n.message}</p>
-                        <div className="flex gap-2 mt-1">
-                          <span className="text-[10px] px-1.5 py-0.5 rounded" style={{backgroundColor: 'var(--bg-input)', color: 'var(--text-muted)'}}>{n.channel}</span>
-                          <span className="text-[10px]" style={{color: 'var(--text-muted)'}}>{new Date(n.created_at).toLocaleDateString("pt-BR")}</span>
-                        </div>
-                      </div>
-                    ))
-                  )}
-                </div>
-              )}
-            </div>
-            <button onClick={toggleTheme} className="text-xs" style={{color: 'var(--text-secondary)'}} title="Alternar tema">
-              {theme === "dark" ? "☀️" : "🌙"}
-            </button>
-            <button onClick={logout} className="text-xs hover:text-red-400" style={{color: 'var(--text-secondary)'}}>Sair</button>
-          </div>
-        </div>
-        {menuOpen && (
-          <div className="md:hidden border-t" style={{borderColor: 'var(--border)', backgroundColor: 'var(--bg-nav)'}}>
-            <div className="px-4 py-3 space-y-1">
-              {tabs.map(t => (
-                <button key={t} onClick={() => { setTab(t); setMenuOpen(false); }}
-                  className={`w-full text-left px-3 py-2 rounded-lg text-sm capitalize ${tab === t ? "bg-emerald-600 text-white" : ""}`}
-                  style={{color: tab === t ? 'white' : 'var(--text-secondary)'}}>
-                  {t === "ia" ? "🤖 IA" : t}
-                </button>
-              ))}
-              <div className="flex items-center gap-3 pt-2 border-t" style={{borderColor: 'var(--border)'}}>
-                <button onClick={toggleTheme} className="text-sm" style={{color: 'var(--text-secondary)'}}>{theme === "dark" ? "☀️ Claro" : "🌙 Escuro"}</button>
-                <button onClick={logout} className="text-sm" style={{color: 'var(--text-secondary)'}}>Sair</button>
-              </div>
-            </div>
-          </div>
-        )}
-      </nav>
-
-      <main className="max-w-6xl mx-auto p-4 space-y-6">
-        {msg && <div className="bg-emerald-900/50 border border-emerald-700 text-emerald-300 px-4 py-2 rounded-lg text-sm">{msg}</div>}
-
-        {/* TAILORED RESUME MODAL */}
-        {tailoredResume && (
-          <div className="bg-zinc-900 rounded-xl p-4 sm:p-6 border border-emerald-700">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="font-semibold">📄 Currículo Personalizado</h2>
-              <div className="flex gap-2">
-                <button onClick={() => { navigator.clipboard.writeText(tailoredResume); setMsg("Copiado!"); }} className="text-xs bg-zinc-800 hover:bg-zinc-700 px-3 py-1.5 rounded-lg">📋 Copiar</button>
-                <button onClick={() => setTailoredResume("")} className="text-zinc-500 hover:text-white text-xs">✕ Fechar</button>
-              </div>
-            </div>
-            <div className="bg-zinc-800/50 rounded-lg p-4 whitespace-pre-wrap text-sm text-zinc-300 leading-relaxed max-h-96 overflow-y-auto font-mono">
-              {tailoredResume}
-            </div>
-          </div>
-        )}
-
-        {/* ANALYSIS MODAL */}
-        {(analysisResult || coverLetter) && !tailoredResume && (
-          <div className="bg-zinc-900 rounded-xl p-4 sm:p-6 border border-emerald-700">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="font-semibold">
-                {analysisResult?.compatibility_score !== undefined ? "🎯 Resultado do Matching" :
-                 analysisResult?.score !== undefined ? "📊 ATS Score" : "✉️ Carta de Apresentação"}
-              </h2>
-              <button onClick={() => { setAnalysisResult(null); setCoverLetter(""); }} className="text-zinc-500 hover:text-white text-xs">✕ Fechar</button>
-            </div>
-
-            {analysisResult?.compatibility_score !== undefined && (
-              <div className="space-y-4">
-                <div className="flex items-center gap-4">
-                  <div className={`text-4xl font-bold ${analysisResult.compatibility_score >= 70 ? "text-emerald-400" : analysisResult.compatibility_score >= 40 ? "text-yellow-400" : "text-red-400"}`}>
-                    {analysisResult.compatibility_score}%
-                  </div>
-                  <p className="text-sm text-zinc-400">Compatibilidade com a vaga</p>
-                </div>
-                {analysisResult.match_reasons?.length > 0 && (
-                  <div>
-                    <p className="text-sm font-medium mb-2">Análise:</p>
-                    <div className="space-y-1">{analysisResult.match_reasons.map((r: any, i: number) => (
-                      <div key={i} className={`text-xs px-3 py-1.5 rounded-lg ${r.type === "match" ? "bg-emerald-900/30 text-emerald-400" : "bg-red-900/30 text-red-400"}`}>
-                        {r.type === "match" ? "✅" : "⚠️"} {r.text}
-                      </div>
-                    ))}</div>
-                  </div>
-                )}
-                {analysisResult.suggestions?.length > 0 && (
-                  <div>
-                    <p className="text-sm font-medium mb-2">💡 Sugestões:</p>
-                    <ul className="list-disc list-inside text-xs text-zinc-400 space-y-1">
-                      {analysisResult.suggestions.map((s: string, i: number) => <li key={i}>{s}</li>)}
-                    </ul>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {analysisResult?.score !== undefined && analysisResult?.compatibility_score === undefined && (
-              <div className="space-y-4">
-                <div className="flex items-center gap-4">
-                  <div className={`text-4xl font-bold ${(analysisResult.score || 0) >= 70 ? "text-emerald-400" : (analysisResult.score || 0) >= 40 ? "text-yellow-400" : "text-red-400"}`}>
-                    {analysisResult.score}/100
-                  </div>
-                  <p className="text-sm text-zinc-400">ATS Score</p>
-                </div>
-                {analysisResult.matched_skills?.length > 0 && (
-                  <div>
-                    <p className="text-sm font-medium mb-2 text-emerald-400">✅ Skills compatíveis: {analysisResult.matched_skills.join(", ")}</p>
-                  </div>
-                )}
-                {analysisResult.missing_skills?.length > 0 && (
-                  <div>
-                    <p className="text-sm font-medium mb-2 text-red-400">⚠️ Skills faltando: {analysisResult.missing_skills.join(", ")}</p>
-                  </div>
-                )}
-                {analysisResult.suggestions?.length > 0 && (
-                  <div>
-                    <p className="text-sm font-medium mb-2">💡 Sugestões:</p>
-                    <ul className="list-disc list-inside text-xs text-zinc-400 space-y-1">
-                      {analysisResult.suggestions.map((s: string, i: number) => <li key={i}>{s}</li>)}
-                    </ul>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {coverLetter && (
-              <div className="bg-zinc-800/50 rounded-lg p-4 whitespace-pre-wrap text-sm text-zinc-300 leading-relaxed max-h-96 overflow-y-auto">
-                {coverLetter}
-              </div>
-            )}
-          </div>
-        )}
-
+    <>
+      <AmbientBackground />
+      <AppShell
+        user={user}
+        activeTab={tab}
+        onTabChange={setTab}
+        theme={theme.theme}
+        onToggleTheme={theme.toggle}
+        onLogout={session.logout}
+        notifications={notifications}
+        unreadCount={unreadCount}
+        onMarkRead={markNotificationRead}
+        offline={usingLocalAnalyzer}
+      >
         {tab === "dashboard" && (
-          <>
-            <div className="bg-zinc-900 rounded-xl p-4 sm:p-6 border border-zinc-800">
-              <h2 className="font-semibold mb-4">📥 Importar Dados</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="bg-zinc-800/50 rounded-lg p-4">
-                  <h3 className="text-sm font-medium mb-2">🐙 GitHub</h3>
-                  <div className="flex gap-2">
-                    <input value={githubUsername} onChange={e => setGithubUsername(e.target.value)} placeholder="Nome de usuário do GitHub" className="flex-1 bg-zinc-900 rounded-lg px-3 py-2 text-xs border border-zinc-700 focus:outline-none focus:border-emerald-500" />
-                    <button onClick={importGithub} disabled={importing} className="bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white px-3 py-2 rounded-lg text-xs font-medium">{importing ? "Importando..." : "Importar"}</button>
-                  </div>
-                  {githubData && (
-                    <div className="mt-3 text-xs text-zinc-400">
-                      <p className="text-emerald-400 font-medium">{githubData.profile?.name || githubUsername}</p>
-                      <p>{githubData.profile?.bio}</p>
-                      <p className="mt-1">📦 {githubData.total_repos} repositórios • 🏷️ {(githubData.skills || []).join(", ")}</p>
-                    </div>
-                  )}
-                </div>
-                <div className="bg-zinc-800/50 rounded-lg p-4">
-                  <h3 className="text-sm font-medium mb-2">🔗 LinkedIn</h3>
-                  <div className="flex gap-2">
-                    <input value={linkedinUrl} onChange={e => setLinkedinUrl(e.target.value)} placeholder="https://linkedin.com/in/..." className="flex-1 bg-zinc-900 rounded-lg px-3 py-2 text-xs border border-zinc-700 focus:outline-none focus:border-emerald-500" />
-                    <button onClick={analyzeLinkedin} disabled={importing} className="bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white px-3 py-2 rounded-lg text-xs font-medium">{importing ? "Analisando..." : "Analisar"}</button>
-                  </div>
-                  {linkedinData && (
-                    <div className="mt-3 text-xs text-zinc-400">
-                      <p className="text-emerald-400 font-medium">{linkedinData.name || "Analisado"}</p>
-                      <p>{linkedinData.headline}</p>
-                      {(linkedinData.skills || []).length > 0 && <p className="mt-1">🏷️ {linkedinData.skills.join(", ")}</p>}
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* Analytics KPIs */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              <div className="bg-zinc-900 rounded-xl p-4 border border-zinc-800">
-                <p className="text-xs text-zinc-500 mb-1">📋 Total</p>
-                <p className="text-2xl font-bold text-white">{analytics?.total_applications || stats?.total || 0}</p>
-              </div>
-              <div className="bg-zinc-900 rounded-xl p-4 border border-zinc-800">
-                <p className="text-xs text-zinc-500 mb-1">🎯 Entrevistas</p>
-                <p className="text-2xl font-bold text-emerald-400">{analytics?.interviews || 0}</p>
-                <p className="text-[10px] text-zinc-600">{analytics?.interview_rate || 0}% taxa</p>
-              </div>
-              <div className="bg-zinc-900 rounded-xl p-4 border border-zinc-800">
-                <p className="text-xs text-zinc-500 mb-1">🏆 Ofertas</p>
-                <p className="text-2xl font-bold text-emerald-400">{analytics?.offers || 0}</p>
-                <p className="text-[10px] text-zinc-600">{analytics?.offer_rate || 0}% taxa</p>
-              </div>
-              <div className="bg-zinc-900 rounded-xl p-4 border border-zinc-800">
-                <p className="text-xs text-zinc-500 mb-1">❌ Rejeições</p>
-                <p className="text-2xl font-bold text-red-400">{analytics?.rejected || 0}</p>
-                <p className="text-[10px] text-zinc-600">{analytics?.rejection_rate || 0}% taxa</p>
-              </div>
-            </div>
-
-            {/* Charts row */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Status chart */}
-              <div className="bg-zinc-900 rounded-xl p-4 sm:p-6 border border-zinc-800">
-                <h2 className="font-semibold mb-4">📊 Status Candidaturas</h2>
-                {stats?.by_status && Object.keys(stats.by_status).length > 0 ? (
-                  <>
-                    <svg viewBox="0 0 200 120" className="w-full h-32">
-                      {(() => {
-                        const entries = Object.entries(stats.by_status) as [string, number][];
-                        const max = Math.max(...entries.map(([,v]) => v), 1);
-                        const colors = ["#34d399", "#60a5fa", "#f59e0b", "#a78bfa", "#f87171", "#e2e8f0", "#2dd4bf"];
-                        const w = 180 / entries.length;
-                        return entries.map(([k, v], i) => (
-                          <g key={k}>
-                            <rect x={10 + i * w} y={110 - (v as number / max) * 80} width={Math.max(w - 4, 8)} height={(v as number / max) * 80}
-                              fill={colors[i % colors.length]} rx="4" />
-                            <text x={10 + i * w + (w - 4) / 2} y="123" textAnchor="middle" fill="#a1a1aa" fontSize="8">
-                              {k.replace(/_/g, "").slice(0, 6)}
-                            </text>
-                            <text x={10 + i * w + (w - 4) / 2} y={105 - (v as number / max) * 80} textAnchor="middle" fill="white" fontSize="9" fontWeight="bold">
-                              {v}
-                            </text>
-                          </g>
-                        ));
-                      })()}
-                    </svg>
-                    <div className="flex flex-wrap gap-2 mt-3">
-                      {Object.entries(stats.by_status).map(([k, v]) => (
-                        <span key={k} className="text-xs bg-zinc-800 px-2 py-0.5 rounded"><span className="capitalize">{k.replace(/_/g, " ")}</span>: <strong>{v as number}</strong></span>
-                      ))}
-                    </div>
-                  </>
-                ) : <p className="text-zinc-500 text-sm">Nenhuma candidatura ainda.</p>}
-              </div>
-
-              {/* Insights */}
-              <div className="bg-zinc-900 rounded-xl p-4 sm:p-6 border border-zinc-800">
-                <h2 className="font-semibold mb-4">📈 Insights</h2>
-                {analytics ? (
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-zinc-400">Taxa de Resposta</span>
-                      <span className="text-lg font-bold text-white">{analytics.response_rate}%</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-zinc-400">ATS Score Médio</span>
-                      <span className="text-lg font-bold text-white">{analytics.avg_ats_score ?? "—"}/100</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-zinc-400">Empresas com mais candidaturas</span>
-                    </div>
-                    {analytics.top_companies?.map((c: any, i: number) => (
-                      <div key={i} className="flex items-center justify-between text-xs">
-                        <span className="text-zinc-400">{c.name}</span>
-                        <span className="text-zinc-300 font-medium">{c.count}x</span>
-                      </div>
-                    ))}
-                    {analytics.top_skills?.length > 0 && (
-                      <>
-                        <div className="flex items-center justify-between pt-2 border-t border-zinc-700/50">
-                          <span className="text-sm text-zinc-400">💪 Top Skills</span>
-                        </div>
-                        <div className="flex flex-wrap gap-1">
-                          {analytics.top_skills.map((s: any, i: number) => (
-                            <span key={i} className="text-xs bg-zinc-800 px-2 py-0.5 rounded text-zinc-300">{s.name} <span className="text-zinc-500">×{s.count}</span></span>
-                          ))}
-                        </div>
-                      </>
-                    )}
-                  </div>
-                ) : (
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between"><span className="text-sm text-zinc-400">Total Candidaturas</span><span className="text-lg font-bold text-white">{stats?.total || 0}</span></div>
-                    <div className="flex items-center justify-between"><span className="text-sm text-zinc-400">Currículos</span><span className="text-lg font-bold text-white">{resumes.length}</span></div>
-                    <div className="flex items-center justify-between"><span className="text-sm text-zinc-400">IA Configurada</span><span className="text-lg font-bold text-emerald-400">{llmConfigs.filter((c: any) => c.has_key).length > 0 ? "✅ Sim" : "❌ Não"}</span></div>
-                    <div className="flex items-center justify-between"><span className="text-sm text-zinc-400">GitHub</span><span className="text-lg font-bold text-white">{githubData ? "✅ Conectado" : "—"}</span></div>
-                    <div className="flex items-center justify-between"><span className="text-sm text-zinc-400">LinkedIn</span><span className="text-lg font-bold text-white">{linkedinData ? "✅ Analisado" : "—"}</span></div>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Timeline chart */}
-            {analytics?.applications_over_time?.length > 0 && (
-              <div className="bg-zinc-900 rounded-xl p-4 sm:p-6 border border-zinc-800">
-                <h2 className="font-semibold mb-4">📅 Candidaturas (últimos 30 dias)</h2>
-                <svg viewBox="0 0 300 80" className="w-full h-24">
-                  {(() => {
-                    const data = analytics.applications_over_time;
-                    const max = Math.max(...data.map((d: any) => d.count), 1);
-                    const w = 280 / data.length;
-                    return data.map((d: any, i: number) => (
-                      <g key={i}>
-                        <rect x={10 + i * w} y={70 - (d.count / max) * 55} width={Math.max(w - 2, 4)} height={(d.count / max) * 55} fill="#34d399" rx="3" opacity="0.8" />
-                      </g>
-                    ));
-                  })()}
-                </svg>
-              </div>
-            )}
-          </>
-        )}
-
-        {tab === "semantic" && (
-          <div className="space-y-4">
-            <div className="bg-zinc-900 rounded-xl p-4 sm:p-6 border border-zinc-800">
-              <h2 className="font-semibold mb-4">🧠 Busca Semântica</h2>
-              <p className="text-xs text-zinc-500 mb-3">Encontre vagas pelo significado, não só por palavras-chave</p>
-              <div className="flex gap-2">
-                <input value={semanticQuery} onChange={e => setSemanticQuery(e.target.value)} onKeyDown={e => e.key === "Enter" && semanticSearch()}
-                  placeholder="Ex: vaga backend com Python e AWS em startup..." className="flex-1 bg-zinc-800 rounded-lg px-4 py-2.5 text-sm border border-zinc-700 focus:outline-none focus:border-emerald-500" />
-                <button onClick={semanticSearch} disabled={semanticSearching}
-                  className="bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white px-6 py-2.5 rounded-lg font-medium text-sm">
-                  {semanticSearching ? "Buscando..." : "Buscar"}
-                </button>
-              </div>
-            </div>
-            {semanticResults.length > 0 && (
-              <div className="bg-zinc-900 rounded-xl p-4 sm:p-6 border border-zinc-800">
-                <h2 className="font-semibold mb-4">{semanticResults.length} resultados semânticos</h2>
-                <div className="space-y-3">
-                  {semanticResults.map((j: any, i: number) => (
-                    <div key={i} className="bg-zinc-800/50 rounded-lg p-4">
-                      <div className="flex items-start justify-between gap-2">
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <h3 className="font-medium text-white">{j.title}</h3>
-                            <span className="text-xs bg-emerald-900/50 text-emerald-400 px-2 py-0.5 rounded">{j.score}%</span>
-                          </div>
-                          <p className="text-xs text-zinc-400">{j.company_id ? `Empresa: ${j.company_id.slice(0, 8)}...` : ""} {j.location}</p>
-                          <p className="text-xs text-zinc-500 mt-1">{j.description?.slice(0, 200)}</p>
-                          {j.match && <p className="text-xs text-emerald-500 mt-1">📌 {j.match}</p>}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
+          <DashboardView
+            analytics={analytics}
+            stats={stats}
+            loading={loadingData}
+            githubUsername={githubUsername}
+            onGithubUsernameChange={setGithubUsername}
+            githubData={githubData}
+            onImportGithub={importGithub}
+            linkedinUrl={linkedinUrl}
+            onLinkedinUrlChange={setLinkedinUrl}
+            linkedinData={linkedinData}
+            onAnalyzeLinkedin={analyzeLinkedin}
+            importing={importing}
+          />
         )}
 
         {tab === "jobs" && (
-          <div className="space-y-4">
-            <div className="bg-zinc-900 rounded-xl p-4 sm:p-6 border border-zinc-800">
-              <h2 className="font-semibold mb-4">Buscar Vagas</h2>
-              <div className="flex gap-2 mb-4 flex-wrap">
-                {sources.map(s => (
-                  <button key={s.id} onClick={() => setSearchSource(s.id)} className={`px-3 py-1.5 rounded-lg text-xs font-medium ${searchSource === s.id ? "bg-emerald-600 text-white" : "bg-zinc-800 text-zinc-400 hover:text-white"}`}>
-                    {s.id === "remoteok" ? "🌍" : "🇧🇷"} {s.name}
-                  </button>
-                ))}
-              </div>
-              <p className="text-xs text-zinc-500 mb-3">{sources.find(s => s.id === searchSource)?.desc}</p>
-              <div className="flex gap-2 mb-4">
-                <input value={searchQuery} onChange={e => setSearchQuery(e.target.value)} onKeyDown={e => e.key === "Enter" && searchJobs()} placeholder="Ex: python, react, backend, estágio..." className="flex-1 bg-zinc-800 rounded-lg px-4 py-2.5 text-sm border border-zinc-700 focus:outline-none focus:border-emerald-500" />
-                <button onClick={searchJobs} disabled={searching} className="bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white px-6 py-2.5 rounded-lg font-medium text-sm">{searching ? "Buscando..." : "Buscar"}</button>
-              </div>
-              <div className="flex gap-2 flex-wrap">
-                {[
-                  { label: "Estágio", emoji: "🎓" }, { label: "Junior", emoji: "🌱" }, { label: "Pleno", emoji: "📈" },
-                  { label: "Senior", emoji: "🚀" }, { label: "Home Office", emoji: "🏠" }, { label: "Remoto", emoji: "🌍" },
-                  { label: "Híbrido", emoji: "🔄" }, { label: "Presencial", emoji: "🏢" }, { label: "CLT", emoji: "📋" },
-                  { label: "PJ", emoji: "📝" }, { label: "Freelance", emoji: "⚡" }, { label: "Tempo Integral", emoji: "💼" },
-                  { label: "Meio Período", emoji: "⏳" },
-                ].map(f => (
-                  <button key={f.label} onClick={() => setSearchQuery(prev => prev ? `${prev} ${f.label}` : f.label)}
-                    className="px-3 py-1.5 rounded-lg text-xs bg-zinc-800 text-zinc-400 hover:bg-zinc-700 hover:text-white transition-colors">{f.emoji} {f.label}</button>
-                ))}
-              </div>
-            </div>
-            {searchResults.length > 0 && (
-              <div className="bg-zinc-900 rounded-xl p-4 sm:p-6 border border-zinc-800">
-                <h2 className="font-semibold mb-4">{searchResults.length} vagas</h2>
-                <div className="space-y-3 max-h-[600px] overflow-y-auto">
-                  {searchResults.map((j: any, i: number) => {
-                    const title = j.position || j.title || j.name || "Vaga";
-                    const company = j.company || j.company_name || "";
-                    const url = j.url || j.apply_url || "";
-                    return (
-                      <div key={url || i} className="bg-zinc-800/50 rounded-lg p-4 hover:bg-zinc-800 transition-colors">
-                        <div className="flex items-start justify-between gap-2">
-                          <div className="min-w-0 flex-1">
-                            <h3 className="font-medium text-white truncate">{title}</h3>
-                            {company && <p className="text-xs text-zinc-400">{company}</p>}
-                          </div>
-                          {url && <a href={url} target="_blank" rel="noopener noreferrer" className="px-3 py-1 rounded-lg bg-emerald-600/20 text-emerald-400 text-xs font-medium hover:bg-emerald-600/40 shrink-0">Candidatar</a>}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-            {searchResults.length === 0 && !searching && (
-              <div className="bg-zinc-900 rounded-xl p-4 sm:p-6 border border-zinc-800"><p className="text-zinc-500 text-sm">Digite um termo e clique em Buscar.</p></div>
-            )}
-          </div>
+          <JobsView
+            source={source}
+            onSourceChange={setSource}
+            query={query}
+            onQueryChange={setQuery}
+            filters={filters}
+            onToggleFilter={(filter) =>
+              setFilters((current) =>
+                current.includes(filter)
+                  ? current.filter((item) => item !== filter)
+                  : [...current, filter],
+              )
+            }
+            onSearch={searchJobs}
+            searching={searching}
+            results={jobResults}
+            sourceAvailable={sourceAvailable}
+            searched={searched}
+            draft={jobDraft}
+            onDraftChange={setJobDraft}
+            onCreateJob={createJob}
+            creating={creatingJob}
+          />
         )}
 
-        {tab === "calendar" && (
-          <div className="space-y-4">
-            <div className="bg-zinc-900 rounded-xl p-4 sm:p-6 border border-zinc-800">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="font-semibold">📅 Agenda de Entrevistas</h2>
-                <button onClick={() => setShowNewEvent(!showNewEvent)} className="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1.5 rounded-lg text-xs font-medium">
-                  {showNewEvent ? "Cancelar" : "+ Novo Evento"}
-                </button>
-              </div>
-
-              {showNewEvent && (
-                <div className="bg-zinc-800/50 rounded-lg p-4 mb-4 space-y-3">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <input value={newEvent.title} onChange={e => setNewEvent({...newEvent, title: e.target.value})} placeholder="Título (ex: Entrevista Nubank)" className="bg-zinc-900 rounded px-3 py-2 text-xs border border-zinc-700" />
-                    <select value={newEvent.event_type} onChange={e => setNewEvent({...newEvent, event_type: e.target.value})} className="bg-zinc-900 rounded px-3 py-2 text-xs border border-zinc-700 text-zinc-300">
-                      <option value="interview">Entrevista</option>
-                      <option value="deadline">Prazo</option>
-                      <option value="reminder">Lembrete</option>
-                    </select>
-                    <input type="datetime-local" value={newEvent.date} onChange={e => setNewEvent({...newEvent, date: e.target.value})} className="bg-zinc-900 rounded px-3 py-2 text-xs border border-zinc-700" />
-                    <input value={newEvent.location} onChange={e => setNewEvent({...newEvent, location: e.target.value})} placeholder="Local ou link (Zoom, Google Meet...)" className="bg-zinc-900 rounded px-3 py-2 text-xs border border-zinc-700" />
-                  </div>
-                  <textarea value={newEvent.notes} onChange={e => setNewEvent({...newEvent, notes: e.target.value})} placeholder="Anotações..." className="w-full bg-zinc-900 rounded px-3 py-2 text-xs border border-zinc-700 h-16" />
-                  <button onClick={createEvent} className="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-lg text-xs font-medium">Salvar Evento</button>
-                </div>
-              )}
-
-              {events.length === 0 ? (
-                <p className="text-zinc-500 text-sm">Nenhum evento. Cadastre entrevistas e prazos.</p>
-              ) : (
-                <div className="space-y-3">
-                  {events.map((e: any) => (
-                    <div key={e.id} className={`bg-zinc-800/50 rounded-lg p-4 border-l-4 ${e.event_type === "interview" ? "border-emerald-500" : e.event_type === "deadline" ? "border-red-500" : "border-blue-500"}`}>
-                      <div className="flex items-start justify-between gap-2">
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <span className={`text-xs px-2 py-0.5 rounded ${e.event_type === "interview" ? "bg-emerald-900/50 text-emerald-400" : e.event_type === "deadline" ? "bg-red-900/50 text-red-400" : "bg-blue-900/50 text-blue-400"}`}>
-                              {e.event_type}
-                            </span>
-                            <h3 className="font-medium text-sm">{e.title}</h3>
-                          </div>
-                          {e.date && <p className="text-xs text-zinc-400 mt-1">📅 {new Date(e.date).toLocaleString("pt-BR")}</p>}
-                          {e.location && <p className="text-xs text-zinc-500">📍 {e.location}</p>}
-                          {e.notes && <p className="text-xs text-zinc-500 mt-1">{e.notes}</p>}
-                        </div>
-                        <div className="flex gap-2 shrink-0">
-                          <select value={e.status} onChange={ev => updateEventStatus(e.id, ev.target.value)} className="bg-zinc-900 rounded px-2 py-1 text-xs border border-zinc-700">
-                            <option value="scheduled">Agendado</option>
-                            <option value="completed">Realizado</option>
-                            <option value="cancelled">Cancelado</option>
-                          </select>
-                          <button onClick={() => deleteEvent(e.id)} className="text-red-400 hover:text-red-300 text-xs">✕</button>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
+        {tab === "semantic" && (
+          <SemanticView
+            query={semanticQuery}
+            onQueryChange={setSemanticQuery}
+            onSearch={runSemanticSearch}
+            searching={semanticSearching}
+            results={semanticResults}
+            searched={semanticSearched}
+            indexedJobs={indexedJobs}
+          />
         )}
 
         {tab === "applications" && (
-          <div className="space-y-4">
-            <div className="bg-zinc-900 rounded-xl p-4 sm:p-6 border border-zinc-800">
-              <h2 className="font-semibold mb-4">Candidaturas</h2>
-              {apps.length === 0 ? <p className="text-zinc-500 text-sm">Nenhuma ainda.</p> : (
-                <div className="space-y-4">
-                  {apps.map((a: any) => (
-                    <div key={a.id} className="bg-zinc-800/50 rounded-lg p-4 space-y-3">
-                      <div className="flex items-center justify-between flex-wrap gap-2">
-                        <div>
-                          <p className="text-sm text-zinc-400">Job: <span className="text-white">{a.job_id.slice(0, 8)}...</span></p>
-                          <p className="text-xs capitalize">Status: <span className="text-emerald-400 font-medium">{a.status.replace(/_/g, " ")}</span></p>
-                        </div>
-                        <div className="flex gap-2 flex-wrap">
-                          {["under_review", "hr_interview", "technical_interview", "offer", "rejected"].map(s => (
-                            <button key={s} onClick={() => updateStatus(a.id, s)} className={`px-2 py-1 rounded text-xs ${a.status === s ? "bg-emerald-600" : "bg-zinc-700 hover:bg-zinc-600"}`}>{s.replace(/_/g, " ")}</button>
-                          ))}
-                        </div>
-                      </div>
-                      {/* AI buttons */}
-                      <div className="flex gap-2 pt-1 border-t border-zinc-700/50">
-                        <button onClick={() => runMatching(a.id, a.job_id, a.resume_id)} disabled={analyzing === a.id}
-                          className="px-3 py-1.5 rounded text-xs bg-indigo-600/20 text-indigo-400 hover:bg-indigo-600/40 disabled:opacity-50">
-                          {analyzing === a.id ? "Analisando..." : "🎯 Matching"}
-                        </button>
-                        <button onClick={() => runAts(a.resume_id, a.job_id)} disabled={analyzing === "ats"}
-                          className="px-3 py-1.5 rounded text-xs bg-purple-600/20 text-purple-400 hover:bg-purple-600/40 disabled:opacity-50">
-                          {analyzing === "ats" ? "Analisando..." : "📊 ATS Score"}
-                        </button>
-                        <button onClick={() => runCoverLetter(a.resume_id, a.job_id)} disabled={analyzing === "cover"}
-                          className="px-3 py-1.5 rounded text-xs bg-amber-600/20 text-amber-400 hover:bg-amber-600/40 disabled:opacity-50">
-                          {analyzing === "cover" ? "Gerando..." : "✉️ Carta"}
-                        </button>
-                        <button onClick={() => runTailorResume(a.resume_id, a.job_id)} disabled={analyzing === "tailor"}
-                          className="px-3 py-1.5 rounded text-xs bg-emerald-600/20 text-emerald-400 hover:bg-emerald-600/40 disabled:opacity-50">
-                          {analyzing === "tailor" ? "Gerando..." : "📄 Currículo"}
-                        </button>
-                        <button onClick={() => runAutoApply(a.resume_id, a.job_id)} disabled={analyzing === "auto-apply"}
-                          className="px-3 py-1.5 rounded text-xs bg-orange-600/20 text-orange-400 hover:bg-orange-600/40 disabled:opacity-50">
-                          {analyzing === "auto-apply" ? "Aplicando..." : "🤖 Auto Apply"}
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
+          <ApplicationsView
+            applications={applications}
+            loading={loadingData}
+            busyAction={busyAction}
+            onRunAction={runAiAction}
+            onUpdateStatus={updateApplicationStatus}
+            language={language}
+            onLanguageChange={setLanguage}
+            tone={tone}
+            onToneChange={setTone}
+            coverLetters={coverLetters}
+            showHistory={showHistory}
+            onToggleHistory={() => {
+              const next = !showHistory;
+              setShowHistory(next);
+              if (next) void loadCoverLetters();
+            }}
+            onViewCoverLetter={(letter) =>
+              setAiResult({ kind: "cover", id: letter.id, content: letter.content })
+            }
+            onDeleteCoverLetter={deleteCoverLetter}
+          />
+        )}
+
+        {tab === "calendar" && (
+          <CalendarView
+            events={events}
+            draft={eventDraft}
+            onDraftChange={setEventDraft}
+            onCreate={createEvent}
+            onDelete={deleteEvent}
+            onUpdateStatus={updateEventStatus}
+            creating={creatingEvent}
+          />
         )}
 
         {tab === "resumes" && (
-          <div className="space-y-4">
-            <div className="bg-zinc-900 rounded-xl p-4 sm:p-6 border border-zinc-800">
-              <h2 className="font-semibold mb-4">Enviar Currículo</h2>
-              <form onSubmit={uploadResume} className="space-y-3">
-                <input name="title" defaultValue="Meu Currículo" className="w-full bg-zinc-800 rounded-lg px-4 py-2.5 text-sm border border-zinc-700" />
-                <input type="file" name="file" accept=".pdf" className="w-full text-sm file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-emerald-600 file:text-white file:text-sm file:font-medium" />
-                <button type="submit" className="bg-emerald-600 hover:bg-emerald-500 text-white px-6 py-2.5 rounded-lg font-medium text-sm">Enviar</button>
-              </form>
-            </div>
-            {resumes.length > 0 && (
-              <div className="bg-zinc-900 rounded-xl p-4 sm:p-6 border border-zinc-800">
-                <h2 className="font-semibold mb-4">Meus Currículos ({resumes.length})</h2>
-                <div className="space-y-3">
-                  {resumes.map((r: any) => (
-                    <div key={r.id} className="bg-zinc-800/50 rounded-lg p-4">
-                      <p className="font-medium">{r.title}</p>
-                      <p className="text-xs text-zinc-500 mb-2">{r.content_preview?.slice(0, 100)}</p>
-                      <button onClick={() => { setCoverLetter(""); setAnalysisResult(r); }} className="text-xs text-emerald-400 hover:text-emerald-300">Ver conteúdo completo</button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
+          <ResumesView
+            resumes={resumes}
+            onUpload={uploadResume}
+            uploading={uploading}
+            onOpen={(resume) =>
+              setAiResult({
+                kind: "resume",
+                content: resume.content_preview,
+                title: resume.title,
+              })
+            }
+          />
         )}
 
         {tab === "chat" && (
-          <div className="bg-zinc-900 rounded-xl p-4 sm:p-6 border border-zinc-800">
-            <h2 className="font-semibold mb-4">💬 Assistente de Carreira</h2>
-            <div className="h-80 overflow-y-auto mb-4 space-y-3 bg-zinc-950/50 rounded-lg p-4 border border-zinc-800/50">
-              {chatHistory.length === 0 && (
-                <p className="text-zinc-500 text-sm text-center py-8">Faça perguntas sobre carreira, entrevistas, currículo...<br/>Ex: "Como melhorar meu currículo?" ou "Dicas para entrevista técnica"</p>
-              )}
-              {chatHistory.map((h, i) => (
-                <div key={i} className={`flex ${h.role === "user" ? "justify-end" : "justify-start"}`}>
-                  <div className={`max-w-[80%] rounded-lg px-4 py-2 text-sm whitespace-pre-wrap ${h.role === "user" ? "bg-emerald-600/20 text-emerald-300" : "bg-zinc-800 text-zinc-300"}`}>
-                    {h.text}
-                  </div>
-                </div>
-              ))}
-              {chatting && <div className="flex justify-start"><div className="bg-zinc-800 rounded-lg px-4 py-2 text-sm text-zinc-500 animate-pulse">Pensando...</div></div>}
-            </div>
-            <div className="flex gap-2">
-              <input value={chatMsg} onChange={e => setChatMsg(e.target.value)} onKeyDown={e => e.key === "Enter" && sendChat()} placeholder="Digite sua pergunta..." className="flex-1 bg-zinc-800 rounded-lg px-4 py-2.5 text-sm border border-zinc-700 focus:outline-none focus:border-emerald-500" />
-              <button onClick={sendChat} disabled={chatting || !chatMsg.trim()} className="bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white px-6 py-2.5 rounded-lg font-medium text-sm">
-                {chatting ? "Enviando..." : "Enviar"}
-              </button>
-            </div>
-            <p className="text-xs text-zinc-500 mt-2">Configure sua chave de IA na aba 🤖 IA para ativar o chat.</p>
-          </div>
+          <ChatView
+            history={chatHistory}
+            draft={chatDraft}
+            onDraftChange={setChatDraft}
+            onSend={sendChat}
+            sending={chatting}
+            offline={usingLocalAnalyzer}
+          />
         )}
 
-        {tab === "ia" && (
-          <div className="bg-zinc-900 rounded-xl p-4 sm:p-6 border border-zinc-800">
-            <h2 className="font-semibold mb-4">🤖 Configurar Inteligência Artificial</h2>
-            <p className="text-sm text-zinc-400 mb-6">Escolha seu provedor de IA e coloque sua chave (API Key). Os dados ficam criptografados.</p>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {llmProviders.map(p => {
-                const config = llmConfigs.find((c: any) => c.provider_name === p.id);
-                const isEditing = editingProvider === p.id;
-                return (
-                  <div key={p.id} className={`bg-zinc-800/50 rounded-xl p-5 border ${config?.is_active ? "border-emerald-700" : "border-zinc-700"} ${isEditing ? "ring-2 ring-emerald-500" : ""}`}>
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="flex items-center gap-2"><span className="text-xl">{p.icon}</span><h3 className="font-medium">{p.name}</h3></div>
-                      {config?.has_key && <span className="text-xs bg-emerald-900/50 text-emerald-400 px-2 py-0.5 rounded">✅ Ativo</span>}
-                    </div>
-                    <p className="text-xs text-zinc-500 mb-3">Modelos: {p.models}</p>
-                    {isEditing ? (
-                      <div className="space-y-2">
-                        {p.id !== "ollama" && <input value={editKey} onChange={e => setEditKey(e.target.value)} type="password" placeholder="API Key" className="w-full bg-zinc-900 rounded px-3 py-2 text-xs border border-zinc-600" />}
-                        {p.needs_url && <input value={editUrl} onChange={e => setEditUrl(e.target.value)} placeholder="Base URL" className="w-full bg-zinc-900 rounded px-3 py-2 text-xs border border-zinc-600" />}
-                        <input value={editModel} onChange={e => setEditModel(e.target.value)} placeholder="Modelo (opcional)" className="w-full bg-zinc-900 rounded px-3 py-2 text-xs border border-zinc-600" />
-                        <div className="flex gap-2 pt-1">
-                          <button onClick={() => saveLlmConfig(p.id)} className="bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-1.5 rounded text-xs font-medium">Salvar</button>
-                          <button onClick={() => { setEditingProvider(""); setEditKey(""); setEditUrl(""); setEditModel(""); }} className="bg-zinc-700 hover:bg-zinc-600 text-white px-3 py-1.5 rounded text-xs">Cancelar</button>
-                        </div>
-                      </div>
-                    ) : (
-                      <div>
-                        {config?.model && <p className="text-xs text-zinc-400 mb-2">Modelo: {config.model}</p>}
-                        <button onClick={() => { setEditingProvider(p.id); setEditKey(""); setEditUrl(""); setEditModel(config?.model || ""); }} className="bg-zinc-700 hover:bg-zinc-600 text-white px-3 py-1.5 rounded text-xs font-medium">
-                          {config?.has_key ? "Alterar Chave" : p.id === "ollama" ? "Configurar" : "Adicionar Chave"}
-                        </button>
-                      </div>
-                    )}
-                  </div>
+        {tab === "settings" && (
+          <SettingsView
+            configs={llmConfigs}
+            saving={busyAction}
+            onSave={async (providerId, draft) => {
+              setBusyAction(providerId);
+              const saved = await guard(() =>
+                client.post("/settings/llm", {
+                  provider_name: providerId,
+                  api_key: draft.apiKey,
+                  base_url: draft.baseUrl,
+                  model: draft.model,
+                }),
+              );
+              if (saved !== undefined) {
+                toast.success("Provedor configurado.");
+                const configs = await guard(() =>
+                  client.get<{ configs: LlmConfig[] }>("/settings/llm"),
                 );
-              })}
-            </div>
-            <div className="mt-6 p-4 bg-zinc-800/30 rounded-lg border border-zinc-700">
-              <h3 className="text-sm font-medium mb-2">🔒 Segurança</h3>
-              <p className="text-xs text-zinc-400">Suas chaves de API são criptografadas e armazenadas com segurança no banco de dados.</p>
-            </div>
-          </div>
+                if (configs) setLlmConfigs(configs.configs);
+              }
+              setBusyAction("");
+            }}
+          />
         )}
-      </main>
-    </div>
+      </AppShell>
+
+      <AiResultPanel
+        result={aiResult}
+        onClose={() => setAiResult(null)}
+        onSaveCoverLetter={saveCoverLetter}
+        savingCoverLetter={savingCoverLetter}
+      />
+
+      <ToastStack toasts={toast.toasts} onDismiss={toast.dismiss} />
+    </>
   );
 }
