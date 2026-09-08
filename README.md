@@ -169,7 +169,7 @@ npm run dev
 
 ```bash
 cd apps/backend
-PYTHONPATH=src pytest -q                                  # 172 testes
+PYTHONPATH=src pytest -q                                  # 187 testes
 PYTHONPATH=src pytest --cov=src --cov-report=term-missing # cobertura, mínimo 80%
 ruff check src tests                                       # lint
 

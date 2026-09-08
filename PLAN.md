@@ -50,7 +50,7 @@ Revisão completa do backend, frontend e infraestrutura. O que foi encontrado e 
 - **Erros:** o frontend mostrava sucesso e falha no mesmo banner verde. Agora há toasts tipados, e o cliente de API propaga a mensagem do servidor em vez de trocá-la por um texto genérico.
 - **Login:** registrava primeiro e caía para login, criando conta a cada e-mail digitado errado. Fluxos separados.
 - **Dependências:** `pgvector`, `prometheus-client`, `requests` e `Jinja2` estavam declaradas e não usadas. Dois clientes de vagas sem nenhuma referência foram removidos.
-- **Testes:** 89 → 172, cobertura de 61% para 80%, agora exigida no CI.
+- **Testes:** 89 → 187, cobertura de 61% para 81%, agora exigida no CI.
 - **CI:** health check nos serviços, gate de cobertura, varredura de segredos.
 
 ### Segunda rodada
@@ -64,10 +64,16 @@ Revisão completa do backend, frontend e infraestrutura. O que foi encontrado e 
 | Estado do OAuth num dicionário do processo — o fluxo só funcionava se o callback caísse na mesma réplica | Redis com `GETDEL` atômico e TTL, e fallback em memória para instância única |
 | Comando de reset do demo documentado no README não funcionava | `PYTHONPATH` e diretório corrigidos |
 | Container de injeção de dependência e cinco módulos de domínio sem nenhum importador | Removidos |
+| **Cliente Redis reutilizado entre event loops** — o pool fica preso ao loop que o criou, então toda operação falhava com "Event loop is closed" e os chamadores caíam no fallback sem avisar | O cliente é reconstruído quando o loop muda |
+| `--reset` da demonstração não removia as vagas que ela cria; cada execução empilhava outras oito, e a demonstração publicada mostrava a mesma vaga três vezes | Purga também vagas, requisitos, embeddings e empresas |
+| Teste de importação do GitHub chamava a API real e passava mesmo quando a importação falhava | HTTP stubado; agora verifica o resultado |
+| **Cliente Redis reutilizado entre event loops** — o pool fica preso ao loop que o criou, então toda operação falhava com "Event loop is closed" e os chamadores caíam no fallback sem avisar | O cliente é reconstruído quando o loop muda |
+|  da demonstração deixava para trás as vagas que ela cria; cada execução empilhava outras oito | Purga também vagas, requisitos, embeddings e empresas |
+| Teste de importação do GitHub chamava a API real e passava mesmo quando a importação falhava | HTTP stubado; agora verifica o resultado |
 
 ### Verificação
 
-- 172 testes passando, 4 pulados (dependem de chave de LLM opcional). Cobertura de 80%.
+- 187 testes passando, 4 pulados (dependem de chave de LLM opcional). Cobertura de 81%, exigida no CI.
 - `ruff check` limpo em `src/` e `tests/`.
 - `tsc --noEmit`, `eslint` e `next build` limpos.
 - Stack completa validada com `docker compose up`: os 6 serviços sobem, o backend fica saudável, o frontend conversa com a API, o demo entra e todas as telas renderizam sem erro de console.

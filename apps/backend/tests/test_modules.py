@@ -77,16 +77,73 @@ async def test_ai_chat(client: AsyncClient):
 
 
 @pytest.mark.asyncio
-async def test_github_import(client: AsyncClient):
+async def test_github_import(client: AsyncClient, monkeypatch):
+    """The client is stubbed: this test used to call github.com for real.
+
+    That made it fail whenever the runner was rate-limited or offline, and it
+    also asserted `"profile" in data or "error" in data` — which passed even
+    when the import had failed.
+    """
+    import modules.ai.api.routes as ai_routes
+
+    class _FakeGitHub:
+        async def get_user(self, username):
+            return {"name": "Pessoa Exemplo", "bio": "Backend", "login": username}
+
+        async def get_repositories(self, username):
+            return [{"name": f"repo-{index}"} for index in range(15)]
+
+        async def get_skills(self, username):
+            return ["Python", "Go"]
+
+        async def close(self):
+            self.closed = True
+
+    monkeypatch.setattr(ai_routes, "GitHubClient", _FakeGitHub, raising=False)
+
     reg = await client.post("/api/v1/auth/register", json={"email": "gh@test.com", "password": "pass12345"})
     token = reg.json()["token"]
 
-    r = await client.post("/api/v1/ai/github/import", headers={"Authorization": f"Bearer {token}"}, json={
-        "username": "blackxzin",
-    })
+    r = await client.post(
+        "/api/v1/ai/github/import",
+        headers={"Authorization": f"Bearer {token}"},
+        json={"username": "octocat"},
+    )
     assert r.status_code == 200
     data = r.json()
-    assert "profile" in data or "error" in data
+    assert data["profile"]["name"] == "Pessoa Exemplo"
+    assert data["total_repos"] == 15
+    assert len(data["repos"]) == 10, "the response should be capped at ten repositories"
+    assert data["skills"] == ["Python", "Go"]
+
+
+@pytest.mark.asyncio
+async def test_github_import_reports_a_missing_user(client: AsyncClient, monkeypatch):
+    """A failed import used to return HTTP 200 with an error body."""
+    import modules.ai.api.routes as ai_routes
+
+    class _FailingGitHub:
+        async def get_user(self, username):
+            raise RuntimeError("404 Not Found")
+
+        async def close(self):
+            return None
+
+    monkeypatch.setattr(ai_routes, "GitHubClient", _FailingGitHub, raising=False)
+
+    reg = await client.post(
+        "/api/v1/auth/register", json={"email": "ghfail@test.com", "password": "pass12345"}
+    )
+    token = reg.json()["token"]
+
+    r = await client.post(
+        "/api/v1/ai/github/import",
+        headers={"Authorization": f"Bearer {token}"},
+        json={"username": "does-not-exist"},
+    )
+    assert r.status_code == 404
+    # The raw client exception must not leak to the caller.
+    assert "404 Not Found" not in r.json()["detail"]
 
 
 @SKIP_AI

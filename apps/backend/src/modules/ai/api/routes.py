@@ -19,6 +19,7 @@ from modules.ai.infrastructure.providers.factory import LLMProviderFactory
 from modules.auth.api.dependencies import ensure_owner, get_current_user
 from modules.auth.domain.entities import User
 from modules.resume.infrastructure.repositories import ResumeRepository
+from modules.users.infrastructure.providers.github_client import GitHubClient
 
 logger = get_logger(__name__)
 router = APIRouter(prefix="/ai", tags=["ai"])
@@ -179,8 +180,6 @@ async def import_github(
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    from modules.users.infrastructure.providers.github_client import GitHubClient
-
     client = GitHubClient()
     try:
         user_data = await client.get_user(body.username)
