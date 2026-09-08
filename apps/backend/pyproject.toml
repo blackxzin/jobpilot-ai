@@ -69,6 +69,12 @@ testpaths = ["tests"]
 [tool.coverage.run]
 source = ["src"]
 omit = ["src/scripts/*"]
+# Routes are exercised through httpx's ASGI transport and SQLAlchemy's async
+# layer, both of which hand execution to greenlets and worker threads. Without
+# these, coverage silently misses everything that runs inside them — the same
+# suite reported 81% locally and 76% on CI purely from library-version
+# differences in how that dispatch happens.
+concurrency = ["thread", "greenlet"]
 
 [tool.coverage.report]
 show_missing = true

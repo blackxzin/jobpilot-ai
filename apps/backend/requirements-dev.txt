@@ -1,13 +1,17 @@
 # ════════════════════════════════
-# JobPilot AI — Dev/test Dependencies
-# Install with: pip install -r requirements.txt -r requirements-dev.txt
+# JobPilot AI — Dev/test dependencies
+# Install with: pip install -r requirements-dev.txt
 # ════════════════════════════════
 
 -r requirements.txt
 
-pytest>=8.0.0
-pytest-asyncio>=0.23.0
-pytest-cov>=5.0.0
+# Pinned so CI reproduces what a developer sees locally. Unpinned, CI resolved
+# different versions of the async plumbing and coverage measured a different
+# set of lines for an identical, passing suite.
+pytest==9.1.1
+pytest-asyncio==1.4.0
+pytest-cov==7.1.0
+coverage==7.16.0
 # Async SQLite driver — the test suite runs against sqlite+aiosqlite
-aiosqlite>=0.20.0
-ruff>=0.6.0
+aiosqlite==0.21.0
+ruff==0.16.3
