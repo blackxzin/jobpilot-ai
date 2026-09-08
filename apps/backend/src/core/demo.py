@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from datetime import UTC, datetime, timedelta
 
-from sqlalchemy import select
+from sqlalchemy import delete, select
 
 from core.config import settings
 from core.database import get_session_factory
@@ -203,6 +203,69 @@ DEMO_NOTIFICATIONS = [
 ]
 
 
+# Everything the seeder creates carries this marker, so a reset can find it.
+# Jobs and companies are global rows, not owned by the demo user, so deleting
+# the user does not cascade to them — a reseed used to stack another eight
+# jobs on top of the previous ones.
+DEMO_SOURCE = "demo"
+
+
+async def purge_demo_data() -> int:
+    """Delete everything the seeder created. Returns the number of jobs removed.
+
+    Ordered so foreign keys stay satisfied on databases without cascading
+    deletes configured for every relationship.
+    """
+    session_factory = get_session_factory()
+    async with session_factory() as session:
+        user = (
+            await session.execute(
+                select(UserModel).where(UserModel.email == settings.DEMO_EMAIL)
+            )
+        ).scalar_one_or_none()
+        if user is not None:
+            # Applications reference demo jobs, so they must go first even
+            # though the user cascade would otherwise handle them.
+            await session.execute(
+                delete(ApplicationModel).where(ApplicationModel.user_id == user.id)
+            )
+            await session.execute(
+                delete(CoverLetterModel).where(CoverLetterModel.user_id == user.id)
+            )
+            await session.delete(user)
+            await session.flush()
+
+        job_ids = [
+            row[0]
+            for row in await session.execute(
+                select(JobModel.id).where(JobModel.source == DEMO_SOURCE)
+            )
+        ]
+        company_ids = [
+            row[0]
+            for row in await session.execute(
+                select(JobModel.company_id).where(JobModel.source == DEMO_SOURCE)
+            )
+            if row[0]
+        ]
+
+        if job_ids:
+            await session.execute(
+                delete(JobEmbeddingModel).where(JobEmbeddingModel.job_id.in_(job_ids))
+            )
+            await session.execute(
+                delete(JobRequirementModel).where(JobRequirementModel.job_id.in_(job_ids))
+            )
+            await session.execute(delete(JobModel).where(JobModel.id.in_(job_ids)))
+        if company_ids:
+            await session.execute(delete(CompanyModel).where(CompanyModel.id.in_(company_ids)))
+
+        await session.commit()
+
+    logger.info("demo_purge_completed", jobs=len(job_ids))
+    return len(job_ids)
+
+
 async def seed_demo_data() -> bool:
     """Create the demo account and its data. Returns True when it seeded.
 
@@ -287,7 +350,7 @@ async def _seed_jobs(session, now: datetime) -> list[JobModel]:
         await session.flush()
 
         job = JobModel(
-            source="demo",
+            source=DEMO_SOURCE,
             source_id=f"demo-{index}",
             title=title,
             company_id=company.id,

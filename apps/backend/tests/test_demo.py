@@ -113,3 +113,46 @@ async def test_semantic_search_ranks_relevant_demo_jobs_first(
     assert results, "semantic search returned nothing for an indexed term"
     assert "Plataforma" in results[0]["title"]
     assert results[0]["score"] > 0
+
+
+@pytest.mark.asyncio
+async def test_reseeding_does_not_stack_duplicate_jobs(monkeypatch, db_session: AsyncSession):
+    """Jobs are global rows, so deleting the demo user used to leave them behind.
+
+    Every reseed then added another eight, and the published demo showed the
+    same posting three times.
+    """
+    from contextlib import asynccontextmanager
+
+    import core.demo as demo
+
+    @asynccontextmanager
+    async def _session_scope():
+        yield db_session
+
+    monkeypatch.setattr(demo, "get_session_factory", lambda: _session_scope)
+
+    await demo.seed_demo_data()
+    assert await db_session.scalar(select(func.count()).select_from(JobModel)) == 8
+
+    removed = await demo.purge_demo_data()
+    assert removed == 8
+    assert await db_session.scalar(select(func.count()).select_from(JobModel)) == 0
+    assert await db_session.scalar(select(func.count()).select_from(JobEmbeddingModel)) == 0
+
+    await demo.seed_demo_data()
+    assert await db_session.scalar(select(func.count()).select_from(JobModel)) == 8
+
+
+@pytest.mark.asyncio
+async def test_purge_is_safe_when_nothing_was_seeded(monkeypatch, db_session: AsyncSession):
+    from contextlib import asynccontextmanager
+
+    import core.demo as demo
+
+    @asynccontextmanager
+    async def _session_scope():
+        yield db_session
+
+    monkeypatch.setattr(demo, "get_session_factory", lambda: _session_scope)
+    assert await demo.purge_demo_data() == 0

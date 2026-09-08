@@ -33,27 +33,27 @@
     ],
     "applications_over_time": [
       {
-        "date": "2026-08-12",
+        "date": "2026-08-13",
         "count": 1
       },
       {
-        "date": "2026-08-17",
+        "date": "2026-08-18",
         "count": 1
       },
       {
-        "date": "2026-08-21",
+        "date": "2026-08-22",
         "count": 1
       },
       {
-        "date": "2026-08-24",
+        "date": "2026-08-25",
         "count": 1
       },
       {
-        "date": "2026-08-29",
+        "date": "2026-08-30",
         "count": 1
       },
       {
-        "date": "2026-09-02",
+        "date": "2026-09-03",
         "count": 1
       }
     ],
@@ -95,93 +95,93 @@
   "applications": {
     "results": [
       {
-        "id": "b3bfb55c-bff5-4977-82ed-125039b804bb",
-        "job_id": "86c10893-79e8-47ae-bb2e-9a69faf4f3da",
-        "resume_id": "9de88cbe-5c91-461c-8866-3e7167dc3d5a",
+        "id": "ffdd6ecb-06e0-41b1-aa08-3cb054dbde70",
+        "job_id": "bc20478b-ece3-4728-aee7-90e27a8f926f",
+        "resume_id": "d19d5490-2da5-42c9-8912-958bba3f278a",
         "status": "applied",
         "cover_letter": "",
         "source_platform": "demo",
-        "applied_at": "2026-09-02 23:50:31.438875+00:00",
+        "applied_at": "2026-09-03 00:01:52.739432+00:00",
         "responded_at": null,
-        "created_at": "2026-09-02 23:50:31.438875+00:00",
+        "created_at": "2026-09-03 00:01:52.739432+00:00",
         "job_title": "Engenheiro(a) de Plataforma",
         "company": "QuintoAndar"
       },
       {
-        "id": "348a6af7-7822-4630-ad55-df2eb45c2e1f",
-        "job_id": "8765794b-ec5a-4195-886c-1c6d06b99183",
-        "resume_id": "9de88cbe-5c91-461c-8866-3e7167dc3d5a",
+        "id": "fd95d494-ce01-44cf-8497-13d40a10692a",
+        "job_id": "61ca7ea5-5268-405b-b0fc-9aaf6f29b288",
+        "resume_id": "d19d5490-2da5-42c9-8912-958bba3f278a",
         "status": "under_review",
         "cover_letter": "",
         "source_platform": "demo",
-        "applied_at": "2026-08-29 23:50:31.438875+00:00",
-        "responded_at": "2026-09-01 23:50:31.438875+00:00",
-        "created_at": "2026-08-29 23:50:31.438875+00:00",
+        "applied_at": "2026-08-30 00:01:52.739432+00:00",
+        "responded_at": "2026-09-02 00:01:52.739432+00:00",
+        "created_at": "2026-08-30 00:01:52.739432+00:00",
         "job_title": "Pessoa Desenvolvedora Full Stack",
         "company": "Hotmart"
       },
       {
-        "id": "659e3e17-4a84-4da5-a22d-aa95be7554fa",
-        "job_id": "812231c1-2cb8-463b-a363-45624622f898",
-        "resume_id": "9de88cbe-5c91-461c-8866-3e7167dc3d5a",
+        "id": "e972290a-7085-43e1-989b-9ad994197036",
+        "job_id": "59048b49-1406-4c7d-b9ae-fbadc62c3954",
+        "resume_id": "d19d5490-2da5-42c9-8912-958bba3f278a",
         "status": "rejected",
         "cover_letter": "",
         "source_platform": "demo",
-        "applied_at": "2026-08-24 23:50:31.438875+00:00",
-        "responded_at": "2026-08-27 23:50:31.438875+00:00",
-        "created_at": "2026-08-24 23:50:31.438875+00:00",
+        "applied_at": "2026-08-25 00:01:52.739432+00:00",
+        "responded_at": "2026-08-28 00:01:52.739432+00:00",
+        "created_at": "2026-08-25 00:01:52.739432+00:00",
         "job_title": "Backend Developer (Python)",
         "company": "Mercado Livre"
       },
       {
-        "id": "622b501b-686b-46c8-8b3d-c3e79378f916",
-        "job_id": "671d5960-5728-4367-8c38-68d347088fac",
-        "resume_id": "9de88cbe-5c91-461c-8866-3e7167dc3d5a",
+        "id": "357c4c3d-29e4-4751-bfc1-518290930f66",
+        "job_id": "c2286a72-60a2-4dac-93a1-d56d286bfde7",
+        "resume_id": "d19d5490-2da5-42c9-8912-958bba3f278a",
         "status": "hr_interview",
         "cover_letter": "",
         "source_platform": "demo",
-        "applied_at": "2026-08-21 23:50:31.438875+00:00",
-        "responded_at": "2026-08-24 23:50:31.438875+00:00",
-        "created_at": "2026-08-21 23:50:31.438875+00:00",
+        "applied_at": "2026-08-22 00:01:52.739432+00:00",
+        "responded_at": "2026-08-25 00:01:52.739432+00:00",
+        "created_at": "2026-08-22 00:01:52.739432+00:00",
         "job_title": "Desenvolvedor(a) Python Pleno",
         "company": "Stone"
       },
       {
-        "id": "81486bdf-810b-4a9e-a3a3-17df560f5d8c",
-        "job_id": "0c70e217-5806-46f6-bf2e-f3e4e0e36461",
-        "resume_id": "9de88cbe-5c91-461c-8866-3e7167dc3d5a",
+        "id": "e618ed07-7074-438f-b5b1-b07c1de4a487",
+        "job_id": "a708ea92-dce6-4684-88dd-553cc977f1df",
+        "resume_id": "d19d5490-2da5-42c9-8912-958bba3f278a",
         "status": "technical_interview",
         "cover_letter": "",
         "source_platform": "demo",
-        "applied_at": "2026-08-17 23:50:31.438875+00:00",
-        "responded_at": "2026-08-20 23:50:31.438875+00:00",
-        "created_at": "2026-08-17 23:50:31.438875+00:00",
+        "applied_at": "2026-08-18 00:01:52.739432+00:00",
+        "responded_at": "2026-08-21 00:01:52.739432+00:00",
+        "created_at": "2026-08-18 00:01:52.739432+00:00",
         "job_title": "Engenheiro(a) de Software Backend Sênior",
         "company": "Nubank"
       },
       {
-        "id": "ee909401-b29e-496f-9d41-8ca99f8044ce",
-        "job_id": "b08c74d5-2998-4c31-be4f-2e26840c84cf",
-        "resume_id": "9de88cbe-5c91-461c-8866-3e7167dc3d5a",
+        "id": "6626e4be-6d82-4f55-a6e3-586b0e0cc12b",
+        "job_id": "eb1b55ef-7156-4699-bbe4-f207efddb3b4",
+        "resume_id": "d19d5490-2da5-42c9-8912-958bba3f278a",
         "status": "rejected",
         "cover_letter": "",
         "source_platform": "demo",
-        "applied_at": "2026-08-12 23:50:31.438875+00:00",
-        "responded_at": "2026-08-15 23:50:31.438875+00:00",
-        "created_at": "2026-08-12 23:50:31.438875+00:00",
+        "applied_at": "2026-08-13 00:01:52.739432+00:00",
+        "responded_at": "2026-08-16 00:01:52.739432+00:00",
+        "created_at": "2026-08-13 00:01:52.739432+00:00",
         "job_title": "Engenheiro(a) de Dados",
         "company": "Loft"
       },
       {
-        "id": "acedfaff-6aee-4101-ad49-d8d5cda538d8",
-        "job_id": "ea44f922-ce59-44ed-b657-716efaf6692c",
-        "resume_id": "9de88cbe-5c91-461c-8866-3e7167dc3d5a",
+        "id": "ae880e51-0fe9-4691-a0cf-62eb4b26d7df",
+        "job_id": "32f44614-f386-4584-9e77-40849e597505",
+        "resume_id": "d19d5490-2da5-42c9-8912-958bba3f278a",
         "status": "offer",
         "cover_letter": "",
         "source_platform": "demo",
-        "applied_at": "2026-08-08 23:50:31.438875+00:00",
-        "responded_at": "2026-08-11 23:50:31.438875+00:00",
-        "created_at": "2026-08-08 23:50:31.438875+00:00",
+        "applied_at": "2026-08-09 00:01:52.739432+00:00",
+        "responded_at": "2026-08-12 00:01:52.739432+00:00",
+        "created_at": "2026-08-09 00:01:52.739432+00:00",
         "job_title": "Tech Lead Backend",
         "company": "iFood"
       }
@@ -201,7 +201,7 @@
   "resumes": {
     "results": [
       {
-        "id": "9de88cbe-5c91-461c-8866-3e7167dc3d5a",
+        "id": "d19d5490-2da5-42c9-8912-958bba3f278a",
         "title": "Currículo — Backend Sênior",
         "file_url": "demo/curriculo-backend.pdf",
         "content_preview": "Lucas Oliveira — Engenheiro de Software Backend\nSão Paulo, SP · Remoto · lucas.demo@jobpilot.ai\n\nRESUMO\nEngenheiro backend com 6 anos de experiência construindo APIs e sistemas\ndistribuídos em Python.",
@@ -227,44 +227,44 @@
             "Stack coerente com as vagas-alvo"
           ]
         },
-        "created_at": "2026-09-07 23:50:31.563486+00:00"
+        "created_at": "2026-09-08 00:01:52.856009+00:00"
       }
     ]
   },
   "calendar": {
     "events": [
       {
-        "id": "523801fc-fd80-4fcb-823f-43f24e4a9333",
+        "id": "ba1bf1f9-a1e2-438a-b45c-37fc17779271",
         "title": "Entrevista técnica — Nubank",
         "event_type": "interview",
-        "date": "2026-09-09 23:50:31.438875+00:00",
+        "date": "2026-09-10 00:01:52.739432+00:00",
         "notes": "Foco em sistemas distribuídos e Python.",
         "location": "",
         "status": "scheduled"
       },
       {
-        "id": "ba03cc18-a8ae-4aa2-8819-bc8fb10bf32b",
+        "id": "3a8b9f8e-ac1b-4755-a07e-56d4b1c0a3a3",
         "title": "Conversa com RH — Stone",
         "event_type": "interview",
-        "date": "2026-09-11 23:50:31.438875+00:00",
+        "date": "2026-09-12 00:01:52.739432+00:00",
         "notes": "Alinhamento de expectativas e faixa salarial.",
         "location": "",
         "status": "scheduled"
       },
       {
-        "id": "40e5c200-49b2-4d83-8e04-29330c9e0a8a",
+        "id": "92f15b26-781f-4760-9a1b-e6c5646b7874",
         "title": "Prazo de resposta — iFood",
         "event_type": "deadline",
-        "date": "2026-09-13 23:50:31.438875+00:00",
+        "date": "2026-09-14 00:01:52.739432+00:00",
         "notes": "Responder à proposta até esta data.",
         "location": "",
         "status": "scheduled"
       },
       {
-        "id": "6e364fa0-a007-4ff8-a66a-dff710f9742a",
+        "id": "ba584f4c-3344-4d0d-ab7f-8ef0ad1787d1",
         "title": "Follow-up — Hotmart",
         "event_type": "reminder",
-        "date": "2026-09-16 23:50:31.438875+00:00",
+        "date": "2026-09-17 00:01:52.739432+00:00",
         "notes": "Enviar e-mail de acompanhamento.",
         "location": "",
         "status": "scheduled"
@@ -274,40 +274,40 @@
   "notifications": {
     "results": [
       {
-        "id": "7f2b85bc-f298-4d6b-a8f0-e6521f319ace",
+        "id": "be359554-1ce9-484f-aab5-c8387cb43130",
         "title": "Entrevista confirmada",
         "message": "A Nubank confirmou sua entrevista técnica para esta semana.",
         "channel": "email",
         "status": "read",
-        "read_at": "2026-09-07 23:50:31.438875+00:00",
-        "created_at": "2026-09-07 23:50:31.438875+00:00"
+        "read_at": "2026-09-08 00:01:52.739432+00:00",
+        "created_at": "2026-09-08 00:01:52.739432+00:00"
       },
       {
-        "id": "11fd5d7f-2517-4741-98a0-b3cf9aa9ad2b",
+        "id": "9114d5d9-30dc-483b-a0b0-c1385d4c2d9f",
         "title": "Nova vaga compatível",
         "message": "Encontramos 3 vagas com mais de 70% de compatibilidade com seu currículo.",
         "channel": "email",
         "status": "sent",
         "read_at": null,
-        "created_at": "2026-09-06 23:50:31.438875+00:00"
+        "created_at": "2026-09-07 00:01:52.739432+00:00"
       },
       {
-        "id": "3f3babbc-af41-4239-b465-e84fad39fa56",
+        "id": "17353657-bd71-4064-a93f-a99ce0e43ccd",
         "title": "Proposta recebida",
         "message": "A iFood enviou uma proposta. Confira os detalhes na sua pipeline.",
         "channel": "email",
         "status": "sent",
         "read_at": null,
-        "created_at": "2026-09-05 23:50:31.438875+00:00"
+        "created_at": "2026-09-06 00:01:52.739432+00:00"
       },
       {
-        "id": "9725a8b0-b0ba-43dc-8fc4-a97febc30afe",
+        "id": "866a0a6a-ecbe-4c0f-8183-ef2869c0d761",
         "title": "Currículo analisado",
         "message": "Seu ATS Score foi atualizado após a última revisão do currículo.",
         "channel": "email",
         "status": "sent",
         "read_at": null,
-        "created_at": "2026-09-04 23:50:31.438875+00:00"
+        "created_at": "2026-09-05 00:01:52.739432+00:00"
       }
     ]
   },
@@ -319,24 +319,101 @@
   },
   "coverLetters": [
     {
-      "id": "7dba2867-4b73-49d5-a157-e8013e58bca3",
-      "user_id": "1cbfb51f-b485-40e6-9692-3af4c80db2a5",
-      "job_id": "0c70e217-5806-46f6-bf2e-f3e4e0e36461",
+      "id": "fb368a41-ae5f-4f17-8b43-0964399e3eb4",
+      "user_id": "4b9a6fb3-a9a9-44c6-b829-c7d58da70d16",
+      "job_id": "32f44614-f386-4584-9e77-40849e597505",
+      "title": "Tech Lead Backend - iFood",
+      "content": "Prezada equipe de iFood,\n\nEscrevo para me candidatar à posição de Tech Lead Backend. Ao longo da minha trajetória venho trabalhando diretamente com aws, backend, mentoria, postgresql, python, exatamente o conjunto de competências que vocês descrevem na vaga.\n\nNo meu histórico recente atuei em entregas que exigiram aws, backend, mentoria, postgresql, python, sempre com foco em resultado mensurável e em colaboração próxima com produto e design. Gosto de assumir problemas de ponta a ponta: entender o contexto, propor a solução mais simples que resolve, e acompanhar o impacto depois de entregue.\n\nTenho interesse específico em iFood pelo tipo de problema descrito na vaga, e acredito que consigo contribuir desde as primeiras semanas. Ficaria feliz em detalhar qualquer um desses pontos em uma conversa.\n\nAtenciosamente,\n\n---\n_Carta montada pelo analisador local do JobPilot (modo offline). Configure um provedor de IA em Configurações → IA para uma carta gerada por LLM._",
+      "language": "pt-BR",
+      "tone": "professional",
+      "created_at": "2026-09-08 00:02:02.801000+00:00",
+      "updated_at": "2026-09-08 00:02:02.801002+00:00"
+    },
+    {
+      "id": "542660d4-b01c-4a40-b347-0a8e0dea216f",
+      "user_id": "4b9a6fb3-a9a9-44c6-b829-c7d58da70d16",
+      "job_id": "eb1b55ef-7156-4699-bbe4-f207efddb3b4",
+      "title": "Engenheiro(a) de Dados - Loft",
+      "content": "Prezada equipe de Loft,\n\nEscrevo para me candidatar à posição de Engenheiro(a) de Dados. Ao longo da minha trajetória venho trabalhando diretamente com postgresql, python, exatamente o conjunto de competências que vocês descrevem na vaga.\n\nNo meu histórico recente atuei em entregas que exigiram postgresql, python, sempre com foco em resultado mensurável e em colaboração próxima com produto e design. Gosto de assumir problemas de ponta a ponta: entender o contexto, propor a solução mais simples que resolve, e acompanhar o impacto depois de entregue.\n\nTenho interesse específico em Loft pelo tipo de problema descrito na vaga, e acredito que consigo contribuir desde as primeiras semanas. Ficaria feliz em detalhar qualquer um desses pontos em uma conversa.\n\nAtenciosamente,\n\n---\n_Carta montada pelo analisador local do JobPilot (modo offline). Configure um provedor de IA em Configurações → IA para uma carta gerada por LLM._",
+      "language": "pt-BR",
+      "tone": "professional",
+      "created_at": "2026-09-08 00:02:02.766919+00:00",
+      "updated_at": "2026-09-08 00:02:02.766922+00:00"
+    },
+    {
+      "id": "ed6ea21a-3f69-4439-b4c3-2ec4d77ce42b",
+      "user_id": "4b9a6fb3-a9a9-44c6-b829-c7d58da70d16",
+      "job_id": "a708ea92-dce6-4684-88dd-553cc977f1df",
+      "title": "Engenheiro(a) de Software Backend Sênior - Nubank",
+      "content": "Prezada equipe de Nubank,\n\nEscrevo para me candidatar à posição de Engenheiro(a) de Software Backend Sênior. Ao longo da minha trajetória venho trabalhando diretamente com aws, backend, ingles, postgresql, python, exatamente o conjunto de competências que vocês descrevem na vaga.\n\nNo meu histórico recente atuei em entregas que exigiram aws, backend, ingles, postgresql, python, sempre com foco em resultado mensurável e em colaboração próxima com produto e design. Gosto de assumir problemas de ponta a ponta: entender o contexto, propor a solução mais simples que resolve, e acompanhar o impacto depois de entregue.\n\nTenho interesse específico em Nubank pelo tipo de problema descrito na vaga, e acredito que consigo contribuir desde as primeiras semanas. Ficaria feliz em detalhar qualquer um desses pontos em uma conversa.\n\nAtenciosamente,\n\n---\n_Carta montada pelo analisador local do JobPilot (modo offline). Configure um provedor de IA em Configurações → IA para uma carta gerada por LLM._",
+      "language": "pt-BR",
+      "tone": "professional",
+      "created_at": "2026-09-08 00:02:02.730912+00:00",
+      "updated_at": "2026-09-08 00:02:02.730915+00:00"
+    },
+    {
+      "id": "0e06105a-bb91-47a7-904f-892573970daa",
+      "user_id": "4b9a6fb3-a9a9-44c6-b829-c7d58da70d16",
+      "job_id": "c2286a72-60a2-4dac-93a1-d56d286bfde7",
+      "title": "Desenvolvedor(a) Python Pleno - Stone",
+      "content": "Prezada equipe de Stone,\n\nEscrevo para me candidatar à posição de Desenvolvedor(a) Python Pleno. Ao longo da minha trajetória venho trabalhando diretamente com celery, docker, fastapi, kubernetes, python, exatamente o conjunto de competências que vocês descrevem na vaga.\n\nNo meu histórico recente atuei em entregas que exigiram celery, docker, fastapi, kubernetes, python, sempre com foco em resultado mensurável e em colaboração próxima com produto e design. Gosto de assumir problemas de ponta a ponta: entender o contexto, propor a solução mais simples que resolve, e acompanhar o impacto depois de entregue.\n\nTenho interesse específico em Stone pelo tipo de problema descrito na vaga, e acredito que consigo contribuir desde as primeiras semanas. Ficaria feliz em detalhar qualquer um desses pontos em uma conversa.\n\nAtenciosamente,\n\n---\n_Carta montada pelo analisador local do JobPilot (modo offline). Configure um provedor de IA em Configurações → IA para uma carta gerada por LLM._",
+      "language": "pt-BR",
+      "tone": "professional",
+      "created_at": "2026-09-08 00:02:02.694310+00:00",
+      "updated_at": "2026-09-08 00:02:02.694313+00:00"
+    },
+    {
+      "id": "e15752ef-c484-439a-b858-46ba5c2e04c8",
+      "user_id": "4b9a6fb3-a9a9-44c6-b829-c7d58da70d16",
+      "job_id": "59048b49-1406-4c7d-b9ae-fbadc62c3954",
+      "title": "Backend Developer (Python) - Mercado Livre",
+      "content": "Prezada equipe de Mercado Livre,\n\nEscrevo para me candidatar à posição de Backend Developer (Python). Ao longo da minha trajetória venho trabalhando diretamente com backend, django, postgresql, python, redis, exatamente o conjunto de competências que vocês descrevem na vaga.\n\nNo meu histórico recente atuei em entregas que exigiram backend, django, postgresql, python, redis, sempre com foco em resultado mensurável e em colaboração próxima com produto e design. Gosto de assumir problemas de ponta a ponta: entender o contexto, propor a solução mais simples que resolve, e acompanhar o impacto depois de entregue.\n\nTenho interesse específico em Mercado Livre pelo tipo de problema descrito na vaga, e acredito que consigo contribuir desde as primeiras semanas. Ficaria feliz em detalhar qualquer um desses pontos em uma conversa.\n\nAtenciosamente,\n\n---\n_Carta montada pelo analisador local do JobPilot (modo offline). Configure um provedor de IA em Configurações → IA para uma carta gerada por LLM._",
+      "language": "pt-BR",
+      "tone": "professional",
+      "created_at": "2026-09-08 00:02:02.658380+00:00",
+      "updated_at": "2026-09-08 00:02:02.658386+00:00"
+    },
+    {
+      "id": "0fef5a78-0233-4e74-b5a4-11862d462f31",
+      "user_id": "4b9a6fb3-a9a9-44c6-b829-c7d58da70d16",
+      "job_id": "61ca7ea5-5268-405b-b0fc-9aaf6f29b288",
+      "title": "Pessoa Desenvolvedora Full Stack - Hotmart",
+      "content": "Prezada equipe de Hotmart,\n\nEscrevo para me candidatar à posição de Pessoa Desenvolvedora Full Stack. Ao longo da minha trajetória venho trabalhando diretamente com backend, python, rest, exatamente o conjunto de competências que vocês descrevem na vaga.\n\nNo meu histórico recente atuei em entregas que exigiram backend, python, rest, sempre com foco em resultado mensurável e em colaboração próxima com produto e design. Gosto de assumir problemas de ponta a ponta: entender o contexto, propor a solução mais simples que resolve, e acompanhar o impacto depois de entregue.\n\nTenho interesse específico em Hotmart pelo tipo de problema descrito na vaga, e acredito que consigo contribuir desde as primeiras semanas. Ficaria feliz em detalhar qualquer um desses pontos em uma conversa.\n\nAtenciosamente,\n\n---\n_Carta montada pelo analisador local do JobPilot (modo offline). Configure um provedor de IA em Configurações → IA para uma carta gerada por LLM._",
+      "language": "pt-BR",
+      "tone": "professional",
+      "created_at": "2026-09-08 00:02:02.622001+00:00",
+      "updated_at": "2026-09-08 00:02:02.622004+00:00"
+    },
+    {
+      "id": "4b1be3a2-e969-46f1-8205-63f41dc95859",
+      "user_id": "4b9a6fb3-a9a9-44c6-b829-c7d58da70d16",
+      "job_id": "bc20478b-ece3-4728-aee7-90e27a8f926f",
+      "title": "Engenheiro(a) de Plataforma - QuintoAndar",
+      "content": "Prezada equipe de QuintoAndar,\n\nEscrevo para me candidatar à posição de Engenheiro(a) de Plataforma. Ao longo da minha trajetória venho trabalhando diretamente com kubernetes, terraform, exatamente o conjunto de competências que vocês descrevem na vaga.\n\nNo meu histórico recente atuei em entregas que exigiram kubernetes, terraform, sempre com foco em resultado mensurável e em colaboração próxima com produto e design. Gosto de assumir problemas de ponta a ponta: entender o contexto, propor a solução mais simples que resolve, e acompanhar o impacto depois de entregue.\n\nTenho interesse específico em QuintoAndar pelo tipo de problema descrito na vaga, e acredito que consigo contribuir desde as primeiras semanas. Ficaria feliz em detalhar qualquer um desses pontos em uma conversa.\n\nAtenciosamente,\n\n---\n_Carta montada pelo analisador local do JobPilot (modo offline). Configure um provedor de IA em Configurações → IA para uma carta gerada por LLM._",
+      "language": "pt-BR",
+      "tone": "professional",
+      "created_at": "2026-09-08 00:02:02.583143+00:00",
+      "updated_at": "2026-09-08 00:02:02.583147+00:00"
+    },
+    {
+      "id": "72b1010f-04db-4a7b-814e-2e8a1151aef8",
+      "user_id": "4b9a6fb3-a9a9-44c6-b829-c7d58da70d16",
+      "job_id": "a708ea92-dce6-4684-88dd-553cc977f1df",
       "title": "Engenheiro(a) de Software Backend Sênior — Nubank",
       "content": "Prezada equipe de Nubank,\n\nEscrevo para me candidatar à posição de Engenheiro(a) de Software Backend Sênior. Ao longo da minha trajetória venho trabalhando diretamente com aws, backend, postgresql, python, senior, exatamente o conjunto de competências que vocês descrevem na vaga.\n\nNo meu histórico recente atuei em entregas que exigiram aws, backend, postgresql, python, senior, sempre com foco em resultado mensurável e em colaboração próxima com produto e design. Gosto de assumir problemas de ponta a ponta: entender o contexto, propor a solução mais simples que resolve, e acompanhar o impacto depois de entregue.\n\nTenho interesse específico em Nubank pelo tipo de problema descrito na vaga, e acredito que consigo contribuir desde as primeiras semanas. Ficaria feliz em detalhar qualquer um desses pontos em uma conversa.\n\nAtenciosamente,\n\n---\n_Carta montada pelo analisador local do JobPilot (modo offline). Configure um provedor de IA em Configurações → IA para uma carta gerada por LLM._",
       "language": "pt-BR",
       "tone": "professional",
-      "created_at": "2026-08-18 23:50:31.438875+00:00",
-      "updated_at": "2026-09-07 23:50:31.679591+00:00"
+      "created_at": "2026-08-19 00:01:52.739432+00:00",
+      "updated_at": "2026-09-08 00:01:52.964694+00:00"
     }
   ],
   "localJobs": {
     "results": [
       {
-        "id": "da45b3e2-bb0a-40af-b34a-65fda86bc42a",
+        "id": "6d34b88a-904f-46fd-b1f3-bb3ac11651b4",
         "source": "demo",
         "title": "Estágio em Desenvolvimento Backend",
-        "company_id": "7d8381af-b556-4310-9862-ce9ff667e15e",
+        "company_id": "8ed58064-ae48-4552-b974-2914e7c8a52d",
         "company": "PicPay",
         "description": "Programa de estágio com trilha de backend em Python. Ideal para quem está em formação e quer aprender boas práticas de engenharia.",
         "location": "São Paulo, SP",
@@ -346,14 +423,14 @@
         "currency": "BRL",
         "apply_url": "https://example.com/vagas/demo",
         "is_remote": true,
-        "posted_at": "2026-08-24 23:50:31.438875+00:00",
-        "created_at": "2026-09-07 23:50:31.665509+00:00"
+        "posted_at": "2026-08-25 00:01:52.739432+00:00",
+        "created_at": "2026-09-08 00:01:52.949631+00:00"
       },
       {
-        "id": "812231c1-2cb8-463b-a363-45624622f898",
+        "id": "59048b49-1406-4c7d-b9ae-fbadc62c3954",
         "source": "demo",
         "title": "Backend Developer (Python)",
-        "company_id": "f1605e39-e86e-4097-a44d-f33ff89ce8cb",
+        "company_id": "9205c95b-c6ff-449c-82d6-2aaebe2d5076",
         "company": "Mercado Livre",
         "description": "Desenvolvimento de APIs REST de alto tráfego. Python, Django, PostgreSQL e Redis. Ambiente remoto com times distribuídos na América Latina.",
         "location": "Remoto",
@@ -363,14 +440,14 @@
         "currency": "BRL",
         "apply_url": "https://example.com/vagas/demo",
         "is_remote": true,
-        "posted_at": "2026-08-26 23:50:31.438875+00:00",
-        "created_at": "2026-09-07 23:50:31.662012+00:00"
+        "posted_at": "2026-08-27 00:01:52.739432+00:00",
+        "created_at": "2026-09-08 00:01:52.945050+00:00"
       },
       {
-        "id": "86c10893-79e8-47ae-bb2e-9a69faf4f3da",
+        "id": "bc20478b-ece3-4728-aee7-90e27a8f926f",
         "source": "demo",
         "title": "Engenheiro(a) de Plataforma",
-        "company_id": "fd39c78e-9aea-4cee-b625-e57b801829d3",
+        "company_id": "33866013-eccb-4a7d-adbe-8130c2e7a18e",
         "company": "QuintoAndar",
         "description": "Time de plataforma responsável por Kubernetes, CI/CD e ferramentas internas. Buscamos alguém com forte base em Linux, Terraform e Go.",
         "location": "São Paulo, SP",
@@ -380,14 +457,14 @@
         "currency": "BRL",
         "apply_url": "https://example.com/vagas/demo",
         "is_remote": true,
-        "posted_at": "2026-08-28 23:50:31.438875+00:00",
-        "created_at": "2026-09-07 23:50:31.658239+00:00"
+        "posted_at": "2026-08-29 00:01:52.739432+00:00",
+        "created_at": "2026-09-08 00:01:52.940723+00:00"
       },
       {
-        "id": "8765794b-ec5a-4195-886c-1c6d06b99183",
+        "id": "61ca7ea5-5268-405b-b0fc-9aaf6f29b288",
         "source": "demo",
         "title": "Pessoa Desenvolvedora Full Stack",
-        "company_id": "957a5b02-61e5-4652-b0dd-6061769fb31d",
+        "company_id": "8953a659-a770-4319-b698-267fb59cbb77",
         "company": "Hotmart",
         "description": "Frente de checkout: React e TypeScript no frontend, Python no backend. Cultura de testes automatizados e revisão de código.",
         "location": "Belo Horizonte, MG",
@@ -397,14 +474,14 @@
         "currency": "BRL",
         "apply_url": "https://example.com/vagas/demo",
         "is_remote": true,
-        "posted_at": "2026-08-30 23:50:31.438875+00:00",
-        "created_at": "2026-09-07 23:50:31.654668+00:00"
+        "posted_at": "2026-08-31 00:01:52.739432+00:00",
+        "created_at": "2026-09-08 00:01:52.936695+00:00"
       },
       {
-        "id": "b08c74d5-2998-4c31-be4f-2e26840c84cf",
+        "id": "eb1b55ef-7156-4699-bbe4-f207efddb3b4",
         "source": "demo",
         "title": "Engenheiro(a) de Dados",
-        "company_id": "e820b27f-efc8-4c0c-b676-b61b27b1457f",
+        "company_id": "47fa3aac-22af-4379-bf33-7fb3150b79a6",
         "company": "Loft",
         "description": "Construção de pipelines de dados com Airflow e Spark, modelagem analítica em PostgreSQL e entregas para times de produto.",
         "location": "São Paulo, SP",
@@ -414,14 +491,14 @@
         "currency": "BRL",
         "apply_url": "https://example.com/vagas/demo",
         "is_remote": true,
-        "posted_at": "2026-09-01 23:50:31.438875+00:00",
-        "created_at": "2026-09-07 23:50:31.650697+00:00"
+        "posted_at": "2026-09-02 00:01:52.739432+00:00",
+        "created_at": "2026-09-08 00:01:52.931876+00:00"
       },
       {
-        "id": "ea44f922-ce59-44ed-b657-716efaf6692c",
+        "id": "32f44614-f386-4584-9e77-40849e597505",
         "source": "demo",
         "title": "Tech Lead Backend",
-        "company_id": "c355faa7-1af2-4a2b-831a-d9b7893a5c0b",
+        "company_id": "42e545a1-21be-448f-bbf9-5ed7b16d4ef4",
         "company": "iFood",
         "description": "Liderança técnica de uma squad de logística. Esperamos experiência com sistemas distribuídos, observabilidade e mentoria. Stack Python/Go, PostgreSQL, Terraform e AWS.",
         "location": "Campinas, SP",
@@ -431,14 +508,14 @@
         "currency": "BRL",
         "apply_url": "https://example.com/vagas/demo",
         "is_remote": false,
-        "posted_at": "2026-09-03 23:50:31.438875+00:00",
-        "created_at": "2026-09-07 23:50:31.646988+00:00"
+        "posted_at": "2026-09-04 00:01:52.739432+00:00",
+        "created_at": "2026-09-08 00:01:52.927638+00:00"
       },
       {
-        "id": "671d5960-5728-4367-8c38-68d347088fac",
+        "id": "c2286a72-60a2-4dac-93a1-d56d286bfde7",
         "source": "demo",
         "title": "Desenvolvedor(a) Python Pleno",
-        "company_id": "db8f6fd6-9862-459f-8bd1-11cc32db676e",
+        "company_id": "150082ab-1105-4428-8c86-75c89ad95e8e",
         "company": "Stone",
         "description": "Time de pagamentos buscando pessoa desenvolvedora Python para evoluir APIs de conciliação. Trabalhamos com FastAPI, Celery, Redis e Docker, com deploy contínuo em Kubernetes.",
         "location": "Rio de Janeiro, RJ",
@@ -448,14 +525,14 @@
         "currency": "BRL",
         "apply_url": "https://example.com/vagas/demo",
         "is_remote": true,
-        "posted_at": "2026-09-05 23:50:31.438875+00:00",
-        "created_at": "2026-09-07 23:50:31.642430+00:00"
+        "posted_at": "2026-09-06 00:01:52.739432+00:00",
+        "created_at": "2026-09-08 00:01:52.923128+00:00"
       },
       {
-        "id": "0c70e217-5806-46f6-bf2e-f3e4e0e36461",
+        "id": "a708ea92-dce6-4684-88dd-553cc977f1df",
         "source": "demo",
         "title": "Engenheiro(a) de Software Backend Sênior",
-        "company_id": "b5e350e6-b95c-467c-a63a-c8f429bc3b7d",
+        "company_id": "a270dfd0-f57d-4f16-ab51-f26bc7e3a30e",
         "company": "Nubank",
         "description": "Procuramos pessoa engenheira backend para atuar no core bancário. Stack em Python e Kotlin, PostgreSQL, Kafka e AWS. Você vai desenhar serviços de alta disponibilidade, participar de on-call e mentorar o time.",
         "location": "São Paulo, SP",
@@ -465,219 +542,15 @@
         "currency": "BRL",
         "apply_url": "https://example.com/vagas/demo",
         "is_remote": true,
-        "posted_at": "2026-09-07 23:50:31.438875+00:00",
-        "created_at": "2026-09-07 23:50:31.625932+00:00"
-      },
-      {
-        "id": "a0a8b3e5-9cb4-4d4a-9a73-8da71e554d34",
-        "source": "demo",
-        "title": "Estágio em Desenvolvimento Backend",
-        "company_id": "f7a10e33-f268-460b-bce4-999b54de5d19",
-        "company": "PicPay",
-        "description": "Programa de estágio com trilha de backend em Python. Ideal para quem está em formação e quer aprender boas práticas de engenharia.",
-        "location": "São Paulo, SP",
-        "location_type": "remote",
-        "salary_min": 2500.0,
-        "salary_max": 3200.0,
-        "currency": "BRL",
-        "apply_url": "https://example.com/vagas/demo",
-        "is_remote": true,
-        "posted_at": "2026-08-24 23:16:29.738524+00:00",
-        "created_at": "2026-09-07 23:16:29.968142+00:00"
-      },
-      {
-        "id": "eb4f0aeb-6b05-4c8a-9fdf-e0ac88f8903c",
-        "source": "demo",
-        "title": "Backend Developer (Python)",
-        "company_id": "5603e37f-df11-4afd-b655-3f77a96917a8",
-        "company": "Mercado Livre",
-        "description": "Desenvolvimento de APIs REST de alto tráfego. Python, Django, PostgreSQL e Redis. Ambiente remoto com times distribuídos na América Latina.",
-        "location": "Remoto",
-        "location_type": "remote",
-        "salary_min": 13000.0,
-        "salary_max": 19000.0,
-        "currency": "BRL",
-        "apply_url": "https://example.com/vagas/demo",
-        "is_remote": true,
-        "posted_at": "2026-08-26 23:16:29.738524+00:00",
-        "created_at": "2026-09-07 23:16:29.965022+00:00"
-      },
-      {
-        "id": "77a232f4-0066-4feb-9d2f-9ae354c4a187",
-        "source": "demo",
-        "title": "Engenheiro(a) de Plataforma",
-        "company_id": "b0fcc8a7-1f99-4614-8983-0607c254b16c",
-        "company": "QuintoAndar",
-        "description": "Time de plataforma responsável por Kubernetes, CI/CD e ferramentas internas. Buscamos alguém com forte base em Linux, Terraform e Go.",
-        "location": "São Paulo, SP",
-        "location_type": "remote",
-        "salary_min": 20000.0,
-        "salary_max": 28000.0,
-        "currency": "BRL",
-        "apply_url": "https://example.com/vagas/demo",
-        "is_remote": true,
-        "posted_at": "2026-08-28 23:16:29.738524+00:00",
-        "created_at": "2026-09-07 23:16:29.961463+00:00"
-      },
-      {
-        "id": "9d5d1af4-6a76-49af-985b-1f0b2b5432e4",
-        "source": "demo",
-        "title": "Pessoa Desenvolvedora Full Stack",
-        "company_id": "49656ee2-0779-4cb8-ab79-e906f3765783",
-        "company": "Hotmart",
-        "description": "Frente de checkout: React e TypeScript no frontend, Python no backend. Cultura de testes automatizados e revisão de código.",
-        "location": "Belo Horizonte, MG",
-        "location_type": "remote",
-        "salary_min": 11000.0,
-        "salary_max": 16000.0,
-        "currency": "BRL",
-        "apply_url": "https://example.com/vagas/demo",
-        "is_remote": true,
-        "posted_at": "2026-08-30 23:16:29.738524+00:00",
-        "created_at": "2026-09-07 23:16:29.957884+00:00"
-      },
-      {
-        "id": "ce2c4b99-2a2d-4113-a9da-27eef74535f7",
-        "source": "demo",
-        "title": "Engenheiro(a) de Dados",
-        "company_id": "e4a5c206-30cd-4414-b2e0-4bac6c5fbe3d",
-        "company": "Loft",
-        "description": "Construção de pipelines de dados com Airflow e Spark, modelagem analítica em PostgreSQL e entregas para times de produto.",
-        "location": "São Paulo, SP",
-        "location_type": "remote",
-        "salary_min": 14000.0,
-        "salary_max": 20000.0,
-        "currency": "BRL",
-        "apply_url": "https://example.com/vagas/demo",
-        "is_remote": true,
-        "posted_at": "2026-09-01 23:16:29.738524+00:00",
-        "created_at": "2026-09-07 23:16:29.954350+00:00"
-      },
-      {
-        "id": "06127be0-91f7-45f2-bfda-379d5b782e41",
-        "source": "demo",
-        "title": "Tech Lead Backend",
-        "company_id": "06c0166f-2a03-469c-8218-678e9d6271f3",
-        "company": "iFood",
-        "description": "Liderança técnica de uma squad de logística. Esperamos experiência com sistemas distribuídos, observabilidade e mentoria. Stack Python/Go, PostgreSQL, Terraform e AWS.",
-        "location": "Campinas, SP",
-        "location_type": "onsite",
-        "salary_min": 25000.0,
-        "salary_max": 34000.0,
-        "currency": "BRL",
-        "apply_url": "https://example.com/vagas/demo",
-        "is_remote": false,
-        "posted_at": "2026-09-03 23:16:29.738524+00:00",
-        "created_at": "2026-09-07 23:16:29.950863+00:00"
-      },
-      {
-        "id": "14bd330c-b62a-408b-8672-fd84cf18e9fd",
-        "source": "demo",
-        "title": "Desenvolvedor(a) Python Pleno",
-        "company_id": "03806452-f020-4b94-8ca7-cf5b59dd2169",
-        "company": "Stone",
-        "description": "Time de pagamentos buscando pessoa desenvolvedora Python para evoluir APIs de conciliação. Trabalhamos com FastAPI, Celery, Redis e Docker, com deploy contínuo em Kubernetes.",
-        "location": "Rio de Janeiro, RJ",
-        "location_type": "remote",
-        "salary_min": 12000.0,
-        "salary_max": 17000.0,
-        "currency": "BRL",
-        "apply_url": "https://example.com/vagas/demo",
-        "is_remote": true,
-        "posted_at": "2026-09-05 23:16:29.738524+00:00",
-        "created_at": "2026-09-07 23:16:29.947180+00:00"
-      },
-      {
-        "id": "61a5c262-c976-4211-b045-5ecb368871ad",
-        "source": "demo",
-        "title": "Engenheiro(a) de Software Backend Sênior",
-        "company_id": "3d214956-b953-43d9-b70b-665aad663e13",
-        "company": "Nubank",
-        "description": "Procuramos pessoa engenheira backend para atuar no core bancário. Stack em Python e Kotlin, PostgreSQL, Kafka e AWS. Você vai desenhar serviços de alta disponibilidade, participar de on-call e mentorar o time.",
-        "location": "São Paulo, SP",
-        "location_type": "remote",
-        "salary_min": 18000.0,
-        "salary_max": 26000.0,
-        "currency": "BRL",
-        "apply_url": "https://example.com/vagas/demo",
-        "is_remote": true,
-        "posted_at": "2026-09-07 23:16:29.738524+00:00",
-        "created_at": "2026-09-07 23:16:29.938504+00:00"
-      },
-      {
-        "id": "71f7b7ff-664d-4b0b-b1eb-4d82fab97910",
-        "source": "demo",
-        "title": "Estágio em Desenvolvimento Backend",
-        "company_id": "8acc0872-b933-4aef-8ff6-22451688d20c",
-        "company": "PicPay",
-        "description": "Programa de estágio com trilha de backend em Python. Ideal para quem está em formação e quer aprender boas práticas de engenharia.",
-        "location": "São Paulo, SP",
-        "location_type": "remote",
-        "salary_min": 2500.0,
-        "salary_max": 3200.0,
-        "currency": "BRL",
-        "apply_url": "https://example.com/vagas/demo",
-        "is_remote": true,
-        "posted_at": "2026-08-24 22:11:20.216960+00:00",
-        "created_at": "2026-09-07 22:11:20.390729+00:00"
-      },
-      {
-        "id": "9a5de15d-f013-4990-8d0c-5e676175bffe",
-        "source": "demo",
-        "title": "Backend Developer (Python)",
-        "company_id": "d40ac762-c978-43a6-be08-c285994024fa",
-        "company": "Mercado Livre",
-        "description": "Desenvolvimento de APIs REST de alto tráfego. Python, Django, PostgreSQL e Redis. Ambiente remoto com times distribuídos na América Latina.",
-        "location": "Remoto",
-        "location_type": "remote",
-        "salary_min": 13000.0,
-        "salary_max": 19000.0,
-        "currency": "BRL",
-        "apply_url": "https://example.com/vagas/demo",
-        "is_remote": true,
-        "posted_at": "2026-08-26 22:11:20.216960+00:00",
-        "created_at": "2026-09-07 22:11:20.386129+00:00"
-      },
-      {
-        "id": "59408cea-b5af-4276-9f7a-e441c9685e5d",
-        "source": "demo",
-        "title": "Engenheiro(a) de Plataforma",
-        "company_id": "c62a0b5f-37dd-4adc-ab71-a3fbce1f8373",
-        "company": "QuintoAndar",
-        "description": "Time de plataforma responsável por Kubernetes, CI/CD e ferramentas internas. Buscamos alguém com forte base em Linux, Terraform e Go.",
-        "location": "São Paulo, SP",
-        "location_type": "remote",
-        "salary_min": 20000.0,
-        "salary_max": 28000.0,
-        "currency": "BRL",
-        "apply_url": "https://example.com/vagas/demo",
-        "is_remote": true,
-        "posted_at": "2026-08-28 22:11:20.216960+00:00",
-        "created_at": "2026-09-07 22:11:20.382254+00:00"
-      },
-      {
-        "id": "56283940-d36f-4b41-9ffb-a61b2d666383",
-        "source": "demo",
-        "title": "Pessoa Desenvolvedora Full Stack",
-        "company_id": "5aa35461-59f7-4cc3-b69b-96699d8fa755",
-        "company": "Hotmart",
-        "description": "Frente de checkout: React e TypeScript no frontend, Python no backend. Cultura de testes automatizados e revisão de código.",
-        "location": "Belo Horizonte, MG",
-        "location_type": "remote",
-        "salary_min": 11000.0,
-        "salary_max": 16000.0,
-        "currency": "BRL",
-        "apply_url": "https://example.com/vagas/demo",
-        "is_remote": true,
-        "posted_at": "2026-08-30 22:11:20.216960+00:00",
-        "created_at": "2026-09-07 22:11:20.378464+00:00"
+        "posted_at": "2026-09-08 00:01:52.739432+00:00",
+        "created_at": "2026-09-08 00:01:52.914876+00:00"
       }
     ],
     "page": 1,
     "per_page": 20
   },
   "ai": {
-    "b3bfb55c-bff5-4977-82ed-125039b804bb": {
+    "ffdd6ecb-06e0-41b1-aa08-3cb054dbde70": {
       "match": {
         "compatibility_score": 50,
         "match_reasons": [
@@ -726,13 +599,13 @@
       },
       "cover": {
         "cover_letter": "Prezada equipe de QuintoAndar,\n\nEscrevo para me candidatar à posição de Engenheiro(a) de Plataforma. Ao longo da minha trajetória venho trabalhando diretamente com kubernetes, terraform, exatamente o conjunto de competências que vocês descrevem na vaga.\n\nNo meu histórico recente atuei em entregas que exigiram kubernetes, terraform, sempre com foco em resultado mensurável e em colaboração próxima com produto e design. Gosto de assumir problemas de ponta a ponta: entender o contexto, propor a solução mais simples que resolve, e acompanhar o impacto depois de entregue.\n\nTenho interesse específico em QuintoAndar pelo tipo de problema descrito na vaga, e acredito que consigo contribuir desde as primeiras semanas. Ficaria feliz em detalhar qualquer um desses pontos em uma conversa.\n\nAtenciosamente,\n\n---\n_Carta montada pelo analisador local do JobPilot (modo offline). Configure um provedor de IA em Configurações → IA para uma carta gerada por LLM._",
-        "id": "9ab0317e-cc1f-48e6-ae0b-4c4ae3c3590c"
+        "id": "ec870d50-82b5-4144-8aac-4644f3cf6a55"
       },
       "tailor": {
         "tailored_resume": "# Currículo direcionado — Engenheiro(a) de Plataforma @ QuintoAndar\n\n## Resumo profissional\nProfissional com experiência prática em kubernetes, terraform, buscando a posição de Engenheiro(a) de Plataforma.\n\n## Competências priorizadas para esta vaga\n- kubernetes\n- terraform\n\n## Lacunas a endereçar\n- go\n- linux\n\n## Currículo original\nLucas Oliveira — Engenheiro de Software Backend\nSão Paulo, SP · Remoto · lucas.demo@jobpilot.ai\n\nRESUMO\nEngenheiro backend com 6 anos de experiência construindo APIs e sistemas\ndistribuídos em Python. Foco em FastAPI, PostgreSQL e infraestrutura em AWS.\nExperiência liderando squads pequenos e mentorando pessoas desenvolvedoras.\n\nEXPERIÊNCIA\n\nTech Lead Backend — Nuvem Pagamentos (2023 - atual)\n- Reescrevi o serviço de liquidação em FastAPI, reduzindo a latência p95 de\n  820ms para 140ms.\n- Migrei o processamento assíncrono para Celery + Redis, absorvendo picos de\n  12x no Black Friday sem degradação.\n- Implementei observabilidade com métricas e tracing; MTTR caiu de 45 para 8 minutos.\n\nDesenvolvedor Backend Sênior — Loja Verde (2021 - 2023)\n- Construí a API de catálogo em Django REST atendendo 4 milhões de requisições/dia.\n- Otimizei consultas PostgreSQL com índices parciais, cortando 60% do custo de banco.\n- Introduzi testes com pytest, elevando a cobertura de 22% para 84%.\n\nDesenvolvedor Backend — Agência Kernel (2019 - 2021)\n- Entreguei integrações REST e GraphQL para clientes de e-commerce.\n- Containerizei o parque de aplicações com Docker, padronizando os deploys.\n\nFORMAÇÃO\nBacharelado em Ciência da Computação — Universidade Federal (2019)\n\nCOMPETÊNCIAS\nPython, FastAPI, Django, PostgreSQL, Redis, Celery, Docker, Kubernetes, AWS,\nTerraform, pytest, Git, CI/CD, REST, GraphQL, observabilidade, mentoria\n\nIDIOMAS\nPortuguês (nativo), Inglês (avançado)\n\n---\n_Reordenado pelo analisador local (modo offline). Configure um provedor de IA em Configurações → IA para uma reescrita completa por LLM._"
       }
     },
-    "348a6af7-7822-4630-ad55-df2eb45c2e1f": {
+    "fd95d494-ce01-44cf-8497-13d40a10692a": {
       "match": {
         "compatibility_score": 50,
         "match_reasons": [
@@ -792,13 +665,13 @@
       },
       "cover": {
         "cover_letter": "Prezada equipe de Hotmart,\n\nEscrevo para me candidatar à posição de Pessoa Desenvolvedora Full Stack. Ao longo da minha trajetória venho trabalhando diretamente com backend, python, rest, exatamente o conjunto de competências que vocês descrevem na vaga.\n\nNo meu histórico recente atuei em entregas que exigiram backend, python, rest, sempre com foco em resultado mensurável e em colaboração próxima com produto e design. Gosto de assumir problemas de ponta a ponta: entender o contexto, propor a solução mais simples que resolve, e acompanhar o impacto depois de entregue.\n\nTenho interesse específico em Hotmart pelo tipo de problema descrito na vaga, e acredito que consigo contribuir desde as primeiras semanas. Ficaria feliz em detalhar qualquer um desses pontos em uma conversa.\n\nAtenciosamente,\n\n---\n_Carta montada pelo analisador local do JobPilot (modo offline). Configure um provedor de IA em Configurações → IA para uma carta gerada por LLM._",
-        "id": "62451ac9-63f5-4852-928c-6d4ccff5d29b"
+        "id": "de5418e3-3b5c-49e9-9de4-2c29a600ee34"
       },
       "tailor": {
         "tailored_resume": "# Currículo direcionado — Pessoa Desenvolvedora Full Stack @ Hotmart\n\n## Resumo profissional\nProfissional com experiência prática em backend, python, rest, buscando a posição de Pessoa Desenvolvedora Full Stack.\n\n## Competências priorizadas para esta vaga\n- backend\n- python\n- rest\n\n## Lacunas a endereçar\n- frontend\n- react\n- typescript\n\n## Currículo original\nLucas Oliveira — Engenheiro de Software Backend\nSão Paulo, SP · Remoto · lucas.demo@jobpilot.ai\n\nRESUMO\nEngenheiro backend com 6 anos de experiência construindo APIs e sistemas\ndistribuídos em Python. Foco em FastAPI, PostgreSQL e infraestrutura em AWS.\nExperiência liderando squads pequenos e mentorando pessoas desenvolvedoras.\n\nEXPERIÊNCIA\n\nTech Lead Backend — Nuvem Pagamentos (2023 - atual)\n- Reescrevi o serviço de liquidação em FastAPI, reduzindo a latência p95 de\n  820ms para 140ms.\n- Migrei o processamento assíncrono para Celery + Redis, absorvendo picos de\n  12x no Black Friday sem degradação.\n- Implementei observabilidade com métricas e tracing; MTTR caiu de 45 para 8 minutos.\n\nDesenvolvedor Backend Sênior — Loja Verde (2021 - 2023)\n- Construí a API de catálogo em Django REST atendendo 4 milhões de requisições/dia.\n- Otimizei consultas PostgreSQL com índices parciais, cortando 60% do custo de banco.\n- Introduzi testes com pytest, elevando a cobertura de 22% para 84%.\n\nDesenvolvedor Backend — Agência Kernel (2019 - 2021)\n- Entreguei integrações REST e GraphQL para clientes de e-commerce.\n- Containerizei o parque de aplicações com Docker, padronizando os deploys.\n\nFORMAÇÃO\nBacharelado em Ciência da Computação — Universidade Federal (2019)\n\nCOMPETÊNCIAS\nPython, FastAPI, Django, PostgreSQL, Redis, Celery, Docker, Kubernetes, AWS,\nTerraform, pytest, Git, CI/CD, REST, GraphQL, observabilidade, mentoria\n\nIDIOMAS\nPortuguês (nativo), Inglês (avançado)\n\n---\n_Reordenado pelo analisador local (modo offline). Configure um provedor de IA em Configurações → IA para uma reescrita completa por LLM._"
       }
     },
-    "659e3e17-4a84-4da5-a22d-aa95be7554fa": {
+    "e972290a-7085-43e1-989b-9ad994197036": {
       "match": {
         "compatibility_score": 88,
         "match_reasons": [
@@ -861,13 +734,13 @@
       },
       "cover": {
         "cover_letter": "Prezada equipe de Mercado Livre,\n\nEscrevo para me candidatar à posição de Backend Developer (Python). Ao longo da minha trajetória venho trabalhando diretamente com backend, django, postgresql, python, redis, exatamente o conjunto de competências que vocês descrevem na vaga.\n\nNo meu histórico recente atuei em entregas que exigiram backend, django, postgresql, python, redis, sempre com foco em resultado mensurável e em colaboração próxima com produto e design. Gosto de assumir problemas de ponta a ponta: entender o contexto, propor a solução mais simples que resolve, e acompanhar o impacto depois de entregue.\n\nTenho interesse específico em Mercado Livre pelo tipo de problema descrito na vaga, e acredito que consigo contribuir desde as primeiras semanas. Ficaria feliz em detalhar qualquer um desses pontos em uma conversa.\n\nAtenciosamente,\n\n---\n_Carta montada pelo analisador local do JobPilot (modo offline). Configure um provedor de IA em Configurações → IA para uma carta gerada por LLM._",
-        "id": "82afb6ae-808c-4dbf-ad39-a70e08615e31"
+        "id": "37a6e289-4b43-4466-8101-e31547e1c3bb"
       },
       "tailor": {
         "tailored_resume": "# Currículo direcionado — Backend Developer (Python) @ Mercado Livre\n\n## Resumo profissional\nProfissional com experiência prática em backend, django, postgresql, python, redis, remoto, buscando a posição de Backend Developer (Python).\n\n## Competências priorizadas para esta vaga\n- backend\n- django\n- postgresql\n- python\n- redis\n- remoto\n- rest\n\n## Lacunas a endereçar\n- espanhol\n\n## Currículo original\nLucas Oliveira — Engenheiro de Software Backend\nSão Paulo, SP · Remoto · lucas.demo@jobpilot.ai\n\nRESUMO\nEngenheiro backend com 6 anos de experiência construindo APIs e sistemas\ndistribuídos em Python. Foco em FastAPI, PostgreSQL e infraestrutura em AWS.\nExperiência liderando squads pequenos e mentorando pessoas desenvolvedoras.\n\nEXPERIÊNCIA\n\nTech Lead Backend — Nuvem Pagamentos (2023 - atual)\n- Reescrevi o serviço de liquidação em FastAPI, reduzindo a latência p95 de\n  820ms para 140ms.\n- Migrei o processamento assíncrono para Celery + Redis, absorvendo picos de\n  12x no Black Friday sem degradação.\n- Implementei observabilidade com métricas e tracing; MTTR caiu de 45 para 8 minutos.\n\nDesenvolvedor Backend Sênior — Loja Verde (2021 - 2023)\n- Construí a API de catálogo em Django REST atendendo 4 milhões de requisições/dia.\n- Otimizei consultas PostgreSQL com índices parciais, cortando 60% do custo de banco.\n- Introduzi testes com pytest, elevando a cobertura de 22% para 84%.\n\nDesenvolvedor Backend — Agência Kernel (2019 - 2021)\n- Entreguei integrações REST e GraphQL para clientes de e-commerce.\n- Containerizei o parque de aplicações com Docker, padronizando os deploys.\n\nFORMAÇÃO\nBacharelado em Ciência da Computação — Universidade Federal (2019)\n\nCOMPETÊNCIAS\nPython, FastAPI, Django, PostgreSQL, Redis, Celery, Docker, Kubernetes, AWS,\nTerraform, pytest, Git, CI/CD, REST, GraphQL, observabilidade, mentoria\n\nIDIOMAS\nPortuguês (nativo), Inglês (avançado)\n\n---\n_Reordenado pelo analisador local (modo offline). Configure um provedor de IA em Configurações → IA para uma reescrita completa por LLM._"
       }
     },
-    "622b501b-686b-46c8-8b3d-c3e79378f916": {
+    "357c4c3d-29e4-4751-bfc1-518290930f66": {
       "match": {
         "compatibility_score": 86,
         "match_reasons": [
@@ -930,13 +803,13 @@
       },
       "cover": {
         "cover_letter": "Prezada equipe de Stone,\n\nEscrevo para me candidatar à posição de Desenvolvedor(a) Python Pleno. Ao longo da minha trajetória venho trabalhando diretamente com celery, docker, fastapi, kubernetes, python, exatamente o conjunto de competências que vocês descrevem na vaga.\n\nNo meu histórico recente atuei em entregas que exigiram celery, docker, fastapi, kubernetes, python, sempre com foco em resultado mensurável e em colaboração próxima com produto e design. Gosto de assumir problemas de ponta a ponta: entender o contexto, propor a solução mais simples que resolve, e acompanhar o impacto depois de entregue.\n\nTenho interesse específico em Stone pelo tipo de problema descrito na vaga, e acredito que consigo contribuir desde as primeiras semanas. Ficaria feliz em detalhar qualquer um desses pontos em uma conversa.\n\nAtenciosamente,\n\n---\n_Carta montada pelo analisador local do JobPilot (modo offline). Configure um provedor de IA em Configurações → IA para uma carta gerada por LLM._",
-        "id": "3e25f121-5020-4c3f-bd00-e3edf69bc32c"
+        "id": "b892add9-bff7-4871-9162-1ae43c8f5f25"
       },
       "tailor": {
         "tailored_resume": "# Currículo direcionado — Desenvolvedor(a) Python Pleno @ Stone\n\n## Resumo profissional\nProfissional com experiência prática em celery, docker, fastapi, kubernetes, python, redis, buscando a posição de Desenvolvedor(a) Python Pleno.\n\n## Competências priorizadas para esta vaga\n- celery\n- docker\n- fastapi\n- kubernetes\n- python\n- redis\n\n## Lacunas a endereçar\n- pleno\n\n## Currículo original\nLucas Oliveira — Engenheiro de Software Backend\nSão Paulo, SP · Remoto · lucas.demo@jobpilot.ai\n\nRESUMO\nEngenheiro backend com 6 anos de experiência construindo APIs e sistemas\ndistribuídos em Python. Foco em FastAPI, PostgreSQL e infraestrutura em AWS.\nExperiência liderando squads pequenos e mentorando pessoas desenvolvedoras.\n\nEXPERIÊNCIA\n\nTech Lead Backend — Nuvem Pagamentos (2023 - atual)\n- Reescrevi o serviço de liquidação em FastAPI, reduzindo a latência p95 de\n  820ms para 140ms.\n- Migrei o processamento assíncrono para Celery + Redis, absorvendo picos de\n  12x no Black Friday sem degradação.\n- Implementei observabilidade com métricas e tracing; MTTR caiu de 45 para 8 minutos.\n\nDesenvolvedor Backend Sênior — Loja Verde (2021 - 2023)\n- Construí a API de catálogo em Django REST atendendo 4 milhões de requisições/dia.\n- Otimizei consultas PostgreSQL com índices parciais, cortando 60% do custo de banco.\n- Introduzi testes com pytest, elevando a cobertura de 22% para 84%.\n\nDesenvolvedor Backend — Agência Kernel (2019 - 2021)\n- Entreguei integrações REST e GraphQL para clientes de e-commerce.\n- Containerizei o parque de aplicações com Docker, padronizando os deploys.\n\nFORMAÇÃO\nBacharelado em Ciência da Computação — Universidade Federal (2019)\n\nCOMPETÊNCIAS\nPython, FastAPI, Django, PostgreSQL, Redis, Celery, Docker, Kubernetes, AWS,\nTerraform, pytest, Git, CI/CD, REST, GraphQL, observabilidade, mentoria\n\nIDIOMAS\nPortuguês (nativo), Inglês (avançado)\n\n---\n_Reordenado pelo analisador local (modo offline). Configure um provedor de IA em Configurações → IA para uma reescrita completa por LLM._"
       }
     },
-    "81486bdf-810b-4a9e-a3a3-17df560f5d8c": {
+    "e618ed07-7074-438f-b5b1-b07c1de4a487": {
       "match": {
         "compatibility_score": 67,
         "match_reasons": [
@@ -1010,13 +883,13 @@
       },
       "cover": {
         "cover_letter": "Prezada equipe de Nubank,\n\nEscrevo para me candidatar à posição de Engenheiro(a) de Software Backend Sênior. Ao longo da minha trajetória venho trabalhando diretamente com aws, backend, ingles, postgresql, python, exatamente o conjunto de competências que vocês descrevem na vaga.\n\nNo meu histórico recente atuei em entregas que exigiram aws, backend, ingles, postgresql, python, sempre com foco em resultado mensurável e em colaboração próxima com produto e design. Gosto de assumir problemas de ponta a ponta: entender o contexto, propor a solução mais simples que resolve, e acompanhar o impacto depois de entregue.\n\nTenho interesse específico em Nubank pelo tipo de problema descrito na vaga, e acredito que consigo contribuir desde as primeiras semanas. Ficaria feliz em detalhar qualquer um desses pontos em uma conversa.\n\nAtenciosamente,\n\n---\n_Carta montada pelo analisador local do JobPilot (modo offline). Configure um provedor de IA em Configurações → IA para uma carta gerada por LLM._",
-        "id": "9feb0ed3-19d4-44a6-aa51-c35657e70f74"
+        "id": "61456155-1477-4320-9e89-728e356b1e11"
       },
       "tailor": {
         "tailored_resume": "# Currículo direcionado — Engenheiro(a) de Software Backend Sênior @ Nubank\n\n## Resumo profissional\nProfissional com experiência prática em aws, backend, ingles, postgresql, python, senior, buscando a posição de Engenheiro(a) de Software Backend Sênior.\n\n## Competências priorizadas para esta vaga\n- aws\n- backend\n- ingles\n- postgresql\n- python\n- senior\n\n## Lacunas a endereçar\n- kafka\n- kotlin\n- microservices\n\n## Currículo original\nLucas Oliveira — Engenheiro de Software Backend\nSão Paulo, SP · Remoto · lucas.demo@jobpilot.ai\n\nRESUMO\nEngenheiro backend com 6 anos de experiência construindo APIs e sistemas\ndistribuídos em Python. Foco em FastAPI, PostgreSQL e infraestrutura em AWS.\nExperiência liderando squads pequenos e mentorando pessoas desenvolvedoras.\n\nEXPERIÊNCIA\n\nTech Lead Backend — Nuvem Pagamentos (2023 - atual)\n- Reescrevi o serviço de liquidação em FastAPI, reduzindo a latência p95 de\n  820ms para 140ms.\n- Migrei o processamento assíncrono para Celery + Redis, absorvendo picos de\n  12x no Black Friday sem degradação.\n- Implementei observabilidade com métricas e tracing; MTTR caiu de 45 para 8 minutos.\n\nDesenvolvedor Backend Sênior — Loja Verde (2021 - 2023)\n- Construí a API de catálogo em Django REST atendendo 4 milhões de requisições/dia.\n- Otimizei consultas PostgreSQL com índices parciais, cortando 60% do custo de banco.\n- Introduzi testes com pytest, elevando a cobertura de 22% para 84%.\n\nDesenvolvedor Backend — Agência Kernel (2019 - 2021)\n- Entreguei integrações REST e GraphQL para clientes de e-commerce.\n- Containerizei o parque de aplicações com Docker, padronizando os deploys.\n\nFORMAÇÃO\nBacharelado em Ciência da Computação — Universidade Federal (2019)\n\nCOMPETÊNCIAS\nPython, FastAPI, Django, PostgreSQL, Redis, Celery, Docker, Kubernetes, AWS,\nTerraform, pytest, Git, CI/CD, REST, GraphQL, observabilidade, mentoria\n\nIDIOMAS\nPortuguês (nativo), Inglês (avançado)\n\n---\n_Reordenado pelo analisador local (modo offline). Configure um provedor de IA em Configurações → IA para uma reescrita completa por LLM._"
       }
     },
-    "ee909401-b29e-496f-9d41-8ca99f8044ce": {
+    "6626e4be-6d82-4f55-a6e3-586b0e0cc12b": {
       "match": {
         "compatibility_score": 33,
         "match_reasons": [
@@ -1072,13 +945,13 @@
       },
       "cover": {
         "cover_letter": "Prezada equipe de Loft,\n\nEscrevo para me candidatar à posição de Engenheiro(a) de Dados. Ao longo da minha trajetória venho trabalhando diretamente com postgresql, python, exatamente o conjunto de competências que vocês descrevem na vaga.\n\nNo meu histórico recente atuei em entregas que exigiram postgresql, python, sempre com foco em resultado mensurável e em colaboração próxima com produto e design. Gosto de assumir problemas de ponta a ponta: entender o contexto, propor a solução mais simples que resolve, e acompanhar o impacto depois de entregue.\n\nTenho interesse específico em Loft pelo tipo de problema descrito na vaga, e acredito que consigo contribuir desde as primeiras semanas. Ficaria feliz em detalhar qualquer um desses pontos em uma conversa.\n\nAtenciosamente,\n\n---\n_Carta montada pelo analisador local do JobPilot (modo offline). Configure um provedor de IA em Configurações → IA para uma carta gerada por LLM._",
-        "id": "5414d102-f2f3-46ed-8f24-ec04d2844368"
+        "id": "71331e65-14ec-4d2a-8036-b5b1783fa8d5"
       },
       "tailor": {
         "tailored_resume": "# Currículo direcionado — Engenheiro(a) de Dados @ Loft\n\n## Resumo profissional\nProfissional com experiência prática em postgresql, python, buscando a posição de Engenheiro(a) de Dados.\n\n## Competências priorizadas para esta vaga\n- postgresql\n- python\n\n## Lacunas a endereçar\n- airflow\n- etl\n- spark\n- sql\n\n## Currículo original\nLucas Oliveira — Engenheiro de Software Backend\nSão Paulo, SP · Remoto · lucas.demo@jobpilot.ai\n\nRESUMO\nEngenheiro backend com 6 anos de experiência construindo APIs e sistemas\ndistribuídos em Python. Foco em FastAPI, PostgreSQL e infraestrutura em AWS.\nExperiência liderando squads pequenos e mentorando pessoas desenvolvedoras.\n\nEXPERIÊNCIA\n\nTech Lead Backend — Nuvem Pagamentos (2023 - atual)\n- Reescrevi o serviço de liquidação em FastAPI, reduzindo a latência p95 de\n  820ms para 140ms.\n- Migrei o processamento assíncrono para Celery + Redis, absorvendo picos de\n  12x no Black Friday sem degradação.\n- Implementei observabilidade com métricas e tracing; MTTR caiu de 45 para 8 minutos.\n\nDesenvolvedor Backend Sênior — Loja Verde (2021 - 2023)\n- Construí a API de catálogo em Django REST atendendo 4 milhões de requisições/dia.\n- Otimizei consultas PostgreSQL com índices parciais, cortando 60% do custo de banco.\n- Introduzi testes com pytest, elevando a cobertura de 22% para 84%.\n\nDesenvolvedor Backend — Agência Kernel (2019 - 2021)\n- Entreguei integrações REST e GraphQL para clientes de e-commerce.\n- Containerizei o parque de aplicações com Docker, padronizando os deploys.\n\nFORMAÇÃO\nBacharelado em Ciência da Computação — Universidade Federal (2019)\n\nCOMPETÊNCIAS\nPython, FastAPI, Django, PostgreSQL, Redis, Celery, Docker, Kubernetes, AWS,\nTerraform, pytest, Git, CI/CD, REST, GraphQL, observabilidade, mentoria\n\nIDIOMAS\nPortuguês (nativo), Inglês (avançado)\n\n---\n_Reordenado pelo analisador local (modo offline). Configure um provedor de IA em Configurações → IA para uma reescrita completa por LLM._"
       }
     },
-    "acedfaff-6aee-4101-ad49-d8d5cda538d8": {
+    "ae880e51-0fe9-4691-a0cf-62eb4b26d7df": {
       "match": {
         "compatibility_score": 75,
         "match_reasons": [
@@ -1149,7 +1022,7 @@
       },
       "cover": {
         "cover_letter": "Prezada equipe de iFood,\n\nEscrevo para me candidatar à posição de Tech Lead Backend. Ao longo da minha trajetória venho trabalhando diretamente com aws, backend, mentoria, postgresql, python, exatamente o conjunto de competências que vocês descrevem na vaga.\n\nNo meu histórico recente atuei em entregas que exigiram aws, backend, mentoria, postgresql, python, sempre com foco em resultado mensurável e em colaboração próxima com produto e design. Gosto de assumir problemas de ponta a ponta: entender o contexto, propor a solução mais simples que resolve, e acompanhar o impacto depois de entregue.\n\nTenho interesse específico em iFood pelo tipo de problema descrito na vaga, e acredito que consigo contribuir desde as primeiras semanas. Ficaria feliz em detalhar qualquer um desses pontos em uma conversa.\n\nAtenciosamente,\n\n---\n_Carta montada pelo analisador local do JobPilot (modo offline). Configure um provedor de IA em Configurações → IA para uma carta gerada por LLM._",
-        "id": "5d231135-c15d-45e6-9f3f-dd71d9d6d00c"
+        "id": "26bc6b1b-25f6-4d58-9746-b97b5d883bd4"
       },
       "tailor": {
         "tailored_resume": "# Currículo direcionado — Tech Lead Backend @ iFood\n\n## Resumo profissional\nProfissional com experiência prática em aws, backend, mentoria, postgresql, python, terraform, buscando a posição de Tech Lead Backend.\n\n## Competências priorizadas para esta vaga\n- aws\n- backend\n- mentoria\n- postgresql\n- python\n- terraform\n\n## Lacunas a endereçar\n- go\n- lideranca\n\n## Currículo original\nLucas Oliveira — Engenheiro de Software Backend\nSão Paulo, SP · Remoto · lucas.demo@jobpilot.ai\n\nRESUMO\nEngenheiro backend com 6 anos de experiência construindo APIs e sistemas\ndistribuídos em Python. Foco em FastAPI, PostgreSQL e infraestrutura em AWS.\nExperiência liderando squads pequenos e mentorando pessoas desenvolvedoras.\n\nEXPERIÊNCIA\n\nTech Lead Backend — Nuvem Pagamentos (2023 - atual)\n- Reescrevi o serviço de liquidação em FastAPI, reduzindo a latência p95 de\n  820ms para 140ms.\n- Migrei o processamento assíncrono para Celery + Redis, absorvendo picos de\n  12x no Black Friday sem degradação.\n- Implementei observabilidade com métricas e tracing; MTTR caiu de 45 para 8 minutos.\n\nDesenvolvedor Backend Sênior — Loja Verde (2021 - 2023)\n- Construí a API de catálogo em Django REST atendendo 4 milhões de requisições/dia.\n- Otimizei consultas PostgreSQL com índices parciais, cortando 60% do custo de banco.\n- Introduzi testes com pytest, elevando a cobertura de 22% para 84%.\n\nDesenvolvedor Backend — Agência Kernel (2019 - 2021)\n- Entreguei integrações REST e GraphQL para clientes de e-commerce.\n- Containerizei o parque de aplicações com Docker, padronizando os deploys.\n\nFORMAÇÃO\nBacharelado em Ciência da Computação — Universidade Federal (2019)\n\nCOMPETÊNCIAS\nPython, FastAPI, Django, PostgreSQL, Redis, Celery, Docker, Kubernetes, AWS,\nTerraform, pytest, Git, CI/CD, REST, GraphQL, observabilidade, mentoria\n\nIDIOMAS\nPortuguês (nativo), Inglês (avançado)\n\n---\n_Reordenado pelo analisador local (modo offline). Configure um provedor de IA em Configurações → IA para uma reescrita completa por LLM._"
@@ -1195,7 +1068,7 @@
     "backend python com aws em startup": {
       "results": [
         {
-          "id": "a0a8b3e5-9cb4-4d4a-9a73-8da71e554d34",
+          "id": "6d34b88a-904f-46fd-b1f3-bb3ac11651b4",
           "title": "Estágio em Desenvolvimento Backend",
           "description": "Programa de estágio com trilha de backend em Python. Ideal para quem está em formação e quer aprender boas práticas de engenharia.",
           "company": "PicPay",
@@ -1205,27 +1078,7 @@
           "match": "Estágio em Desenvolvimento Backend PicPay São Paulo, SP Programa de estágio com trilha de backend em Python. Ideal para quem está em formação e quer aprender boas práticas de engenharia. Python Git SQ"
         },
         {
-          "id": "da45b3e2-bb0a-40af-b34a-65fda86bc42a",
-          "title": "Estágio em Desenvolvimento Backend",
-          "description": "Programa de estágio com trilha de backend em Python. Ideal para quem está em formação e quer aprender boas práticas de engenharia.",
-          "company": "PicPay",
-          "location": "São Paulo, SP",
-          "apply_url": "https://example.com/vagas/demo",
-          "score": 42.7,
-          "match": "Estágio em Desenvolvimento Backend PicPay São Paulo, SP Programa de estágio com trilha de backend em Python. Ideal para quem está em formação e quer aprender boas práticas de engenharia. Python Git SQ"
-        },
-        {
-          "id": "71f7b7ff-664d-4b0b-b1eb-4d82fab97910",
-          "title": "Estágio em Desenvolvimento Backend",
-          "description": "Programa de estágio com trilha de backend em Python. Ideal para quem está em formação e quer aprender boas práticas de engenharia.",
-          "company": "PicPay",
-          "location": "São Paulo, SP",
-          "apply_url": "https://example.com/vagas/demo",
-          "score": 38.6,
-          "match": "Estágio em Desenvolvimento Backend PicPay São Paulo, SP Programa de estágio com trilha de backend em Python. Ideal para quem está em formação e quer aprender boas práticas de engenharia. Python Git SQ"
-        },
-        {
-          "id": "06127be0-91f7-45f2-bfda-379d5b782e41",
+          "id": "32f44614-f386-4584-9e77-40849e597505",
           "title": "Tech Lead Backend",
           "description": "Liderança técnica de uma squad de logística. Esperamos experiência com sistemas distribuídos, observabilidade e mentoria. Stack Python/Go, PostgreSQL, Terraform e AWS.",
           "company": "iFood",
@@ -1235,17 +1088,7 @@
           "match": "Tech Lead Backend iFood Campinas, SP Liderança técnica de uma squad de logística. Esperamos experiência com sistemas distribuídos, observabilidade e mentoria. Stack Python/Go, PostgreSQL, Terraform e "
         },
         {
-          "id": "ea44f922-ce59-44ed-b657-716efaf6692c",
-          "title": "Tech Lead Backend",
-          "description": "Liderança técnica de uma squad de logística. Esperamos experiência com sistemas distribuídos, observabilidade e mentoria. Stack Python/Go, PostgreSQL, Terraform e AWS.",
-          "company": "iFood",
-          "location": "Campinas, SP",
-          "apply_url": "https://example.com/vagas/demo",
-          "score": 34.1,
-          "match": "Tech Lead Backend iFood Campinas, SP Liderança técnica de uma squad de logística. Esperamos experiência com sistemas distribuídos, observabilidade e mentoria. Stack Python/Go, PostgreSQL, Terraform e "
-        },
-        {
-          "id": "0c70e217-5806-46f6-bf2e-f3e4e0e36461",
+          "id": "a708ea92-dce6-4684-88dd-553cc977f1df",
           "title": "Engenheiro(a) de Software Backend Sênior",
           "description": "Procuramos pessoa engenheira backend para atuar no core bancário. Stack em Python e Kotlin, PostgreSQL, Kafka e AWS. Você vai desenhar serviços de alta disponibilidade, participar de on-call e mentorar o time.",
           "company": "Nubank",
@@ -1255,47 +1098,7 @@
           "match": "Engenheiro(a) de Software Backend Sênior Nubank São Paulo, SP Procuramos pessoa engenheira backend para atuar no core bancário. Stack em Python e Kotlin, PostgreSQL, Kafka e AWS. Você vai desenhar ser"
         },
         {
-          "id": "61a5c262-c976-4211-b045-5ecb368871ad",
-          "title": "Engenheiro(a) de Software Backend Sênior",
-          "description": "Procuramos pessoa engenheira backend para atuar no core bancário. Stack em Python e Kotlin, PostgreSQL, Kafka e AWS. Você vai desenhar serviços de alta disponibilidade, participar de on-call e mentorar o time.",
-          "company": "Nubank",
-          "location": "São Paulo, SP",
-          "apply_url": "https://example.com/vagas/demo",
-          "score": 33.2,
-          "match": "Engenheiro(a) de Software Backend Sênior Nubank São Paulo, SP Procuramos pessoa engenheira backend para atuar no core bancário. Stack em Python e Kotlin, PostgreSQL, Kafka e AWS. Você vai desenhar ser"
-        },
-        {
-          "id": "dc7aa757-4e97-4b43-b580-a786600c21d5",
-          "title": "Tech Lead Backend",
-          "description": "Liderança técnica de uma squad de logística. Esperamos experiência com sistemas distribuídos, observabilidade e mentoria. Stack Python/Go, PostgreSQL, Terraform e AWS.",
-          "company": "iFood",
-          "location": "Campinas, SP",
-          "apply_url": "https://example.com/vagas/demo",
-          "score": 30.1,
-          "match": "Tech Lead Backend iFood Campinas, SP Liderança técnica de uma squad de logística. Esperamos experiência com sistemas distribuídos, observabilidade e mentoria. Stack Python/Go, PostgreSQL, Terraform e "
-        },
-        {
-          "id": "8c13b0b3-91a2-4ca0-ad50-a233f5f6e129",
-          "title": "Engenheiro(a) de Software Backend Sênior",
-          "description": "Procuramos pessoa engenheira backend para atuar no core bancário. Stack em Python e Kotlin, PostgreSQL, Kafka e AWS. Você vai desenhar serviços de alta disponibilidade, participar de on-call e mentorar o time.",
-          "company": "Nubank",
-          "location": "São Paulo, SP",
-          "apply_url": "https://example.com/vagas/demo",
-          "score": 29.6,
-          "match": "Engenheiro(a) de Software Backend Sênior Nubank São Paulo, SP Procuramos pessoa engenheira backend para atuar no core bancário. Stack em Python e Kotlin, PostgreSQL, Kafka e AWS. Você vai desenhar ser"
-        },
-        {
-          "id": "9a5de15d-f013-4990-8d0c-5e676175bffe",
-          "title": "Backend Developer (Python)",
-          "description": "Desenvolvimento de APIs REST de alto tráfego. Python, Django, PostgreSQL e Redis. Ambiente remoto com times distribuídos na América Latina.",
-          "company": "Mercado Livre",
-          "location": "Remoto",
-          "apply_url": "https://example.com/vagas/demo",
-          "score": 29.0,
-          "match": "Backend Developer (Python) Mercado Livre Remoto Desenvolvimento de APIs REST de alto tráfego. Python, Django, PostgreSQL e Redis. Ambiente remoto com times distribuídos na América Latina. Python Djang"
-        },
-        {
-          "id": "812231c1-2cb8-463b-a363-45624622f898",
+          "id": "59048b49-1406-4c7d-b9ae-fbadc62c3954",
           "title": "Backend Developer (Python)",
           "description": "Desenvolvimento de APIs REST de alto tráfego. Python, Django, PostgreSQL e Redis. Ambiente remoto com times distribuídos na América Latina.",
           "company": "Mercado Livre",
@@ -1305,33 +1108,53 @@
           "match": "Backend Developer (Python) Mercado Livre Remoto Desenvolvimento de APIs REST de alto tráfego. Python, Django, PostgreSQL e Redis. Ambiente remoto com times distribuídos na América Latina. Python Djang"
         },
         {
-          "id": "eb4f0aeb-6b05-4c8a-9fdf-e0ac88f8903c",
-          "title": "Backend Developer (Python)",
-          "description": "Desenvolvimento de APIs REST de alto tráfego. Python, Django, PostgreSQL e Redis. Ambiente remoto com times distribuídos na América Latina.",
-          "company": "Mercado Livre",
-          "location": "Remoto",
+          "id": "c2286a72-60a2-4dac-93a1-d56d286bfde7",
+          "title": "Desenvolvedor(a) Python Pleno",
+          "description": "Time de pagamentos buscando pessoa desenvolvedora Python para evoluir APIs de conciliação. Trabalhamos com FastAPI, Celery, Redis e Docker, com deploy contínuo em Kubernetes.",
+          "company": "Stone",
+          "location": "Rio de Janeiro, RJ",
           "apply_url": "https://example.com/vagas/demo",
-          "score": 28.7,
-          "match": "Backend Developer (Python) Mercado Livre Remoto Desenvolvimento de APIs REST de alto tráfego. Python, Django, PostgreSQL e Redis. Ambiente remoto com times distribuídos na América Latina. Python Djang"
+          "score": 28.5,
+          "match": "Desenvolvedor(a) Python Pleno Stone Rio de Janeiro, RJ Time de pagamentos buscando pessoa desenvolvedora Python para evoluir APIs de conciliação. Trabalhamos com FastAPI, Celery, Redis e Docker, com d"
+        },
+        {
+          "id": "eb1b55ef-7156-4699-bbe4-f207efddb3b4",
+          "title": "Engenheiro(a) de Dados",
+          "description": "Construção de pipelines de dados com Airflow e Spark, modelagem analítica em PostgreSQL e entregas para times de produto.",
+          "company": "Loft",
+          "location": "São Paulo, SP",
+          "apply_url": "https://example.com/vagas/demo",
+          "score": 24.4,
+          "match": "Engenheiro(a) de Dados Loft São Paulo, SP Construção de pipelines de dados com Airflow e Spark, modelagem analítica em PostgreSQL e entregas para times de produto. Python Airflow Spark SQL ETL"
+        },
+        {
+          "id": "bc20478b-ece3-4728-aee7-90e27a8f926f",
+          "title": "Engenheiro(a) de Plataforma",
+          "description": "Time de plataforma responsável por Kubernetes, CI/CD e ferramentas internas. Buscamos alguém com forte base em Linux, Terraform e Go.",
+          "company": "QuintoAndar",
+          "location": "São Paulo, SP",
+          "apply_url": "https://example.com/vagas/demo",
+          "score": 22.6,
+          "match": "Engenheiro(a) de Plataforma QuintoAndar São Paulo, SP Time de plataforma responsável por Kubernetes, CI/CD e ferramentas internas. Buscamos alguém com forte base em Linux, Terraform e Go. Kubernetes T"
+        },
+        {
+          "id": "61ca7ea5-5268-405b-b0fc-9aaf6f29b288",
+          "title": "Pessoa Desenvolvedora Full Stack",
+          "description": "Frente de checkout: React e TypeScript no frontend, Python no backend. Cultura de testes automatizados e revisão de código.",
+          "company": "Hotmart",
+          "location": "Belo Horizonte, MG",
+          "apply_url": "https://example.com/vagas/demo",
+          "score": 21.9,
+          "match": "Pessoa Desenvolvedora Full Stack Hotmart Belo Horizonte, MG Frente de checkout: React e TypeScript no frontend, Python no backend. Cultura de testes automatizados e revisão de código. React TypeScript"
         }
       ],
       "query": "backend python com aws em startup",
-      "indexed_jobs": 24
+      "indexed_jobs": 8
     },
     "liderança técnica remoto sênior": {
       "results": [
         {
-          "id": "dc7aa757-4e97-4b43-b580-a786600c21d5",
-          "title": "Tech Lead Backend",
-          "description": "Liderança técnica de uma squad de logística. Esperamos experiência com sistemas distribuídos, observabilidade e mentoria. Stack Python/Go, PostgreSQL, Terraform e AWS.",
-          "company": "iFood",
-          "location": "Campinas, SP",
-          "apply_url": "https://example.com/vagas/demo",
-          "score": 21.1,
-          "match": "Tech Lead Backend iFood Campinas, SP Liderança técnica de uma squad de logística. Esperamos experiência com sistemas distribuídos, observabilidade e mentoria. Stack Python/Go, PostgreSQL, Terraform e "
-        },
-        {
-          "id": "06127be0-91f7-45f2-bfda-379d5b782e41",
+          "id": "32f44614-f386-4584-9e77-40849e597505",
           "title": "Tech Lead Backend",
           "description": "Liderança técnica de uma squad de logística. Esperamos experiência com sistemas distribuídos, observabilidade e mentoria. Stack Python/Go, PostgreSQL, Terraform e AWS.",
           "company": "iFood",
@@ -1341,27 +1164,7 @@
           "match": "Tech Lead Backend iFood Campinas, SP Liderança técnica de uma squad de logística. Esperamos experiência com sistemas distribuídos, observabilidade e mentoria. Stack Python/Go, PostgreSQL, Terraform e "
         },
         {
-          "id": "ea44f922-ce59-44ed-b657-716efaf6692c",
-          "title": "Tech Lead Backend",
-          "description": "Liderança técnica de uma squad de logística. Esperamos experiência com sistemas distribuídos, observabilidade e mentoria. Stack Python/Go, PostgreSQL, Terraform e AWS.",
-          "company": "iFood",
-          "location": "Campinas, SP",
-          "apply_url": "https://example.com/vagas/demo",
-          "score": 20.9,
-          "match": "Tech Lead Backend iFood Campinas, SP Liderança técnica de uma squad de logística. Esperamos experiência com sistemas distribuídos, observabilidade e mentoria. Stack Python/Go, PostgreSQL, Terraform e "
-        },
-        {
-          "id": "9a5de15d-f013-4990-8d0c-5e676175bffe",
-          "title": "Backend Developer (Python)",
-          "description": "Desenvolvimento de APIs REST de alto tráfego. Python, Django, PostgreSQL e Redis. Ambiente remoto com times distribuídos na América Latina.",
-          "company": "Mercado Livre",
-          "location": "Remoto",
-          "apply_url": "https://example.com/vagas/demo",
-          "score": 13.7,
-          "match": "Backend Developer (Python) Mercado Livre Remoto Desenvolvimento de APIs REST de alto tráfego. Python, Django, PostgreSQL e Redis. Ambiente remoto com times distribuídos na América Latina. Python Djang"
-        },
-        {
-          "id": "812231c1-2cb8-463b-a363-45624622f898",
+          "id": "59048b49-1406-4c7d-b9ae-fbadc62c3954",
           "title": "Backend Developer (Python)",
           "description": "Desenvolvimento de APIs REST de alto tráfego. Python, Django, PostgreSQL e Redis. Ambiente remoto com times distribuídos na América Latina.",
           "company": "Mercado Livre",
@@ -1371,17 +1174,7 @@
           "match": "Backend Developer (Python) Mercado Livre Remoto Desenvolvimento de APIs REST de alto tráfego. Python, Django, PostgreSQL e Redis. Ambiente remoto com times distribuídos na América Latina. Python Djang"
         },
         {
-          "id": "eb4f0aeb-6b05-4c8a-9fdf-e0ac88f8903c",
-          "title": "Backend Developer (Python)",
-          "description": "Desenvolvimento de APIs REST de alto tráfego. Python, Django, PostgreSQL e Redis. Ambiente remoto com times distribuídos na América Latina.",
-          "company": "Mercado Livre",
-          "location": "Remoto",
-          "apply_url": "https://example.com/vagas/demo",
-          "score": 13.6,
-          "match": "Backend Developer (Python) Mercado Livre Remoto Desenvolvimento de APIs REST de alto tráfego. Python, Django, PostgreSQL e Redis. Ambiente remoto com times distribuídos na América Latina. Python Djang"
-        },
-        {
-          "id": "8c13b0b3-91a2-4ca0-ad50-a233f5f6e129",
+          "id": "a708ea92-dce6-4684-88dd-553cc977f1df",
           "title": "Engenheiro(a) de Software Backend Sênior",
           "description": "Procuramos pessoa engenheira backend para atuar no core bancário. Stack em Python e Kotlin, PostgreSQL, Kafka e AWS. Você vai desenhar serviços de alta disponibilidade, participar de on-call e mentorar o time.",
           "company": "Nubank",
@@ -1391,37 +1184,27 @@
           "match": "Engenheiro(a) de Software Backend Sênior Nubank São Paulo, SP Procuramos pessoa engenheira backend para atuar no core bancário. Stack em Python e Kotlin, PostgreSQL, Kafka e AWS. Você vai desenhar ser"
         },
         {
-          "id": "61a5c262-c976-4211-b045-5ecb368871ad",
-          "title": "Engenheiro(a) de Software Backend Sênior",
-          "description": "Procuramos pessoa engenheira backend para atuar no core bancário. Stack em Python e Kotlin, PostgreSQL, Kafka e AWS. Você vai desenhar serviços de alta disponibilidade, participar de on-call e mentorar o time.",
-          "company": "Nubank",
-          "location": "São Paulo, SP",
+          "id": "c2286a72-60a2-4dac-93a1-d56d286bfde7",
+          "title": "Desenvolvedor(a) Python Pleno",
+          "description": "Time de pagamentos buscando pessoa desenvolvedora Python para evoluir APIs de conciliação. Trabalhamos com FastAPI, Celery, Redis e Docker, com deploy contínuo em Kubernetes.",
+          "company": "Stone",
+          "location": "Rio de Janeiro, RJ",
           "apply_url": "https://example.com/vagas/demo",
-          "score": 6.7,
-          "match": "Engenheiro(a) de Software Backend Sênior Nubank São Paulo, SP Procuramos pessoa engenheira backend para atuar no core bancário. Stack em Python e Kotlin, PostgreSQL, Kafka e AWS. Você vai desenhar ser"
+          "score": 0.0,
+          "match": "Desenvolvedor(a) Python Pleno Stone Rio de Janeiro, RJ Time de pagamentos buscando pessoa desenvolvedora Python para evoluir APIs de conciliação. Trabalhamos com FastAPI, Celery, Redis e Docker, com d"
         },
         {
-          "id": "0c70e217-5806-46f6-bf2e-f3e4e0e36461",
-          "title": "Engenheiro(a) de Software Backend Sênior",
-          "description": "Procuramos pessoa engenheira backend para atuar no core bancário. Stack em Python e Kotlin, PostgreSQL, Kafka e AWS. Você vai desenhar serviços de alta disponibilidade, participar de on-call e mentorar o time.",
-          "company": "Nubank",
-          "location": "São Paulo, SP",
-          "apply_url": "https://example.com/vagas/demo",
-          "score": 6.7,
-          "match": "Engenheiro(a) de Software Backend Sênior Nubank São Paulo, SP Procuramos pessoa engenheira backend para atuar no core bancário. Stack em Python e Kotlin, PostgreSQL, Kafka e AWS. Você vai desenhar ser"
-        },
-        {
-          "id": "71f7b7ff-664d-4b0b-b1eb-4d82fab97910",
-          "title": "Estágio em Desenvolvimento Backend",
-          "description": "Programa de estágio com trilha de backend em Python. Ideal para quem está em formação e quer aprender boas práticas de engenharia.",
-          "company": "PicPay",
+          "id": "eb1b55ef-7156-4699-bbe4-f207efddb3b4",
+          "title": "Engenheiro(a) de Dados",
+          "description": "Construção de pipelines de dados com Airflow e Spark, modelagem analítica em PostgreSQL e entregas para times de produto.",
+          "company": "Loft",
           "location": "São Paulo, SP",
           "apply_url": "https://example.com/vagas/demo",
           "score": 0.0,
-          "match": "Estágio em Desenvolvimento Backend PicPay São Paulo, SP Programa de estágio com trilha de backend em Python. Ideal para quem está em formação e quer aprender boas práticas de engenharia. Python Git SQ"
+          "match": "Engenheiro(a) de Dados Loft São Paulo, SP Construção de pipelines de dados com Airflow e Spark, modelagem analítica em PostgreSQL e entregas para times de produto. Python Airflow Spark SQL ETL"
         },
         {
-          "id": "56283940-d36f-4b41-9ffb-a61b2d666383",
+          "id": "61ca7ea5-5268-405b-b0fc-9aaf6f29b288",
           "title": "Pessoa Desenvolvedora Full Stack",
           "description": "Frente de checkout: React e TypeScript no frontend, Python no backend. Cultura de testes automatizados e revisão de código.",
           "company": "Hotmart",
@@ -1431,33 +1214,33 @@
           "match": "Pessoa Desenvolvedora Full Stack Hotmart Belo Horizonte, MG Frente de checkout: React e TypeScript no frontend, Python no backend. Cultura de testes automatizados e revisão de código. React TypeScript"
         },
         {
-          "id": "14bd330c-b62a-408b-8672-fd84cf18e9fd",
-          "title": "Desenvolvedor(a) Python Pleno",
-          "description": "Time de pagamentos buscando pessoa desenvolvedora Python para evoluir APIs de conciliação. Trabalhamos com FastAPI, Celery, Redis e Docker, com deploy contínuo em Kubernetes.",
-          "company": "Stone",
-          "location": "Rio de Janeiro, RJ",
+          "id": "bc20478b-ece3-4728-aee7-90e27a8f926f",
+          "title": "Engenheiro(a) de Plataforma",
+          "description": "Time de plataforma responsável por Kubernetes, CI/CD e ferramentas internas. Buscamos alguém com forte base em Linux, Terraform e Go.",
+          "company": "QuintoAndar",
+          "location": "São Paulo, SP",
           "apply_url": "https://example.com/vagas/demo",
           "score": 0.0,
-          "match": "Desenvolvedor(a) Python Pleno Stone Rio de Janeiro, RJ Time de pagamentos buscando pessoa desenvolvedora Python para evoluir APIs de conciliação. Trabalhamos com FastAPI, Celery, Redis e Docker, com d"
+          "match": "Engenheiro(a) de Plataforma QuintoAndar São Paulo, SP Time de plataforma responsável por Kubernetes, CI/CD e ferramentas internas. Buscamos alguém com forte base em Linux, Terraform e Go. Kubernetes T"
+        },
+        {
+          "id": "6d34b88a-904f-46fd-b1f3-bb3ac11651b4",
+          "title": "Estágio em Desenvolvimento Backend",
+          "description": "Programa de estágio com trilha de backend em Python. Ideal para quem está em formação e quer aprender boas práticas de engenharia.",
+          "company": "PicPay",
+          "location": "São Paulo, SP",
+          "apply_url": "https://example.com/vagas/demo",
+          "score": 0.0,
+          "match": "Estágio em Desenvolvimento Backend PicPay São Paulo, SP Programa de estágio com trilha de backend em Python. Ideal para quem está em formação e quer aprender boas práticas de engenharia. Python Git SQ"
         }
       ],
       "query": "liderança técnica remoto sênior",
-      "indexed_jobs": 24
+      "indexed_jobs": 8
     },
     "kubernetes terraform plataforma": {
       "results": [
         {
-          "id": "59408cea-b5af-4276-9f7a-e441c9685e5d",
-          "title": "Engenheiro(a) de Plataforma",
-          "description": "Time de plataforma responsável por Kubernetes, CI/CD e ferramentas internas. Buscamos alguém com forte base em Linux, Terraform e Go.",
-          "company": "QuintoAndar",
-          "location": "São Paulo, SP",
-          "apply_url": "https://example.com/vagas/demo",
-          "score": 44.3,
-          "match": "Engenheiro(a) de Plataforma QuintoAndar São Paulo, SP Time de plataforma responsável por Kubernetes, CI/CD e ferramentas internas. Buscamos alguém com forte base em Linux, Terraform e Go. Kubernetes T"
-        },
-        {
-          "id": "77a232f4-0066-4feb-9d2f-9ae354c4a187",
+          "id": "bc20478b-ece3-4728-aee7-90e27a8f926f",
           "title": "Engenheiro(a) de Plataforma",
           "description": "Time de plataforma responsável por Kubernetes, CI/CD e ferramentas internas. Buscamos alguém com forte base em Linux, Terraform e Go.",
           "company": "QuintoAndar",
@@ -1467,108 +1250,78 @@
           "match": "Engenheiro(a) de Plataforma QuintoAndar São Paulo, SP Time de plataforma responsável por Kubernetes, CI/CD e ferramentas internas. Buscamos alguém com forte base em Linux, Terraform e Go. Kubernetes T"
         },
         {
-          "id": "86c10893-79e8-47ae-bb2e-9a69faf4f3da",
-          "title": "Engenheiro(a) de Plataforma",
-          "description": "Time de plataforma responsável por Kubernetes, CI/CD e ferramentas internas. Buscamos alguém com forte base em Linux, Terraform e Go.",
-          "company": "QuintoAndar",
+          "id": "c2286a72-60a2-4dac-93a1-d56d286bfde7",
+          "title": "Desenvolvedor(a) Python Pleno",
+          "description": "Time de pagamentos buscando pessoa desenvolvedora Python para evoluir APIs de conciliação. Trabalhamos com FastAPI, Celery, Redis e Docker, com deploy contínuo em Kubernetes.",
+          "company": "Stone",
+          "location": "Rio de Janeiro, RJ",
+          "apply_url": "https://example.com/vagas/demo",
+          "score": 31.9,
+          "match": "Desenvolvedor(a) Python Pleno Stone Rio de Janeiro, RJ Time de pagamentos buscando pessoa desenvolvedora Python para evoluir APIs de conciliação. Trabalhamos com FastAPI, Celery, Redis e Docker, com d"
+        },
+        {
+          "id": "32f44614-f386-4584-9e77-40849e597505",
+          "title": "Tech Lead Backend",
+          "description": "Liderança técnica de uma squad de logística. Esperamos experiência com sistemas distribuídos, observabilidade e mentoria. Stack Python/Go, PostgreSQL, Terraform e AWS.",
+          "company": "iFood",
+          "location": "Campinas, SP",
+          "apply_url": "https://example.com/vagas/demo",
+          "score": 30.4,
+          "match": "Tech Lead Backend iFood Campinas, SP Liderança técnica de uma squad de logística. Esperamos experiência com sistemas distribuídos, observabilidade e mentoria. Stack Python/Go, PostgreSQL, Terraform e "
+        },
+        {
+          "id": "59048b49-1406-4c7d-b9ae-fbadc62c3954",
+          "title": "Backend Developer (Python)",
+          "description": "Desenvolvimento de APIs REST de alto tráfego. Python, Django, PostgreSQL e Redis. Ambiente remoto com times distribuídos na América Latina.",
+          "company": "Mercado Livre",
+          "location": "Remoto",
+          "apply_url": "https://example.com/vagas/demo",
+          "score": 22.1,
+          "match": "Backend Developer (Python) Mercado Livre Remoto Desenvolvimento de APIs REST de alto tráfego. Python, Django, PostgreSQL e Redis. Ambiente remoto com times distribuídos na América Latina. Python Djang"
+        },
+        {
+          "id": "eb1b55ef-7156-4699-bbe4-f207efddb3b4",
+          "title": "Engenheiro(a) de Dados",
+          "description": "Construção de pipelines de dados com Airflow e Spark, modelagem analítica em PostgreSQL e entregas para times de produto.",
+          "company": "Loft",
           "location": "São Paulo, SP",
           "apply_url": "https://example.com/vagas/demo",
-          "score": 43.9,
-          "match": "Engenheiro(a) de Plataforma QuintoAndar São Paulo, SP Time de plataforma responsável por Kubernetes, CI/CD e ferramentas internas. Buscamos alguém com forte base em Linux, Terraform e Go. Kubernetes T"
+          "score": 15.9,
+          "match": "Engenheiro(a) de Dados Loft São Paulo, SP Construção de pipelines de dados com Airflow e Spark, modelagem analítica em PostgreSQL e entregas para times de produto. Python Airflow Spark SQL ETL"
         },
         {
-          "id": "14bd330c-b62a-408b-8672-fd84cf18e9fd",
-          "title": "Desenvolvedor(a) Python Pleno",
-          "description": "Time de pagamentos buscando pessoa desenvolvedora Python para evoluir APIs de conciliação. Trabalhamos com FastAPI, Celery, Redis e Docker, com deploy contínuo em Kubernetes.",
-          "company": "Stone",
-          "location": "Rio de Janeiro, RJ",
+          "id": "6d34b88a-904f-46fd-b1f3-bb3ac11651b4",
+          "title": "Estágio em Desenvolvimento Backend",
+          "description": "Programa de estágio com trilha de backend em Python. Ideal para quem está em formação e quer aprender boas práticas de engenharia.",
+          "company": "PicPay",
+          "location": "São Paulo, SP",
           "apply_url": "https://example.com/vagas/demo",
-          "score": 31.9,
-          "match": "Desenvolvedor(a) Python Pleno Stone Rio de Janeiro, RJ Time de pagamentos buscando pessoa desenvolvedora Python para evoluir APIs de conciliação. Trabalhamos com FastAPI, Celery, Redis e Docker, com d"
+          "score": 15.8,
+          "match": "Estágio em Desenvolvimento Backend PicPay São Paulo, SP Programa de estágio com trilha de backend em Python. Ideal para quem está em formação e quer aprender boas práticas de engenharia. Python Git SQ"
         },
         {
-          "id": "671d5960-5728-4367-8c38-68d347088fac",
-          "title": "Desenvolvedor(a) Python Pleno",
-          "description": "Time de pagamentos buscando pessoa desenvolvedora Python para evoluir APIs de conciliação. Trabalhamos com FastAPI, Celery, Redis e Docker, com deploy contínuo em Kubernetes.",
-          "company": "Stone",
-          "location": "Rio de Janeiro, RJ",
+          "id": "61ca7ea5-5268-405b-b0fc-9aaf6f29b288",
+          "title": "Pessoa Desenvolvedora Full Stack",
+          "description": "Frente de checkout: React e TypeScript no frontend, Python no backend. Cultura de testes automatizados e revisão de código.",
+          "company": "Hotmart",
+          "location": "Belo Horizonte, MG",
           "apply_url": "https://example.com/vagas/demo",
-          "score": 31.9,
-          "match": "Desenvolvedor(a) Python Pleno Stone Rio de Janeiro, RJ Time de pagamentos buscando pessoa desenvolvedora Python para evoluir APIs de conciliação. Trabalhamos com FastAPI, Celery, Redis e Docker, com d"
+          "score": 15.5,
+          "match": "Pessoa Desenvolvedora Full Stack Hotmart Belo Horizonte, MG Frente de checkout: React e TypeScript no frontend, Python no backend. Cultura de testes automatizados e revisão de código. React TypeScript"
         },
         {
-          "id": "dc7aa757-4e97-4b43-b580-a786600c21d5",
-          "title": "Tech Lead Backend",
-          "description": "Liderança técnica de uma squad de logística. Esperamos experiência com sistemas distribuídos, observabilidade e mentoria. Stack Python/Go, PostgreSQL, Terraform e AWS.",
-          "company": "iFood",
-          "location": "Campinas, SP",
+          "id": "a708ea92-dce6-4684-88dd-553cc977f1df",
+          "title": "Engenheiro(a) de Software Backend Sênior",
+          "description": "Procuramos pessoa engenheira backend para atuar no core bancário. Stack em Python e Kotlin, PostgreSQL, Kafka e AWS. Você vai desenhar serviços de alta disponibilidade, participar de on-call e mentorar o time.",
+          "company": "Nubank",
+          "location": "São Paulo, SP",
           "apply_url": "https://example.com/vagas/demo",
-          "score": 30.7,
-          "match": "Tech Lead Backend iFood Campinas, SP Liderança técnica de uma squad de logística. Esperamos experiência com sistemas distribuídos, observabilidade e mentoria. Stack Python/Go, PostgreSQL, Terraform e "
-        },
-        {
-          "id": "06127be0-91f7-45f2-bfda-379d5b782e41",
-          "title": "Tech Lead Backend",
-          "description": "Liderança técnica de uma squad de logística. Esperamos experiência com sistemas distribuídos, observabilidade e mentoria. Stack Python/Go, PostgreSQL, Terraform e AWS.",
-          "company": "iFood",
-          "location": "Campinas, SP",
-          "apply_url": "https://example.com/vagas/demo",
-          "score": 30.4,
-          "match": "Tech Lead Backend iFood Campinas, SP Liderança técnica de uma squad de logística. Esperamos experiência com sistemas distribuídos, observabilidade e mentoria. Stack Python/Go, PostgreSQL, Terraform e "
-        },
-        {
-          "id": "ea44f922-ce59-44ed-b657-716efaf6692c",
-          "title": "Tech Lead Backend",
-          "description": "Liderança técnica de uma squad de logística. Esperamos experiência com sistemas distribuídos, observabilidade e mentoria. Stack Python/Go, PostgreSQL, Terraform e AWS.",
-          "company": "iFood",
-          "location": "Campinas, SP",
-          "apply_url": "https://example.com/vagas/demo",
-          "score": 30.4,
-          "match": "Tech Lead Backend iFood Campinas, SP Liderança técnica de uma squad de logística. Esperamos experiência com sistemas distribuídos, observabilidade e mentoria. Stack Python/Go, PostgreSQL, Terraform e "
-        },
-        {
-          "id": "cc28d575-6db5-4c08-a591-bef5e4ed6380",
-          "title": "Desenvolvedor(a) Python Pleno",
-          "description": "Time de pagamentos buscando pessoa desenvolvedora Python para evoluir APIs de conciliação. Trabalhamos com FastAPI, Celery, Redis e Docker, com deploy contínuo em Kubernetes.",
-          "company": "Stone",
-          "location": "Rio de Janeiro, RJ",
-          "apply_url": "https://example.com/vagas/demo",
-          "score": 26.2,
-          "match": "Desenvolvedor(a) Python Pleno Stone Rio de Janeiro, RJ Time de pagamentos buscando pessoa desenvolvedora Python para evoluir APIs de conciliação. Trabalhamos com FastAPI, Celery, Redis e Docker, com d"
-        },
-        {
-          "id": "9a5de15d-f013-4990-8d0c-5e676175bffe",
-          "title": "Backend Developer (Python)",
-          "description": "Desenvolvimento de APIs REST de alto tráfego. Python, Django, PostgreSQL e Redis. Ambiente remoto com times distribuídos na América Latina.",
-          "company": "Mercado Livre",
-          "location": "Remoto",
-          "apply_url": "https://example.com/vagas/demo",
-          "score": 22.3,
-          "match": "Backend Developer (Python) Mercado Livre Remoto Desenvolvimento de APIs REST de alto tráfego. Python, Django, PostgreSQL e Redis. Ambiente remoto com times distribuídos na América Latina. Python Djang"
-        },
-        {
-          "id": "812231c1-2cb8-463b-a363-45624622f898",
-          "title": "Backend Developer (Python)",
-          "description": "Desenvolvimento de APIs REST de alto tráfego. Python, Django, PostgreSQL e Redis. Ambiente remoto com times distribuídos na América Latina.",
-          "company": "Mercado Livre",
-          "location": "Remoto",
-          "apply_url": "https://example.com/vagas/demo",
-          "score": 22.1,
-          "match": "Backend Developer (Python) Mercado Livre Remoto Desenvolvimento de APIs REST de alto tráfego. Python, Django, PostgreSQL e Redis. Ambiente remoto com times distribuídos na América Latina. Python Djang"
-        },
-        {
-          "id": "eb4f0aeb-6b05-4c8a-9fdf-e0ac88f8903c",
-          "title": "Backend Developer (Python)",
-          "description": "Desenvolvimento de APIs REST de alto tráfego. Python, Django, PostgreSQL e Redis. Ambiente remoto com times distribuídos na América Latina.",
-          "company": "Mercado Livre",
-          "location": "Remoto",
-          "apply_url": "https://example.com/vagas/demo",
-          "score": 22.1,
-          "match": "Backend Developer (Python) Mercado Livre Remoto Desenvolvimento de APIs REST de alto tráfego. Python, Django, PostgreSQL e Redis. Ambiente remoto com times distribuídos na América Latina. Python Djang"
+          "score": 13.1,
+          "match": "Engenheiro(a) de Software Backend Sênior Nubank São Paulo, SP Procuramos pessoa engenheira backend para atuar no core bancário. Stack em Python e Kotlin, PostgreSQL, Kafka e AWS. Você vai desenhar ser"
         }
       ],
       "query": "kubernetes terraform plataforma",
-      "indexed_jobs": 24
+      "indexed_jobs": 8
     }
   }
 }
