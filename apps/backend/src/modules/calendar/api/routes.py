@@ -12,6 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from core.database import get_db
 from core.exceptions import NotFoundError, ValidationError
 from core.models import CalendarEventModel
+from core.validators import validate_uuid
 from modules.auth.api.dependencies import get_current_user
 from modules.auth.domain.entities import User
 
@@ -58,7 +59,7 @@ def _event_to_dict(e: CalendarEventModel) -> dict:
 
 
 async def _get_owned_event(db: AsyncSession, event_id: str, user: User) -> CalendarEventModel:
-    event = await db.get(CalendarEventModel, event_id)
+    event = await db.get(CalendarEventModel, validate_uuid(event_id, "event_id"))
     if not event or str(event.user_id) != str(user.id):
         raise NotFoundError("Event not found")
     return event

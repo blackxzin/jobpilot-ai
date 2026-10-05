@@ -9,6 +9,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.database import get_db
 from core.exceptions import NotFoundError, ValidationError
+from core.validators import validate_uuid
 from modules.applications.application.use_cases import (
     CreateApplicationDTO,
     CreateApplicationUseCase,
@@ -110,6 +111,7 @@ async def update_status(
             f"Invalid status '{body.status}'. Allowed: {', '.join(ApplicationStatus.all_values())}"
         ) from e
 
+    app_id = validate_uuid(app_id, "app_id")
     repository = SQLAlchemyApplicationRepository(db)
     existing = await repository.get_by_id(app_id)
     if existing is None:

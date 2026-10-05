@@ -7,13 +7,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.database import get_db
 from core.exceptions import NotFoundError
-from modules.ai.api.routes import _get_provider, _job_to_prompt_dict, _load_job
+from core.validators import validate_uuid
+from modules.ai.api.routes import _get_provider, _job_to_prompt_dict, _load_job, _load_owned_resume
 from modules.ai.application.llm_service import LLMService
 from modules.auth.api.dependencies import ensure_owner, get_current_user
 from modules.auth.domain.entities import User
 from modules.cover_letters.application.use_cases import GenerateCoverLetterUseCase
 from modules.cover_letters.infrastructure.repositories import CoverLetterRepository
-from modules.resume.infrastructure.repositories import ResumeRepository
 
 router = APIRouter(prefix="/cover-letters", tags=["cover-letters"])
 
@@ -31,7 +31,7 @@ class UpdateRequest(BaseModel):
 
 
 async def _load_owned_cover_letter(db: AsyncSession, cover_letter_id: str, user: User):
-    model = await CoverLetterRepository(db).get_by_id(cover_letter_id)
+    model = await CoverLetterRepository(db).get_by_id(validate_uuid(cover_letter_id, "cover_letter_id"))
     if not model:
         raise NotFoundError("Cover letter not found")
     ensure_owner(model.user_id, user, "Cover letter")
@@ -44,14 +44,8 @@ async def generate(
     user: User = Depends(get_current_user),
     db: AsyncSession = Depends(get_db),
 ):
-    resume = await ResumeRepository(db).get_by_id(body.resume_id)
-    if not resume:
-        raise NotFoundError("Resume not found")
-    ensure_owner(resume.user_id, user, "Resume")
-
+    resume = await _load_owned_resume(db, body.resume_id, user)
     job = await _load_job(db, body.job_id)
-    if not job:
-        raise NotFoundError("Job not found")
 
     llm_service = LLMService(await _get_provider(str(user.id), db))
     use_case = GenerateCoverLetterUseCase(llm_service, CoverLetterRepository(db))
