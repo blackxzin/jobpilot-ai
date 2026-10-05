@@ -46,6 +46,11 @@ async def get_redis() -> aioredis.Redis:
             settings.REDIS_URL,
             decode_responses=True,
             max_connections=20,
+            # Every caller degrades gracefully without Redis, but only once the
+            # call fails. With no timeout an unreachable host stalls login, the
+            # rate limiter and /health/ready for the OS TCP timeout instead.
+            socket_connect_timeout=2,
+            socket_timeout=2,
         )
         _client_loop = loop
 

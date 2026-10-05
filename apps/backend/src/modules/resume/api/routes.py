@@ -1,6 +1,8 @@
 """Resume API routes — upload, list, get."""
 from __future__ import annotations
 
+import asyncio
+
 from fastapi import APIRouter, Depends, File, Form, UploadFile
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -69,8 +71,9 @@ async def upload_resume(
     )
 
     # Best-effort: the resume is saved either way, and the score is filled in
-    # asynchronously. A broker that is down must not fail the upload.
-    _queue_ats_scoring(str(resume.id))
+    # asynchronously. A broker that is down must not fail the upload. Publishing
+    # is blocking I/O, so it runs off the event loop.
+    await asyncio.to_thread(_queue_ats_scoring, str(resume.id))
     return _r_to_dict(resume)
 
 

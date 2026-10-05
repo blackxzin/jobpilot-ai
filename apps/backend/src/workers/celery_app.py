@@ -45,4 +45,11 @@ celery_app.conf.update(
     worker_max_tasks_per_child=200,
     task_acks_late=True,
     worker_prefetch_multiplier=1,
+    # Nothing reads task results. Storing them made every `.delay()` connect to
+    # the result backend too, and with Redis down that retried for ~70 s
+    # before failing — freezing the upload request that dispatched it.
+    task_ignore_result=True,
+    # Fail fast when the broker is unreachable; dispatch is best-effort.
+    task_publish_retry_policy={"max_retries": 2, "interval_start": 0, "interval_step": 0.2, "interval_max": 0.5},
+    broker_connection_timeout=2,
 )
