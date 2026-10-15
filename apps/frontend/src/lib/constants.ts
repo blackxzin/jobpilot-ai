@@ -39,6 +39,7 @@ export const JOB_SOURCES: JobSource[] = [
   { id: "remoteok", name: "RemoteOK", description: "Vagas remotas no mundo todo" },
   { id: "jobicy", name: "Jobicy", description: "Vagas remotas de tecnologia" },
   { id: "linkedin", name: "LinkedIn", description: "Vagas públicas do LinkedIn" },
+  { id: "gupy", name: "Gupy", description: "Vagas do portal Gupy" },
 ];
 
 export const QUICK_FILTERS = [
