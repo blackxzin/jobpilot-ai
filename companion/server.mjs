@@ -1,6 +1,6 @@
 import http from 'node:http';
 import { chromium } from 'playwright';
-import { isTrustedVacancyUrl, validateRequest, challengeDetected, planFields } from './workflow.mjs';
+import { isTrustedVacancyUrl, validateRequest, challengeDetected, planFields, vacancyPlatform } from './workflow.mjs';
 
 const PORT = Number(process.env.JOBPILOT_COMPANION_PORT || 8765);
 const ALLOWED_ORIGINS = new Set([
@@ -29,7 +29,8 @@ async function visible(locator) {
 async function runApplication(payload) {
   const ctx = await getContext();
   const page = await ctx.newPage();
-  const result = { state: 'needs_review', reason: '', url: payload.job.url, fields_filled: [] };
+  const platform = vacancyPlatform(payload.job.url);
+  const result = { state: 'needs_review', platform, reason: '', url: payload.job.url, fields_filled: [] };
   try {
     await page.goto(payload.job.url, { waitUntil: 'domcontentloaded', timeout: 30000 });
     await sleep(1200);
@@ -37,28 +38,30 @@ async function runApplication(payload) {
       result.reason = 'Verificação de acesso: resolva no navegador e execute novamente.';
       return result;
     }
-    let host = new URL(page.url()).hostname;
-    if (!host.endsWith('.gupy.io') && host !== 'gupy.io') {
-      result.reason = 'O site de candidatura não é Gupy. Continue manualmente nesta página.';
+    const currentPlatform = vacancyPlatform(page.url());
+    if (currentPlatform !== platform) {
+      result.reason = `A página redirecionou para fora de ${platform === 'linkedin' ? 'LinkedIn' : 'Gupy'}. Continue manualmente nesta página.`;
       result.url = page.url();
       return result;
     }
 
     // Existing login sessions are kept in the local persistent browser profile.
     // No passwords, MFA codes or cookies leave the computer.
-    if (/\/login|\/signin|\/cadastro|\/register/.test(page.url().toLowerCase())) {
-      result.reason = 'Faça login/cadastro na Gupy no navegador e tente novamente.';
+    if (/\/login|\/signin|\/checkpoint|\/authwall|\/cadastro|\/register/.test(page.url().toLowerCase())) {
+      result.reason = `Faça login${platform === 'gupy' ? '/cadastro' : ''} no ${platform === 'linkedin' ? 'LinkedIn' : 'Gupy'} no navegador e tente novamente.`;
       result.url = page.url();
       return result;
     }
 
-    const start = page.getByRole('button', { name: /candidat(?:ar|e-se)|inscrever|aplicar/i }).first();
+    const start = page.getByRole('button', { name: platform === 'linkedin'
+      ? /easy apply|candidatura simplificada|candidatura fácil/i
+      : /candidat(?:ar|e-se)|inscrever|aplicar/i }).first();
     if (await start.count() && await start.isVisible()) {
       await start.click();
       await sleep(950);
     }
 
-    const fields = planFields(payload.profile);
+    const fields = planFields(payload.profile, payload.resume_text || '', payload.matched_keywords || []);
     // Fill only labelled, unambiguous inputs. Never guess sensitive details.
     for (const item of fields) {
       const controls = page.getByLabel(item.label, { exact: false });
@@ -80,13 +83,13 @@ async function runApplication(payload) {
       result.reason = 'CAPTCHA ou verificação de segurança. Conclua manualmente.';
       return result;
     }
-    if (/\/login|\/signin/.test(page.url().toLowerCase())) {
-      result.reason = 'Sessão da Gupy não autenticada. Faça login manualmente.';
+    if (/\/login|\/signin|\/checkpoint|\/authwall/.test(page.url().toLowerCase())) {
+      result.reason = `Sessão do ${platform === 'linkedin' ? 'LinkedIn' : 'Gupy'} não autenticada. Faça login manualmente.`;
       return result;
     }
     // Form questions vary by employer. We do not click the final submit control
     // unless an explicit supported form adapter verifies every required response.
-    result.reason = 'Campos conhecidos preenchidos. Revise respostas, anexos e envie na Gupy. Envio não confirmado.';
+    result.reason = `Campos conhecidos preenchidos. Revise respostas e anexos e conclua no ${platform === 'linkedin' ? 'LinkedIn' : 'Gupy'}. Envio não confirmado.`;
     return result;
   } catch (err) {
     result.state = 'failed';
@@ -110,6 +113,7 @@ const server = http.createServer(async (req, res) => {
   if (req.method === 'GET' && req.url === '/health') return reply(200, { ready: true, busy: running });
   if (req.method !== 'POST' || req.url !== '/apply') return reply(404, { error: 'Not found' });
   if (running) return reply(409, { error: 'Já existe uma candidatura aberta.' });
+  if (req.method === 'POST' && req.url === '/apply') running = true;
   let raw = '';
   try {
     for await (const chunk of req) {
@@ -117,7 +121,6 @@ const server = http.createServer(async (req, res) => {
       if (raw.length > 80000) return reply(413, { error: 'Payload too large' });
     }
     const payload = validateRequest(JSON.parse(raw));
-    running = true;
     return reply(200, await runApplication(payload));
   } catch (err) {
     return reply(400, { error: String(err.message || err).slice(0, 280) });

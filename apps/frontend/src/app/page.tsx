@@ -282,21 +282,27 @@ export default function Home() {
     // only recorded when the external platform independently confirms it.
     setAssistedBusy(true);
     try {
+      let matchedKeywords: string[] = [];
       if (vacancy.description.length >= 30) {
         const prep = await guard(() => client.post<{
           match_score: number; keywords_supported_by_resume: string[];
           missing_skills_not_to_claim: string[]; cover_letter_draft: string;
         }>("/ai/prepare-external", { resume_id: resumes[0].id, job: vacancy }));
         if (prep) {
+          matchedKeywords = prep.keywords_supported_by_resume;
           toast.success("Compatibilidade: " + prep.match_score +
             "%. Palavras-chave do seu currículo: " +
             (prep.keywords_supported_by_resume.join(", ") || "não identificadas") +
             ". Lacunas: " + (prep.missing_skills_not_to_claim.join(", ") || "nenhuma"));
         }
       }
+      const resumeContext = await guard(() => client.get<{ content_text: string }>(
+        `/resumes/${encodeURIComponent(resumes[0].id)}/application-context`,
+      ));
       const response = await fetch("http://127.0.0.1:8765/apply", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ job: vacancy, profile, consent: true }),
+        body: JSON.stringify({ job: vacancy, profile, consent: true,
+          resume_text: resumeContext?.content_text || "", matched_keywords: matchedKeywords }),
       });
       const outcome = await response.json() as { state?: string; reason?: string; error?: string };
       if (!response.ok) throw new Error(outcome.error || "Agente local indisponível.");

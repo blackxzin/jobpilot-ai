@@ -238,14 +238,14 @@ export function JobsView({
         )}
 
         <div className="surface-inset mb-4 space-y-2 p-3">
-          <p className="text-xs font-semibold">Dados para preenchimento assistido na Gupy</p>
+          <p className="text-xs font-semibold">Dados para preenchimento assistido</p>
           <div className="grid gap-2 sm:grid-cols-2">
             {([{ key: "name", label: "Nome completo" }, { key: "email", label: "E-mail" }, { key: "phone", label: "Celular" }, { key: "linkedin", label: "LinkedIn" }] as const).map(field => (
               <input key={field.key} className="field" aria-label={field.label} placeholder={field.label}
                 value={candidateProfile[field.key]} onChange={event => changeProfile(field.key, event.target.value)} />
             ))}
           </div>
-          <p className="text-xs text-faint">Guardados somente neste navegador. Confira seus dados antes de iniciar.</p>
+          <p className="text-xs text-faint">Guardados somente neste navegador. O currículo salvo completa dados e sugere respostas com palavras-chave comprovadas nele. Confira antes de enviar.</p>
         </div>
 
         <div className="mb-4 flex flex-wrap gap-1.5">

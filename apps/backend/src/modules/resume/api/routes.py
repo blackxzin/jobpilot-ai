@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import asyncio
 
-from fastapi import APIRouter, Depends, File, Form, UploadFile
+from fastapi import APIRouter, Depends, File, Form, Response, UploadFile
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.database import get_db
@@ -106,6 +106,21 @@ async def get_resume(
     resume = await use_case.execute(validate_uuid(resume_id, "resume_id"))
     ensure_owner(resume.user_id, user, "Resume")
     return _r_to_dict(resume)
+
+
+@router.get("/{resume_id}/application-context")
+async def get_resume_application_context(
+    resume_id: str,
+    response: Response,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Return resume text only when the owner starts assisted application."""
+    use_case = GetResumeUseCase(ResumeRepository(db))
+    resume = await use_case.execute(validate_uuid(resume_id, "resume_id"))
+    ensure_owner(resume.user_id, user, "Resume")
+    response.headers["Cache-Control"] = "no-store"
+    return {"content_text": (resume.content_text or "")[:12000]}
 
 
 PREVIEW_CHARS = 200
