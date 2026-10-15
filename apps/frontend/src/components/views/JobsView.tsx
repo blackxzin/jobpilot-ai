@@ -138,7 +138,7 @@ export function JobsView({
   onDraftChange: (draft: NewJobDraft) => void;
   onCreateJob: () => void;
   creating: boolean;
-  onAssist: (job: Job | ExternalJob) => void;
+  onAssist: (job: Job | ExternalJob, profile: CandidateProfile) => void;
   assistedBusy: boolean;
 }) {
   const [showForm, setShowForm] = useState(false);
