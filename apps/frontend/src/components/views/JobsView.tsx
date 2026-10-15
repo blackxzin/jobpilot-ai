@@ -11,7 +11,7 @@ import {
   X,
   WandSparkles,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Badge, Button, Card, EmptyState, SectionHeader, Skeleton } from "@/components/ui";
 import { JOB_SOURCES, QUICK_FILTERS } from "@/lib/constants";
 import { formatSalaryRange } from "@/lib/format";
@@ -52,7 +52,7 @@ function normalize(job: Job | ExternalJob) {
   };
 }
 
-function JobCard({ job, onAssist, assistedBusy }: { job: Job | ExternalJob; onAssist: (job: Job | ExternalJob) => void; assistedBusy: boolean }) {
+export interface CandidateProfile { name: string; email: string; phone: string; linkedin: string; }\n\nfunction JobCard({ job, onAssist, assistedBusy, profile }: { job: Job | ExternalJob; onAssist: (job: Job | ExternalJob, profile: CandidateProfile) => void; assistedBusy: boolean; profile: CandidateProfile }) {
   const item = normalize(job);
 
   return (
@@ -82,7 +82,7 @@ function JobCard({ job, onAssist, assistedBusy }: { job: Job | ExternalJob; onAs
         </div>
 
         {item.url && (
-          <button type="button" onClick={() => onAssist(job)} disabled={assistedBusy}
+          <button type="button" onClick={() => onAssist(job, profile)} disabled={assistedBusy}
             className="flex shrink-0 items-center gap-1 rounded-lg bg-accent-soft px-3 py-1.5 text-xs font-medium text-accent disabled:opacity-50">
             <WandSparkles size={12} /> Candidatura assistida
           </button>
@@ -139,7 +139,7 @@ export function JobsView({
   onAssist: (job: Job | ExternalJob) => void;
   assistedBusy: boolean;
 }) {
-  const [showForm, setShowForm] = useState(false);
+  const [showForm, setShowForm] = useState(false);\n  const [candidateProfile, setCandidateProfile] = useState<CandidateProfile>({ name: "", email: "", phone: "", linkedin: "" });\n  useEffect(() => {\n    try { const saved = JSON.parse(localStorage.getItem("jobpilot-candidate-profile") || "{}");\n      setCandidateProfile({ name: saved.name || "", email: saved.email || "", phone: saved.phone || "", linkedin: saved.linkedin || "" });\n    } catch { /* Invalid saved profile; show blank inputs. */ }\n  }, []);\n  const changeProfile = (key: keyof CandidateProfile, value: string) => {\n    const updated = { ...candidateProfile, [key]: value };\n    setCandidateProfile(updated);\n    localStorage.setItem("jobpilot-candidate-profile", JSON.stringify(updated));\n  };
   const activeSource = JOB_SOURCES.find((item) => item.id === source);
 
   return (
@@ -224,7 +224,7 @@ export function JobsView({
           </div>
         )}
 
-        <div className="mb-4 flex flex-wrap gap-1.5">
+        <div className="surface-inset mb-4 space-y-2 p-3">\n          <p className="text-xs font-semibold">Dados para preenchimento assistido na Gupy</p>\n          <div className="grid gap-2 sm:grid-cols-2">\n            {([{ key: "name", label: "Nome completo" }, { key: "email", label: "E-mail" }, { key: "phone", label: "Celular" }, { key: "linkedin", label: "LinkedIn" }] as const).map(field => (\n              <input key={field.key} className="field" aria-label={field.label} placeholder={field.label}\n                value={candidateProfile[field.key]} onChange={event => changeProfile(field.key, event.target.value)} />\n            ))}\n          </div>\n          <p className="text-xs text-faint">Guardados somente neste navegador. Confira seus dados antes de iniciar.</p>\n        </div>\n\n        <div className="mb-4 flex flex-wrap gap-1.5">
           {JOB_SOURCES.map((item) => (
             <button
               key={item.id}
@@ -297,7 +297,7 @@ export function JobsView({
         <div className="space-y-3 stagger">
           <p className="text-xs text-faint">{results.length} vagas encontradas</p>
           {results.map((job, index) => (
-            <JobCard key={(job as ExternalJob).url || (job as Job).id || index} job={job} onAssist={onAssist} assistedBusy={assistedBusy} />
+            <JobCard key={(job as ExternalJob).url || (job as Job).id || index} job={job} onAssist={onAssist} assistedBusy={assistedBusy} profile={candidateProfile} />
           ))}
         </div>
       )}
