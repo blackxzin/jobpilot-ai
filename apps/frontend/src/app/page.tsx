@@ -11,7 +11,7 @@ import { ApplicationsView } from "@/components/views/ApplicationsView";
 import { CalendarView, EMPTY_EVENT_DRAFT, type EventDraft } from "@/components/views/CalendarView";
 import { ChatView, type ChatMessage } from "@/components/views/ChatView";
 import { DashboardView } from "@/components/views/DashboardView";
-import { EMPTY_JOB_DRAFT, JobsView, type NewJobDraft } from "@/components/views/JobsView";
+import { EMPTY_JOB_DRAFT, JobsView, type NewJobDraft, type CandidateProfile } from "@/components/views/JobsView";
 import { ResumesView } from "@/components/views/ResumesView";
 import { SemanticView } from "@/components/views/SemanticView";
 import { SettingsView } from "@/components/views/SettingsView";
@@ -263,7 +263,7 @@ export default function Home() {
     setSearching(false);
   }
 
-  async function assistApplication(job: Job | ExternalJob) {
+  async function assistApplication(job: Job | ExternalJob, profile: CandidateProfile) {
     const candidate = job as ExternalJob;
     const vacancy = {
       title: candidate.position || candidate.title || candidate.name || "",
@@ -296,7 +296,7 @@ export default function Home() {
       }
       const response = await fetch("http://127.0.0.1:8765/apply", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ job: vacancy, profile: {}, consent: true }),
+        body: JSON.stringify({ job: vacancy, profile, consent: true }),
       });
       const outcome = await response.json() as { state?: string; reason?: string; error?: string };
       if (!response.ok) throw new Error(outcome.error || "Agente local indisponível.");
