@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
@@ -137,6 +137,91 @@ def _job_to_prompt_dict(job: JobModel) -> dict:
         "description": job.description or "",
         "requirements": requirements,
         "skills": skills,
+    }
+
+
+
+# ── External vacancy assistance ───────────────────────────────────────────────
+
+class ExternalVacancy(BaseModel):
+    title: str = Field(min_length=2, max_length=255)
+    company: str = Field(default="", max_length=255)
+    description: str = Field(default="", max_length=12000)
+    url: str = Field(default="", max_length=2000)
+
+
+class ExternalMatchRequest(BaseModel):
+    resume_id: str
+    jobs: list[ExternalVacancy] = Field(min_length=1, max_length=40)
+
+
+class ExternalPrepareRequest(BaseModel):
+    resume_id: str
+    job: ExternalVacancy
+
+
+@router.post("/match-external")
+async def match_external(
+    body: ExternalMatchRequest,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Rank public job-board results using only the user's own resume.
+
+    Missing skills are suggestions for study, never claims the candidate may make.
+    If a vacancy has no description, its score is intentionally left unknown.
+    """
+    from modules.ai.infrastructure.llm_providers.offline_provider import score_match
+
+    resume = await _load_owned_resume(db, body.resume_id, user)
+    if not (resume.content_text or "").strip():
+        raise ValidationError("O currículo enviado não contém texto.")
+    results = []
+    for job in body.jobs:
+        if not job.description.strip():
+            results.append({"score": None, "matched_skills": [], "missing_skills": [],
+                            "warning": "Descrição incompleta; compatibilidade desconhecida."})
+            continue
+        score, matched, missing = score_match(
+            resume.content_text, " ".join([job.title, job.description])
+        )
+        results.append({
+            "score": score,
+            "matched_skills": sorted(matched),
+            "missing_skills": sorted(missing),
+            "warning": "",
+        })
+    return {"results": results}
+
+
+@router.post("/prepare-external")
+async def prepare_external(
+    body: ExternalPrepareRequest,
+    user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Suggest grounded keywords and a draft for review before a Gupy submission."""
+    from modules.ai.infrastructure.llm_providers.offline_provider import score_match
+
+    resume = await _load_owned_resume(db, body.resume_id, user)
+    if not (resume.content_text or "").strip():
+        raise ValidationError("O currículo enviado não contém texto.")
+    job = body.job
+    if len(job.description.strip()) < 30:
+        raise ValidationError("É necessário ter a descrição da vaga para preparar a candidatura.")
+    score, matched, missing = score_match(resume.content_text, job.title + " " + job.description)
+    llm = LLMService(await _get_provider(str(user.id), db))
+    draft = await llm.generate_cover_letter(
+        resume.content_text,
+        {"title": job.title, "company": job.company, "description": job.description,
+         "requirements": [], "skills": []},
+    )
+    return {
+        "match_score": score,
+        "keywords_supported_by_resume": sorted(matched),
+        "missing_skills_not_to_claim": sorted(missing),
+        "cover_letter_draft": draft,
+        "note": "Confira a carta antes de usar. Nunca acrescente experiências que não estejam no currículo.",
     }
 
 
