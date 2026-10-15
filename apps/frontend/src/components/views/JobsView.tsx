@@ -9,6 +9,7 @@ import {
   Search,
   WifiOff,
   X,
+  WandSparkles,
 } from "lucide-react";
 import { useState } from "react";
 import { Badge, Button, Card, EmptyState, SectionHeader, Skeleton } from "@/components/ui";
@@ -51,7 +52,7 @@ function normalize(job: Job | ExternalJob) {
   };
 }
 
-function JobCard({ job }: { job: Job | ExternalJob }) {
+function JobCard({ job, onAssist, assistedBusy }: { job: Job | ExternalJob; onAssist: (job: Job | ExternalJob) => void; assistedBusy: boolean }) {
   const item = normalize(job);
 
   return (
@@ -80,6 +81,12 @@ function JobCard({ job }: { job: Job | ExternalJob }) {
           </div>
         </div>
 
+        {item.url && (
+          <button type="button" onClick={() => onAssist(job)} disabled={assistedBusy}
+            className="flex shrink-0 items-center gap-1 rounded-lg bg-accent-soft px-3 py-1.5 text-xs font-medium text-accent disabled:opacity-50">
+            <WandSparkles size={12} /> Candidatura assistida
+          </button>
+        )}
         {item.url && (
           <a
             href={item.url}
@@ -111,6 +118,8 @@ export function JobsView({
   onDraftChange,
   onCreateJob,
   creating,
+  onAssist,
+  assistedBusy,
 }: {
   source: string;
   onSourceChange: (source: string) => void;
@@ -127,6 +136,8 @@ export function JobsView({
   onDraftChange: (draft: NewJobDraft) => void;
   onCreateJob: () => void;
   creating: boolean;
+  onAssist: (job: Job | ExternalJob) => void;
+  assistedBusy: boolean;
 }) {
   const [showForm, setShowForm] = useState(false);
   const activeSource = JOB_SOURCES.find((item) => item.id === source);
@@ -286,7 +297,7 @@ export function JobsView({
         <div className="space-y-3 stagger">
           <p className="text-xs text-faint">{results.length} vagas encontradas</p>
           {results.map((job, index) => (
-            <JobCard key={(job as ExternalJob).url || (job as Job).id || index} job={job} />
+            <JobCard key={(job as ExternalJob).url || (job as Job).id || index} job={job} onAssist={onAssist} assistedBusy={assistedBusy} />
           ))}
         </div>
       )}
