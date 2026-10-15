@@ -52,7 +52,9 @@ function normalize(job: Job | ExternalJob) {
   };
 }
 
-export interface CandidateProfile { name: string; email: string; phone: string; linkedin: string; }\n\nfunction JobCard({ job, onAssist, assistedBusy, profile }: { job: Job | ExternalJob; onAssist: (job: Job | ExternalJob, profile: CandidateProfile) => void; assistedBusy: boolean; profile: CandidateProfile }) {
+export interface CandidateProfile { name: string; email: string; phone: string; linkedin: string; }
+
+function JobCard({ job, onAssist, assistedBusy, profile }: { job: Job | ExternalJob; onAssist: (job: Job | ExternalJob, profile: CandidateProfile) => void; assistedBusy: boolean; profile: CandidateProfile }) {
   const item = normalize(job);
 
   return (
@@ -139,7 +141,18 @@ export function JobsView({
   onAssist: (job: Job | ExternalJob) => void;
   assistedBusy: boolean;
 }) {
-  const [showForm, setShowForm] = useState(false);\n  const [candidateProfile, setCandidateProfile] = useState<CandidateProfile>({ name: "", email: "", phone: "", linkedin: "" });\n  useEffect(() => {\n    try { const saved = JSON.parse(localStorage.getItem("jobpilot-candidate-profile") || "{}");\n      setCandidateProfile({ name: saved.name || "", email: saved.email || "", phone: saved.phone || "", linkedin: saved.linkedin || "" });\n    } catch { /* Invalid saved profile; show blank inputs. */ }\n  }, []);\n  const changeProfile = (key: keyof CandidateProfile, value: string) => {\n    const updated = { ...candidateProfile, [key]: value };\n    setCandidateProfile(updated);\n    localStorage.setItem("jobpilot-candidate-profile", JSON.stringify(updated));\n  };
+  const [showForm, setShowForm] = useState(false);
+  const [candidateProfile, setCandidateProfile] = useState<CandidateProfile>({ name: "", email: "", phone: "", linkedin: "" });
+  useEffect(() => {
+    try { const saved = JSON.parse(localStorage.getItem("jobpilot-candidate-profile") || "{}");
+      setCandidateProfile({ name: saved.name || "", email: saved.email || "", phone: saved.phone || "", linkedin: saved.linkedin || "" });
+    } catch { /* Invalid saved profile; show blank inputs. */ }
+  }, []);
+  const changeProfile = (key: keyof CandidateProfile, value: string) => {
+    const updated = { ...candidateProfile, [key]: value };
+    setCandidateProfile(updated);
+    localStorage.setItem("jobpilot-candidate-profile", JSON.stringify(updated));
+  };
   const activeSource = JOB_SOURCES.find((item) => item.id === source);
 
   return (
@@ -224,7 +237,18 @@ export function JobsView({
           </div>
         )}
 
-        <div className="surface-inset mb-4 space-y-2 p-3">\n          <p className="text-xs font-semibold">Dados para preenchimento assistido na Gupy</p>\n          <div className="grid gap-2 sm:grid-cols-2">\n            {([{ key: "name", label: "Nome completo" }, { key: "email", label: "E-mail" }, { key: "phone", label: "Celular" }, { key: "linkedin", label: "LinkedIn" }] as const).map(field => (\n              <input key={field.key} className="field" aria-label={field.label} placeholder={field.label}\n                value={candidateProfile[field.key]} onChange={event => changeProfile(field.key, event.target.value)} />\n            ))}\n          </div>\n          <p className="text-xs text-faint">Guardados somente neste navegador. Confira seus dados antes de iniciar.</p>\n        </div>\n\n        <div className="mb-4 flex flex-wrap gap-1.5">
+        <div className="surface-inset mb-4 space-y-2 p-3">
+          <p className="text-xs font-semibold">Dados para preenchimento assistido na Gupy</p>
+          <div className="grid gap-2 sm:grid-cols-2">
+            {([{ key: "name", label: "Nome completo" }, { key: "email", label: "E-mail" }, { key: "phone", label: "Celular" }, { key: "linkedin", label: "LinkedIn" }] as const).map(field => (
+              <input key={field.key} className="field" aria-label={field.label} placeholder={field.label}
+                value={candidateProfile[field.key]} onChange={event => changeProfile(field.key, event.target.value)} />
+            ))}
+          </div>
+          <p className="text-xs text-faint">Guardados somente neste navegador. Confira seus dados antes de iniciar.</p>
+        </div>
+
+        <div className="mb-4 flex flex-wrap gap-1.5">
           {JOB_SOURCES.map((item) => (
             <button
               key={item.id}
