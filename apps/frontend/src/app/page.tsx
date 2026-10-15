@@ -11,7 +11,7 @@ import { ApplicationsView } from "@/components/views/ApplicationsView";
 import { CalendarView, EMPTY_EVENT_DRAFT, type EventDraft } from "@/components/views/CalendarView";
 import { ChatView, type ChatMessage } from "@/components/views/ChatView";
 import { DashboardView } from "@/components/views/DashboardView";
-import { EMPTY_JOB_DRAFT, JobsView, type NewJobDraft } from "@/components/views/JobsView";
+import { EMPTY_JOB_DRAFT, JobsView, type NewJobDraft, type CandidateProfile } from "@/components/views/JobsView";
 import { ResumesView } from "@/components/views/ResumesView";
 import { SemanticView } from "@/components/views/SemanticView";
 import { SettingsView } from "@/components/views/SettingsView";
@@ -76,6 +76,7 @@ export default function Home() {
   const [searched, setSearched] = useState(false);
   const [jobDraft, setJobDraft] = useState<NewJobDraft>(EMPTY_JOB_DRAFT);
   const [creatingJob, setCreatingJob] = useState(false);
+  const [assistedBusy, setAssistedBusy] = useState(false);
 
   // ── Semantic search ─────────────────────────────────────────────
   const [semanticQuery, setSemanticQuery] = useState("");
@@ -260,6 +261,50 @@ export default function Home() {
     setJobResults(response?.results ?? []);
     setSourceAvailable(response?.available ?? true);
     setSearching(false);
+  }
+
+  async function assistApplication(job: Job | ExternalJob, profile: CandidateProfile) {
+    const candidate = job as ExternalJob;
+    const vacancy = {
+      title: candidate.position || candidate.title || candidate.name || "",
+      company: candidate.company || candidate.company_name || "",
+      description: job.description || "",
+      url: candidate.url || candidate.apply_url || (job as Job).apply_url || "",
+    };
+    if (!vacancy.url) { toast.error("Esta vaga não possui link."); return; }
+    if (resumes.length === 0) {
+      toast.error("Envie seu currículo PDF na aba Currículos antes de se candidatar.");
+      setTab("resumes");
+      return;
+    }
+    // The local companion owns the visible browser session, not the backend.
+    // Explicit click authorizes opening and filling; any final submission is
+    // only recorded when the external platform independently confirms it.
+    setAssistedBusy(true);
+    try {
+      if (vacancy.description.length >= 30) {
+        const prep = await guard(() => client.post<{
+          match_score: number; keywords_supported_by_resume: string[];
+          missing_skills_not_to_claim: string[]; cover_letter_draft: string;
+        }>("/ai/prepare-external", { resume_id: resumes[0].id, job: vacancy }));
+        if (prep) {
+          toast.success("Compatibilidade: " + prep.match_score +
+            "%. Palavras-chave do seu currículo: " +
+            (prep.keywords_supported_by_resume.join(", ") || "não identificadas") +
+            ". Lacunas: " + (prep.missing_skills_not_to_claim.join(", ") || "nenhuma"));
+        }
+      }
+      const response = await fetch("http://127.0.0.1:8765/apply", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ job: vacancy, profile, consent: true }),
+      });
+      const outcome = await response.json() as { state?: string; reason?: string; error?: string };
+      if (!response.ok) throw new Error(outcome.error || "Agente local indisponível.");
+      toast.success(outcome.reason || "O navegador de candidatura foi aberto.");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message +
+        " Inicie o companion na pasta companion com npm start." : "Não foi possível iniciar o agente.");
+    } finally { setAssistedBusy(false); }
   }
 
   async function createJob() {
@@ -573,6 +618,8 @@ export default function Home() {
             onDraftChange={setJobDraft}
             onCreateJob={createJob}
             creating={creatingJob}
+            onAssist={assistApplication}
+            assistedBusy={assistedBusy}
           />
         )}
 

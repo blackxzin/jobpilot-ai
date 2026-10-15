@@ -9,8 +9,9 @@ import {
   Search,
   WifiOff,
   X,
+  WandSparkles,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Badge, Button, Card, EmptyState, SectionHeader, Skeleton } from "@/components/ui";
 import { JOB_SOURCES, QUICK_FILTERS } from "@/lib/constants";
 import { formatSalaryRange } from "@/lib/format";
@@ -51,7 +52,9 @@ function normalize(job: Job | ExternalJob) {
   };
 }
 
-function JobCard({ job }: { job: Job | ExternalJob }) {
+export interface CandidateProfile { name: string; email: string; phone: string; linkedin: string; }
+
+function JobCard({ job, onAssist, assistedBusy, profile }: { job: Job | ExternalJob; onAssist: (job: Job | ExternalJob, profile: CandidateProfile) => void; assistedBusy: boolean; profile: CandidateProfile }) {
   const item = normalize(job);
 
   return (
@@ -80,6 +83,12 @@ function JobCard({ job }: { job: Job | ExternalJob }) {
           </div>
         </div>
 
+        {item.url && (
+          <button type="button" onClick={() => onAssist(job, profile)} disabled={assistedBusy}
+            className="flex shrink-0 items-center gap-1 rounded-lg bg-accent-soft px-3 py-1.5 text-xs font-medium text-accent disabled:opacity-50">
+            <WandSparkles size={12} /> Candidatura assistida
+          </button>
+        )}
         {item.url && (
           <a
             href={item.url}
@@ -111,6 +120,8 @@ export function JobsView({
   onDraftChange,
   onCreateJob,
   creating,
+  onAssist,
+  assistedBusy,
 }: {
   source: string;
   onSourceChange: (source: string) => void;
@@ -127,8 +138,21 @@ export function JobsView({
   onDraftChange: (draft: NewJobDraft) => void;
   onCreateJob: () => void;
   creating: boolean;
+  onAssist: (job: Job | ExternalJob, profile: CandidateProfile) => void;
+  assistedBusy: boolean;
 }) {
   const [showForm, setShowForm] = useState(false);
+  const [candidateProfile, setCandidateProfile] = useState<CandidateProfile>({ name: "", email: "", phone: "", linkedin: "" });
+  useEffect(() => {
+    try { const saved = JSON.parse(localStorage.getItem("jobpilot-candidate-profile") || "{}");
+      setCandidateProfile({ name: saved.name || "", email: saved.email || "", phone: saved.phone || "", linkedin: saved.linkedin || "" });
+    } catch { /* Invalid saved profile; show blank inputs. */ }
+  }, []);
+  const changeProfile = (key: keyof CandidateProfile, value: string) => {
+    const updated = { ...candidateProfile, [key]: value };
+    setCandidateProfile(updated);
+    localStorage.setItem("jobpilot-candidate-profile", JSON.stringify(updated));
+  };
   const activeSource = JOB_SOURCES.find((item) => item.id === source);
 
   return (
@@ -213,6 +237,17 @@ export function JobsView({
           </div>
         )}
 
+        <div className="surface-inset mb-4 space-y-2 p-3">
+          <p className="text-xs font-semibold">Dados para preenchimento assistido na Gupy</p>
+          <div className="grid gap-2 sm:grid-cols-2">
+            {([{ key: "name", label: "Nome completo" }, { key: "email", label: "E-mail" }, { key: "phone", label: "Celular" }, { key: "linkedin", label: "LinkedIn" }] as const).map(field => (
+              <input key={field.key} className="field" aria-label={field.label} placeholder={field.label}
+                value={candidateProfile[field.key]} onChange={event => changeProfile(field.key, event.target.value)} />
+            ))}
+          </div>
+          <p className="text-xs text-faint">Guardados somente neste navegador. Confira seus dados antes de iniciar.</p>
+        </div>
+
         <div className="mb-4 flex flex-wrap gap-1.5">
           {JOB_SOURCES.map((item) => (
             <button
@@ -286,7 +321,7 @@ export function JobsView({
         <div className="space-y-3 stagger">
           <p className="text-xs text-faint">{results.length} vagas encontradas</p>
           {results.map((job, index) => (
-            <JobCard key={(job as ExternalJob).url || (job as Job).id || index} job={job} />
+            <JobCard key={(job as ExternalJob).url || (job as Job).id || index} job={job} onAssist={onAssist} assistedBusy={assistedBusy} profile={candidateProfile} />
           ))}
         </div>
       )}

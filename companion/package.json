@@ -1,0 +1,12 @@
+{
+  "name": "jobpilot-application-companion",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node server.mjs",
+    "test": "node --test *.test.mjs"
+  },
+  "dependencies": {
+    "playwright": "^1.57.0"
+  }
+}
